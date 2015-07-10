@@ -14,11 +14,7 @@ SEXP bin(SEXP x, SEXP y) {
   double* dy = REAL(y);
   int sz = LENGTH(x);
   
-  //Rprintf("Creating variable\n");
   variable* v1 = variable_factory(dx, sz);
-  
-  //Rprintf("Printing Variable\n");
-  //print_variable(v1);
   
 // return the vector to R
 #ifdef DEBUG
@@ -27,15 +23,19 @@ SEXP bin(SEXP x, SEXP y) {
     REAL(out)[i] = v1->data[v1->order[i]];
   }
   
-  //Rprintf("Destroying Variable\n");
+  release_variable(v1);
   UNPROTECT(1);
   return out;
 #endif
   
   // create an interaction object
   interaction* ivar = interaction_factory(*v1, dy);
+   
+  print_agg_counts(ivar);
+  print_agg_pcts(ivar);
   
   release_variable(v1);
+  release_interaction(ivar);
   
   return R_NilValue;
   

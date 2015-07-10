@@ -1,6 +1,8 @@
+library(microbenchmark)
+
 # dummy data
-x <- sample(1:10, 100, replace = T)
-y <- sample(0:1, 100, replace = T)
+x <- runif(100000)
+y <- sample(0:1, 100000, replace = T)
 
 test_func <- function(x, y){
   stopifnot(length(x) == length(y))
