@@ -1,1 +1,2 @@
+useDynLib("binnr")
 exportPattern("^[[:alpha:]]+")

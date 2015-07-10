@@ -1,4 +1,9 @@
 # dummy data
-x <- runif(1000)
-y <- log(x/(1-x)) + rnorm(1000)/10
-plot(x, y)
+x <- sample(1:10, 100, replace = T)
+y <- sample(0:1, 100, replace = T)
+
+test_func <- function(x, y){
+  stopifnot(length(x) == length(y))
+  
+  .Call('bin', as.double(x), as.double(y))
+}
