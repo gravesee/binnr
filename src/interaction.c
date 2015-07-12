@@ -1,5 +1,6 @@
 #include "interaction.h"
 #include "stdlib.h"
+#include "math.h"
 
 // initialize interaction components
 interaction* interaction_factory(variable v, double* y) {
@@ -78,34 +79,44 @@ void aggregate_interaction_counts(interaction* ivar) {
 
 // calculate cum and decum pcts for partitioning
 void aggregate_cumulative_pcts(interaction *ivar) {
-  Rprintf("In HERE!\n");
+  int num_unique = ivar->num_unique;
   
   size_t** agg_counts = ivar->agg_counts; // local reference to agg_counts
   size_t*  tot_counts = ivar->tot_counts; // ditto tot_counts
   
-  ivar->agg_pcts = malloc(sizeof(double*) * (ivar->num_unique));
+  ivar->woe_table = malloc(sizeof(double*) * (num_unique));
+  
+  // need to do this as cumulatives and decumulatives
+  size_t cuml_zero, cuml_ones, decum_zero, decum_ones;
+  double cuml_zero_pct, cuml_ones_pct;
+  
+  cuml_zero = 0; cuml_ones = 0;;
   
   // loop over agg_counts and calculate stuff
-  for(size_t i = 0; i < ivar->num_unique; i++) {
-    int idx = ivar->num_unique - i;
+  for(size_t i = 0; i < num_unique; i++) {
     
-    ivar->agg_pcts[i] = calloc(4, sizeof(double));
+    ivar->woe_table[i] = malloc(sizeof(double) * 5);
     
-    // forwards
-    ivar->agg_pcts[i][0] =
-      (double) agg_counts[i][ZERO_CT] / tot_counts[ZERO_CT];
+    // cumulative pcts
+    cuml_zero += agg_counts[i][ZERO_CT];
+    cuml_ones += agg_counts[i][ONES_CT];
     
-    ivar->agg_pcts[i][1] =
-      (double) agg_counts[i][ONES_CT] / tot_counts[ONES_CT];
+    cuml_zero_pct = (double) cuml_zero / tot_counts[ZERO_CT];
+    cuml_ones_pct = (double) cuml_ones / tot_counts[ONES_CT];
     
-    // backwards
-    ivar->agg_pcts[idx][2] =
-      (double) agg_counts[idx][ZERO_CT] / tot_counts[ZERO_CT];
     
-    ivar->agg_pcts[idx][3] =
-      (double) agg_counts[idx][ONES_CT] / tot_counts[ONES_CT];
     
-    Rprintf("Cum Sum 0s: %f\n", ivar->agg_pcts[i][0]);
+    ivar->woe_table[i][WOE] = log(cuml_ones_pct / cuml_zero_pct);
+    ivar->woe_table[i][IV]  =
+      (cuml_ones_pct - cuml_zero_pct) * ivar->woe_table[i][WOE];
+      
+    ivar->woe_table[i][WOE_DECUM] =
+      log((1 - cuml_ones_pct) / (1 - cuml_zero_pct));
+      
+    ivar->woe_table[i][IV_DECUM] =
+      ((1 - cuml_ones_pct) - (1 - cuml_zero_pct)) * ivar->woe_table[i][WOE_DECUM];
+      
+    ivar->woe_table[i][IV_SUM] = ivar->woe_table[i][IV] + ivar->woe_table[i][IV_DECUM];
   }
 }
 
@@ -129,12 +140,13 @@ void print_agg_counts(interaction* ivar) {
 void print_agg_pcts(interaction* ivar) {
   // print agg_counts table
   for(size_t i = 0; i < ivar->num_unique; i++) {
-    int a, b, c, d;
-    a = ivar->agg_pcts[i][0];
-    b = ivar->agg_pcts[i][1];
-    c = ivar->agg_pcts[i][2];
-    d = ivar->agg_pcts[i][3];
-    Rprintf("%5d | %5d | %5d | %5d\n", a, b, c, d);
+    double a, b, c, d, e;
+    a = ivar->woe_table[i][WOE];
+    b = ivar->woe_table[i][IV];
+    c = ivar->woe_table[i][WOE_DECUM];
+    d = ivar->woe_table[i][IV_DECUM];
+    e = ivar->woe_table[i][IV_SUM];
+    Rprintf("%5f | %5f | %5f | %5f | %5f\n", a, b, c, d, e);
   }
 }
 

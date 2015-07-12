@@ -1,4 +1,4 @@
-#ifndef VARIABLE_H_
+#ifndef VARIABLE_H_  
 #define VARIABLE_H_
 
 #include "Rinternals.h"

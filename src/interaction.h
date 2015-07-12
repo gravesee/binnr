@@ -14,12 +14,16 @@ typedef struct {
   size_t** agg_counts; // n x 3 matrix of aggregated counts
   size_t* tot_counts; // table totals
   
-  double** agg_pcts; // n x ? matrix containing all info needed for partitioning
+  double** woe_table; // n x 2 matrix containing all info needed for partitioning
   
 } interaction;
 
 enum AGG_POS {
-  ZERO_CT, ONES_CT, TOT_CT
+  ONES_CT, ZERO_CT, TOT_CT
+};
+
+enum PCT_POS {
+  WOE, IV, WOE_DECUM, IV_DECUM, IV_SUM
 };
 
 interaction* interaction_factory(variable v, double* y);
