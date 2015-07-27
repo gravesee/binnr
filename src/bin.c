@@ -2,19 +2,22 @@
 #include "R.h"
 #include "stdio.h"
 #include "variable.h"
-#include "interaction.h" 
+#include "queue.h"
+#include "xtab.h"
 
-//#define DEBUG
+//#define DEBUG 0
 
 // TODO: create a new object that combines a variable and performance
 
 SEXP bin(SEXP x, SEXP y) {
   
+  Rprintf("Calling this stupid function\n");
+  
   double* dx = REAL(x);
   double* dy = REAL(y);
   int sz = LENGTH(x);
     
-  variable* v1 = variable_factory(dx, sz); 
+  struct variable* v1 = variable_factory(dx, sz); 
   
 // return the vector to R
 #ifdef DEBUG
@@ -28,14 +31,18 @@ SEXP bin(SEXP x, SEXP y) {
   return out;
 #endif 
   
+  struct xtab* xtab = xtab_factory(v1, dy);
+  
+  print_xtab(xtab);
+  
   // create an interaction object
-  interaction* ivar = interaction_factory(*v1, dy);
+  //interaction* ivar = interaction_factory(*v1, dy);
    
-  print_agg_counts(ivar);
-  print_agg_pcts(ivar);
+  //print_agg_counts(ivar);
+  //print_agg_pcts(ivar);
   
   release_variable(v1);
-  release_interaction(ivar);
+  //release_interaction(ivar);
   
   return R_NilValue;
   
