@@ -9,6 +9,11 @@ struct xtab {
   size_t   size;
 };
 
+struct split {
+  int start;
+  size_t size;
+};
+
 // create and initiazlize the xtab
 struct xtab* xtab_factory(struct variable* v, double* y);
 
@@ -17,9 +22,11 @@ size_t* create_unique_flag(struct variable* v);
 
 void print_xtab(struct xtab* x);
 
+void release_xtab(struct xtab* x);
+
 enum {
-  ZERO_CT=1,
-  ONES_CT=2,
-  VALUE=0,
-  TOTS_CT=0
+  ZERO_CT = 1,
+  ONES_CT = 2,
+  VALUE   = 0,
+  TOTS_CT = 0
 };

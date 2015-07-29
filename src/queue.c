@@ -4,6 +4,7 @@
 
 #include "queue.h"
 #include "stdio.h"
+#include "R.h"
 
 struct queue* queue_factory() {
 
@@ -16,7 +17,7 @@ struct queue* queue_factory() {
 }
 
 void enqueue(struct queue *q, struct work w) {
-    printf("Queueing something up!\n");
+    //printf("Queueing something up!\n");
     struct node* n = malloc(sizeof(struct node));
 
     n->work = w;
@@ -51,7 +52,7 @@ struct work dequeue(struct queue *q) {
     return(out);
 }
 
-void destroy_queue(struct queue* q) {
+void release_queue(struct queue* q) {
     struct node* temp = q->first;
     while(temp != NULL) {
         q->first = temp->next;
@@ -62,17 +63,17 @@ void destroy_queue(struct queue* q) {
 };
 
 int queue_size(struct queue *q) {
-    printf("Queue size in size func: %d\n", q->size);
+    // printf("Queue size in size func: %d\n", q->size);
     return (q->size);
 }
 
 void queue_print(struct queue* q) {
     struct node* temp = q->first;
     while(temp != NULL) {
-        printf("(%02d, %02d)\n", temp->work.start, temp->work.stop);
+        Rprintf("(%02d, %02d)\n", temp->work.start, temp->work.stop);
         temp = temp->next;
     }
-    printf("\n");
+    Rprintf("\n");
 }
 
 int is_empty(struct queue *q) {

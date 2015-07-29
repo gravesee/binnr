@@ -42,7 +42,6 @@ int compare(const void* a, const void* b) {
 
 // sort the 
 void sort_variable_index(struct variable* v) {
-  
   // put data array into global temporarily and sort it
   base_array = v->data;
   qsort(v->order, v->size, sizeof(v->order[0]), compare);

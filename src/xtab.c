@@ -1,12 +1,15 @@
 #include "stdlib.h"
 #include "xtab.h"
 #include "variable.h"
+#include "R.h"
 
+// set up a xtab structure that contains: aggregated counts, totals, and size
+// will be used for all calculations relating to information value
 struct xtab* xtab_factory(struct variable* v, double* y){
   
   struct xtab* xtab = malloc(sizeof(struct xtab*));
   
-  size_t* uniq = create_unique_flag(v); // malloc'd
+  size_t* uniq = create_unique_flag(v); // !!! malloc'd -- Needs release
   
   // get number of unique values
   size_t num_unique = 0;
@@ -20,7 +23,6 @@ struct xtab* xtab_factory(struct variable* v, double* y){
   
   size_t idx = -1;
   for (size_t i = 0; i < v->size; i++) {
-  
     // if uniq == 1 then increment the agg index and allocate xtab row memory
     if (uniq[i] == 1) {
         idx += 1;
@@ -44,9 +46,12 @@ struct xtab* xtab_factory(struct variable* v, double* y){
   xtab->totals = tot;
   xtab->size = num_unique;
   
+  free(uniq);
+  
   return(xtab);
 }
 
+// create array same size as 'data' where 1 = first uniq value and 0 = non-uniq
 size_t* create_unique_flag(struct variable* v) {
   
   size_t* unique_flag = malloc(sizeof(size_t) * v->size);
@@ -66,6 +71,9 @@ size_t* create_unique_flag(struct variable* v) {
   return unique_flag;
 }
 
+
+
+// print the aggregated counts in a matrix-like format
 void print_xtab(struct xtab* x) {
   double** tmp = x->counts;
   for (size_t i = 0; i < x->size; i++) {
@@ -73,3 +81,15 @@ void print_xtab(struct xtab* x) {
   }
 }
 
+// free the resources used by the xtab object
+void release_xtab(struct xtab* x) {
+  //Rprintf("Releasing the xtab!\n");
+  
+  // release all of the table pointers
+  for (size_t i = 0; i < x->size; i++) {
+    free(x->counts[i]);
+  }
+  free(x->counts);
+  free(x->totals);
+  free(x);
+};

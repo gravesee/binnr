@@ -42,7 +42,7 @@ int queue_size(struct queue* q);
 void queue_print(struct queue* q);
 
 // destroy queue and contents
-void destroy_queue(struct queue* q);
+void release_queue(struct queue* q);
 
 // return 1 if queue is empty
 int is_empty(struct queue* q);
