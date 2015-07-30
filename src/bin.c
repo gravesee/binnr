@@ -5,31 +5,34 @@
 #include "queue.h"
 #include "xtab.h"
 
+#define RETURN_R
+
 // prototype for main working function
-void find_best_split(struct queue* q, struct xtab* xtab, size_t* breaks, double* grand_tot); 
+void find_best_split(
+    struct queue* q,
+    struct xtab* xtab,
+    size_t* breaks,
+    double* grand_tot,
+    int* num_bins,
+    double min_iv,
+    int min_cnt,
+    int max_bin
+  );
 
 // called from R and handles passing of data to and from
-SEXP bin(SEXP x, SEXP y) {
+SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin) {
   
   // grab a few things from the R objects before proceeding
   double* dx = REAL(x);
   double* dy = REAL(y);
   int sz = LENGTH(x);
+  
+  double min_iv = *REAL(miniv);
+  int min_cnt = *INTEGER(mincnt);
+  int max_bin = *INTEGER(maxbin);
 
   // wrap R components in a C structure
   struct variable* v = variable_factory(dx, sz); 
-  
-// return the vector to R for testing
-#ifdef RETURN_R
-  SEXP out = PROTECT(allocVector(REALSXP, v->size));
-  for(size_t i = 0; i < v->size; i++){
-    REAL(out)[i] = v->data[v1->order[i]];
-  }
-  
-  release_variable(v);
-  UNPROTECT(1);
-  return out;
-#endif 
   
   // create the xtab
   struct xtab* xtab = xtab_factory(v, dy);
@@ -41,25 +44,31 @@ SEXP bin(SEXP x, SEXP y) {
   struct work w = {0, xtab->size - 1}; // last index is one less than the size
   enqueue(q, w);
   
-  // bin the variable until it's done
   
   // create a vector to store the split rows and init to zero
   size_t* breaks = calloc(xtab->size, sizeof(size_t));
   double* grand_tots = get_xtab_totals(xtab, 0, xtab->size);
+  int num_bins = 1;
   
+  // bin the variable until it's done
   while(!is_empty(q)) {
-    find_best_split(q, xtab, breaks, grand_tots);
+    find_best_split(q, xtab, breaks, grand_tots, &num_bins, min_iv, min_cnt, max_bin);
     // do stuff!
   }
-  
-  // loop over breaks and print each one out
-  Rprintf("Break Values (");
-  for (size_t i = 0; i < xtab->size; i++){
+
+  // return breaks in an R object
+#ifdef RETURN_R
+  SEXP out = PROTECT(allocVector(REALSXP, num_bins + 1));
+  size_t j = 0;
+  REAL(out)[0] = R_NegInf;
+  for(size_t i = 0; i < xtab->size; i++) {
     if (breaks[i] == 1) {
-      Rprintf(" %4.3f, ",  xtab->counts[i][0]);
+      j++;
+      REAL(out)[j] = xtab->counts[i][0];
     }
+    REAL(out)[j + 1] = R_PosInf;
   }
-  Rprintf(" )");
+#endif 
   
   // Release resources
   release_variable(v);
@@ -68,44 +77,37 @@ SEXP bin(SEXP x, SEXP y) {
   free(breaks);
   free(grand_tots);
   
+  
+#ifdef RETURN_R 
+  UNPROTECT(1);
+  return out;
+#endif
+  
   return R_NilValue;
   
 }
 
 void print_calc_table(double** calc, size_t size);
 
-void find_best_split(struct queue* q, struct xtab* xtab, size_t* breaks, double* grand_tot){
-  
-#ifdef DEBUG
-  Rprintf("Splitting new range\n-----------------------------------------\n");
-  queue_print(q);
-#endif
- 
+void find_best_split(
+  struct queue* q,
+  struct xtab* xtab,
+  size_t* breaks,
+  double* grand_tot,
+  int* num_bins,
+  double min_iv,
+  int min_cnt,
+  int max_bin
+) {
+
   // take work from queue
   struct work w = dequeue(q);
 
-#ifdef DEBUG
-  Rprintf("Working on this range: (%d, %d)\n", w.start, w.stop);
-#endif
-
   // range of values
   size_t range = (w.stop - w.start + 1);
-
-#ifdef DEBUG
-  Rprintf("Range value: %d\n", range);
-#endif
  
   // find best split within start/stop range
-  //double* tot = malloc(sizeof(double) * 2);
   double* tot = get_xtab_totals(xtab, w.start, w.stop + 1);
-  
-  // calculate column totals
-  //for (size_t i = w.start; i <= w.stop; i++) {
-  //  tot[0] += xtab->counts[i][ZERO_CT];
-  //  tot[1] += xtab->counts[i][ONES_CT];
-  //}
-  
-  
   
   // create data structure to store all calculations required for best split
   // 0) cumulative count zeros
@@ -121,9 +123,6 @@ void find_best_split(struct queue* q, struct xtab* xtab, size_t* breaks, double*
   double** calc = malloc(sizeof(double*) * range);
   for (size_t i =0; i < range; i++) {
     calc[i] = calloc(10, sizeof(double));
-#ifdef DEBUG
-    //Rprintf("i = %d\n", i);
-#endif
   }
   
   
@@ -167,12 +166,12 @@ void find_best_split(struct queue* q, struct xtab* xtab, size_t* breaks, double*
     // valid split criteria
     
     // minsplit
-    if ((calc[idx][0] + calc[idx][1]) < 50) {
+    if ((calc[idx][0] + calc[idx][1]) < min_cnt) {
       calc[idx][9] = -1;
-    } else if ((calc[idx][2] + calc[idx][3]) < 50) {
+    } else if ((calc[idx][2] + calc[idx][3]) < min_cnt) {
       calc[idx][9] = -1;
     // min iv
-    } else if (calc[idx][8] < 0.01) {
+    } else if (calc[idx][8] < min_iv) {
       calc[idx][9] = -1;
     // infinite iv
     } else if (isinf(calc[idx][8])) {
@@ -185,15 +184,11 @@ void find_best_split(struct queue* q, struct xtab* xtab, size_t* breaks, double*
     }
   }
   
+  Rprintf("Best IV: %f\n", best_iv);
+  
   // add two pieces of work to the queue
-  if (best_iv > -1) { 
-#ifdef DEBUG
-    Rprintf("Best split index: %d\n", best_split_idx);
-    Rprintf("Best split value: %f\n", xtab->counts[w.start + best_split_idx][0]);
-    Rprintf("Work 1 (start, stop): (%d, %d)\n", w.start, w.start + best_split_idx);
-    Rprintf("Work 2 (start, stop): (%d, %d)\n", w.start + best_split_idx + 1, w.stop);
-#endif
-
+  if (best_iv > -1 & *num_bins < max_bin) {
+    (*num_bins)++;
     // update breaks array
     breaks[w.start + best_split_idx] = 1;
     struct work w1 = {w.start, w.start + best_split_idx};
@@ -202,13 +197,7 @@ void find_best_split(struct queue* q, struct xtab* xtab, size_t* breaks, double*
     // add work to the queue
     enqueue(q, w1);
     enqueue(q, w2);
-  } else {
-#ifdef DEBUG
-    Rprintf("No split found that meets criteria\n", best_split_idx);
-#endif
   }
-  
-  //print_calc_table(calc, idx);
   
   // FREE RESOURCES ALLOCATED IN THIS FUNCTION //
   free(tot);
