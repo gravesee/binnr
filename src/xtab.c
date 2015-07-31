@@ -18,31 +18,30 @@ struct xtab* xtab_factory(struct variable* v, double* y){
   }
   
   // allocate memory for aggregated counts
-  double** agg = malloc(sizeof(double*) * num_unique);
-  //double*  tot = calloc(3, sizeof(double));
+  double* zero_ct = calloc(num_unique, sizeof(*zero_ct));
+  double* ones_ct = calloc(num_unique, sizeof(*ones_ct));
+  double* values  = malloc(sizeof(*values) * num_unique);
   
   size_t idx = -1;
   for (size_t i = 0; i < v->size; i++) {
-    // if uniq == 1 then increment the agg index and allocate xtab row memory
-    if (uniq[i] == 1) {
+    if (uniq[i] == 1) { // if uniq == 1 then increment the agg index
         idx += 1;
-        agg[idx] = calloc(3, sizeof(double));
-        agg[idx][VALUE] = v->data[v->order[i]];
+        values[idx] = v->data[v->order[i]];
     }
       
     // tally the counts
     if (y[v->order[i]] == 0) {
-      agg[idx][ZERO_CT]++;
+      zero_ct[idx]++;
     } else {
-      agg[idx][ONES_CT]++;
+      ones_ct[idx]++;
     }
   }
   
-  xtab->counts = agg;
-  xtab->size   = num_unique;
-  
+  xtab->zero_ct = zero_ct;
+  xtab->ones_ct = ones_ct;
+  xtab->values  = values;
+  xtab->size    = num_unique;
   free(uniq);
-  
   return(xtab);
 }
 
@@ -70,27 +69,23 @@ double* get_xtab_totals(struct xtab* xtab, size_t start, size_t stop) {
   
   // calculate column totals
   for (size_t i = start; i < stop; i++) {
-    tot[0] += xtab->counts[i][ZERO_CT];
-    tot[1] += xtab->counts[i][ONES_CT];
+    tot[0] += xtab->zero_ct[i];
+    tot[1] += xtab->ones_ct[i];
   }
   return tot;
 }
 
 // print the aggregated counts in a matrix-like format
 void print_xtab(struct xtab* x) {
-  double** tmp = x->counts;
   for (size_t i = 0; i < x->size; i++) {
-    Rprintf("[%3.0f, %3.0f, %3.0f]\n", tmp[i][VALUE], tmp[i][ZERO_CT], tmp[i][ONES_CT]);
+    Rprintf("[%3.0f, %3.0f, %3.0f]\n", x->values[i], x->zero_ct[i], x->ones_ct[i]);
   }
 }
 
 // free the resources used by the xtab object
 void release_xtab(struct xtab* x) {
-  // release all of the table pointers
-  for (size_t i = 0; i < x->size; i++) {
-    free(x->counts[i]);
-  }
-  free(x->counts);
-  //free(x->totals);
+  free(x->zero_ct);
+  free(x->ones_ct);
+  free(x->values);
   free(x);
 };

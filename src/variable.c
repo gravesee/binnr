@@ -1,3 +1,6 @@
+#ifndef VARIABLE_H
+#define VARIABLE_H
+
 #include "variable.h"
 #include "stdlib.h"
 
@@ -52,3 +55,5 @@ void print_variable(struct variable* v){
     Rprintf("Sorted Vec: %f\n", v->data[v->order[i]]);
   }
 }
+
+#endif

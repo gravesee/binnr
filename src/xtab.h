@@ -1,12 +1,16 @@
 // redo the crossing of two variables here
+#ifndef XTAB_SOURCE_FILE_H
+#define XTAB_SOURCE_FILE_H
+
 #include "variable.h"
 
 //#define DEBUG
 
 // xtab is an aggregation of unique x and y counts and totals
 struct xtab {
-  double** counts; // counts of 1s and 0s by unique value
-  //double*  totals; // totals of 1s and 0s overall
+  double* ones_ct;
+  double* zero_ct;
+  double* values;
   size_t   size;
 };
 
@@ -27,8 +31,4 @@ void release_xtab(struct xtab* x);
 
 double* get_xtab_totals(struct xtab* xtab, size_t start, size_t stop);
 
-enum {
-  VALUE   = 0,
-  ZERO_CT = 1,
-  ONES_CT = 2
-};
+#endif
