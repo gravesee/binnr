@@ -10,19 +10,14 @@
 // called from R and handles passing of data to and from
 SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity) {
   
-  // grab a few things from the R objects before proceeding
   double *dx = REAL(x);
   double *dy = REAL(y);
-  
   double min_iv = *REAL(miniv);
   int min_cnt = *INTEGER(mincnt), max_bin = *INTEGER(maxbin);
   int mono = *INTEGER(monotonicity);
 
   struct variable* v = variable_factory(dx, LENGTH(x));
-  //print_variable(v);
-  
   struct xtab* xtab = xtab_factory(v, dy); // create the xtab
-  //print_xtab(xtab);
   
   struct queue* q = queue_factory(); // create the queue
   struct work w = {0, xtab->size - 1}; // last index is one less than the size
@@ -59,14 +54,12 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   free(breaks);
   free(grand_tots);
   
-  
 #ifdef RETURN_R 
   UNPROTECT(1);
   return out;
 #endif
   
   return R_NilValue;
-  
 }
 
 void find_best_split(
@@ -82,13 +75,16 @@ void find_best_split(
 ) {
   
   struct work w = dequeue(q); // take work from queue
-  
   double* tot = get_xtab_totals(xtab, w.start, w.stop + 1);
-  //Rprintf("Starting new split\n");
+  double asc_zero = 0;
+  double asc_ones = 0;
+  double dsc_zero = 0;
+  double dsc_ones = 0;
+  double best_iv = -1;
+  int valid = 0;
+  int woe_sign = 0;
+  size_t best_split_idx;
   
-  double asc_zero = 0, asc_ones = 0, dsc_zero, dsc_ones, best_iv = -1;
-  int valid, woe_sign;
-  size_t best_split_idx, i;
   for (size_t i = w.start; i <= w.stop; i++) {
     valid = 0;
     
@@ -124,23 +120,23 @@ void find_best_split(
   // add two pieces of work to the queue
   if (best_iv > -1 & *num_bins < max_bin) {
     (*num_bins)++;
-    // update breaks array
-    breaks[best_split_idx] = 1;
+    breaks[best_split_idx] = 1; // update breaks array
     struct work w1 = {w.start, best_split_idx};
     struct work w2 = {best_split_idx + 1, w.stop};
     
-    // add work to the queue
-    enqueue(q, w1);
+    enqueue(q, w1); // add work to queue
     enqueue(q, w2);
   }
   
-  // FREE RESOURCES ALLOCATED IN THIS FUNCTION //
   free(tot);
 }
   
 struct iv calc_iv(double asc_zero, double asc_ones, double dsc_zero, double dsc_ones, double* tots) {
-  struct iv iv;
-  double asc_woe, dsc_woe, asc_iv, dsc_iv;
+  struct iv iv = {0};
+  double asc_woe = 0;
+  double dsc_woe = 0;
+  double asc_iv  = 0;
+  double dsc_iv  = 0;
   
   asc_woe = log((asc_zero/tots[0])/(asc_ones/tots[1]));
   dsc_woe = log((dsc_zero/tots[0])/(dsc_ones/tots[1]));

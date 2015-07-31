@@ -24,19 +24,20 @@ y <- titanic$Survived[!f]
 test_func <- function(x, y, min.iv=.025, min.cnt = 50, max.bin=20, sv=NULL, mono=0) {
   stopifnot(length(x) == length(y))
   f <- !(x %in% sv)
+  if (all(!f)) return(numeric(length(x)))
   breaks <- .Call('bin', as.double(x[f]), as.double(y[f]), as.double(min.iv), as.integer(min.cnt), as.integer(max.bin), as.integer(mono))
   
   out <- cut(x, breaks)
   levels(out) <- c(levels(out), sv)
   out[!f] <- x[!f]
-  
   tots <- table(y)
-  print(mean(tots))
-  
-  ave(y, out, FUN=function(x) {
+  out <- ave(y, out, FUN=function(x) {
     tmp = table(x)
     log((tmp[2]/tots[2])/(tmp[1]/tots[1]))
   })
+  
+  out[is.na(out)] <- log(mean(y)/(1-mean(y)))
+  out
 }
 
 test_func2 <- function(x, y, min.iv=.025, min.cnt = 50, max.bin=20, sv=NULL, mono=0) {
