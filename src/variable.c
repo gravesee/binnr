@@ -5,13 +5,14 @@
 double* base_array = NULL;
 
 // create and initalized a variable struct
-variable* variable_factory(double* data, int size) {
+struct variable* variable_factory(double* data, int size) {
   
-  variable* v = malloc(sizeof(variable));
+  struct variable* v = malloc(sizeof(*v));
   v->data = data;
   v->size = size;
   
   v->order = malloc(sizeof(int) * size); // create storage for index
+  
   // initialize v->order with sequence
   for(size_t i = 0; i < v->size; i++) {
     v->order[i] = i;
@@ -23,7 +24,7 @@ variable* variable_factory(double* data, int size) {
 }
 
 // release storage for variable
-void release_variable(variable* v) {
+void release_variable(struct variable* v) {
   free(v->order);
   free(v);
 }
@@ -40,14 +41,13 @@ int compare(const void* a, const void* b) {
 }
 
 // sort the 
-void sort_variable_index(variable* v) {
-  
+void sort_variable_index(struct variable* v) {
   // put data array into global temporarily and sort it
   base_array = v->data;
   qsort(v->order, v->size, sizeof(v->order[0]), compare);
 }
 
-void print_variable(variable* v){
+void print_variable(struct variable* v){
   for(size_t i = 0; i < v->size; i++) {
     Rprintf("Sorted Vec: %f\n", v->data[v->order[i]]);
   }
