@@ -4,6 +4,7 @@
 #include "queue.h"
 #include "xtab.h"
 #include "bin.h"
+#include "limits.h"
 
 #define RETURN_R
 
@@ -27,10 +28,12 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   size_t* breaks = calloc(xtab->size, sizeof(size_t));
   double* grand_tots = get_xtab_totals(xtab, 0, xtab->size);
   int num_bins = 1;
+  size_t pivot = INT_MIN;
+  double pivot_woe = 0;
   
   // bin the variable until it's done
   while(!is_empty(q)) {
-    find_best_split(q, xtab, breaks, grand_tots, &num_bins, min_iv, min_cnt, max_bin, mono);
+    find_best_split(q, xtab, breaks, grand_tots, &num_bins, min_iv, min_cnt, max_bin, mono, &pivot);
   }
 
   // return breaks in an R object
@@ -71,7 +74,8 @@ void find_best_split(
   double min_iv,
   int min_cnt,
   int max_bin,
-  int mono
+  int mono,
+  size_t* pivot
 ) {
   
   struct work w = dequeue(q); // take work from queue
@@ -83,7 +87,9 @@ void find_best_split(
   double best_iv = -1;
   int valid = 0;
   int woe_sign = 0;
+  int mono_sign = (mono > 0) ? 1 : -1;
   size_t best_split_idx;
+  struct iv iv;
   
   for (size_t i = w.start; i <= w.stop; i++) {
     valid = 0;
@@ -94,8 +100,9 @@ void find_best_split(
     dsc_zero = tot[0] - asc_zero;
     dsc_ones = tot[1] - asc_ones;
     
-    struct iv iv = calc_iv(asc_zero, asc_ones, dsc_zero, dsc_ones, grand_tot);
-    
+    iv = calc_iv(asc_zero, asc_ones, dsc_zero, dsc_ones, grand_tot);
+    woe_sign = ((iv.asc_woe - iv.dsc_woe) > 0) ? 1 : -1;
+       
     if ((asc_zero + asc_ones) < min_cnt) { // minsplit
       valid = -1;
     } else if ((dsc_zero + dsc_ones) < min_cnt) { // minsplit
@@ -104,16 +111,30 @@ void find_best_split(
       valid = -1;
     } else if (isinf(iv.iv)) { // infinite iv
       valid = -1;
-    } else if (mono != 0) {
-      woe_sign = ((iv.asc_woe - iv.dsc_woe) > 0) ? 1 : -1;
-      if (woe_sign != mono) {
+    } else if (abs(mono) == 1) {
+      if (woe_sign != mono_sign) {
         valid = -1;
+      }
+    } else if (abs(mono) == 2 & *pivot != INT_MIN) {
+      if (i > *pivot) {
+        if (woe_sign != -mono_sign) {
+          valid = -1;
+        }
+      } else {
+        if (woe_sign != mono_sign) {
+          valid = -1;
+        }
       }
     }
     
     if (valid != -1 & iv.iv > best_iv) {
       best_iv = iv.iv;
       best_split_idx = i;
+      woe_sign = ((iv.asc_woe - iv.dsc_woe) > 0) ? 1 : -1;
+      if (woe_sign != mono_sign & *pivot == INT_MIN) {
+          *pivot = w.stop;
+          Rprintf("Pivot found at: %f\n", xtab->values[*pivot]);
+      }
     }
   }
   
