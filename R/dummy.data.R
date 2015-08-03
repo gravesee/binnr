@@ -1,7 +1,7 @@
 #library(microbenchmark)
-# data(titanic, package='mjollnir')
+data(titanic, package='mjollnir')
 
-titanic <- read.csv("~/Downloads/train.csv", header=T)
+#titanic <- read.csv("~/Downloads/train.csv", header=T)
 
 #dyn.load('/binnr/src/bin.so')
 
@@ -12,11 +12,11 @@ titanic <- read.csv("~/Downloads/train.csv", header=T)
 # y <- sample(0:1 , 1e6, replace=T)
 # 
 # #x <- as.numeric(as.character(titanic$Pclass))
-# y <- titanic$Survived
+y <- titanic$Survived
 # 
 # f <- is.na(titanic$Age)
 # x <- titanic$SibSp
-# x <- titanic$Fare
+x <- titanic$Fare
 # 
 # x <- titanic$Age[!f]
 # y <- titanic$Survived[!f]
@@ -24,9 +24,9 @@ titanic <- read.csv("~/Downloads/train.csv", header=T)
 x <- rnorm(1e5)
 y <- rbinom(1e5, 1, plogis(x**2))
 
-x <- titanic$Fare
-x <- titanic$Age
-y <- titanic$Survived
+#x <- titanic$Fare
+#x <- titanic$Age
+#y <- titanic$Survived
 
 #SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin)
 test_func <- function(x, y, min.iv=.025, min.cnt = 50, max.bin=20, sv=NULL, mono=0) {
