@@ -4,18 +4,15 @@
 #include "queue.h"
 #include "xtab.h"
 #include "bin.h"
-
-#define RETURN_R
+ 
+#define RETURN_R 
 
 // called from R and handles passing of data to and from
 SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity) {
   
   double *dx = REAL(x);
   double *dy = REAL(y);
-  double min_iv = *REAL(miniv);
-  int min_cnt = *INTEGER(mincnt), max_bin = *INTEGER(maxbin);
-  int mono = *INTEGER(monotonicity);
-
+  
   struct variable* v = variable_factory(dx, LENGTH(x));
   struct xtab* xtab = xtab_factory(v, dy); // create the xtab
   
@@ -27,10 +24,29 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   size_t* breaks = calloc(xtab->size, sizeof(size_t));
   double* grand_tots = get_xtab_totals(xtab, 0, xtab->size);
   int num_bins = 1;
+  
+  struct opts opts;
+  opts.max_bin = *INTEGER(maxbin);
+  opts.min_cnt = *INTEGER(mincnt);
+  opts.min_iv = *REAL(miniv);
+  opts.mono = *INTEGER(monotonicity);
 
   // bin the variable until it's done
   while(!is_empty(q)) {
-    find_best_split(q, xtab, breaks, grand_tots, &num_bins, min_iv, min_cnt, max_bin, mono);
+    struct work w = dequeue(q); // take work from queue
+    size_t split = find_best_split(w.start, w.stop, xtab, grand_tots, opts);
+    
+    // add two pieces of work to the queue
+    if ((split != -1) & (num_bins < opts.max_bin)) {
+      num_bins++;
+      breaks[split] = 1; // update breaks array
+      
+      struct work w1 = {w.start, split};
+      struct work w2 = {split + 1, w.stop};
+      
+      enqueue(q, w1); // add work to queue
+      enqueue(q, w2);
+    }
   }
 
   // return breaks in an R object
@@ -62,89 +78,64 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   return R_NilValue;
 }
 
-void find_best_split(
-  struct queue* q,
-  struct xtab* xtab,
-  size_t* breaks,
-  double* grand_tot,
-  int* num_bins,
-  double min_iv,
-  int min_cnt,
-  int max_bin,
-  int mono
-) {
+size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot, struct opts opts) {
   
-  struct work w = dequeue(q); // take work from queue
-  double* tot = get_xtab_totals(xtab, w.start, w.stop + 1);
-  double asc_zero = 0;
-  double asc_ones = 0;
-  double dsc_zero = 0;
-  double dsc_ones = 0;
+  double* tot = get_xtab_totals(xtab, start, stop + 1);
+  double asc_cnts[2] = {0};
+  double dsc_cnts[2] = {0};
   double best_iv = -1;
   int valid = 0;
   int woe_sign = 0;
-  size_t best_split_idx;
+  size_t best_split_idx = -1;
 
-  for (size_t i = w.start; i <= w.stop; i++) {
+  for (size_t i = start; i <= stop; i++) {
     valid = 0;
     
-    asc_zero += xtab->zero_ct[i];
-    asc_ones += xtab->ones_ct[i];
+    asc_cnts[0] += xtab->zero_ct[i];
+    asc_cnts[1] += xtab->ones_ct[i];
     
-    dsc_zero = tot[0] - asc_zero;
-    dsc_ones = tot[1] - asc_ones;
+    dsc_cnts[0] = tot[0] - asc_cnts[0];
+    dsc_cnts[1] = tot[1] - asc_cnts[1];
     
-    struct iv iv = calc_iv(asc_zero, asc_ones, dsc_zero, dsc_ones, grand_tot);
+    struct iv iv = calc_iv(asc_cnts, dsc_cnts, grand_tot);
     
-    if ((asc_zero + asc_ones) < min_cnt) { // minsplit
+    if ((asc_cnts[0] + asc_cnts[1]) < opts.min_cnt) { // minsplit
       valid = -1;
-    } else if ((dsc_zero + dsc_ones) < min_cnt) { // minsplit
+    } else if ((dsc_cnts[0] + dsc_cnts[1]) < opts.min_cnt) { // minsplit
       valid = -1;
-    } else if (iv.iv < min_iv) { // min iv
+    } else if (iv.iv < opts.min_iv) { // min iv
       valid = -1;
     } else if (isinf(iv.iv)) { // infinite iv
       valid = -1;
-    } else if (mono != 0) {
-      woe_sign = (iv.asc_woe < iv.dsc_woe) ? 1 : -1;
-      if (woe_sign != mono) {
+    } else if (opts.mono != 0) {
+      woe_sign = (iv.asc_woe > iv.dsc_woe) ? 1 : -1;
+      if (woe_sign != opts.mono) {
         valid = -1;
       }
     }
 
-    if (valid != -1 & iv.iv > best_iv) {
+    if ((valid != -1) & (iv.iv > best_iv)) {
       best_iv = iv.iv;
       best_split_idx = i;
     }
   }
   
-  // add two pieces of work to the queue
-  if (best_iv > -1 & *num_bins < max_bin) {
-    (*num_bins)++;
-    breaks[best_split_idx] = 1; // update breaks array
-    Rprintf("IV: %f\n", best_iv);
-    
-
-    struct work w1 = {w.start, best_split_idx};
-    struct work w2 = {best_split_idx + 1, w.stop};
-    
-    enqueue(q, w1); // add work to queue
-    enqueue(q, w2);
-  }
-  
   free(tot);
+  
+  return best_split_idx;
 }
 
-struct iv calc_iv(double asc_zero, double asc_ones, double dsc_zero, double dsc_ones, double* tots) {
+struct iv calc_iv(double* asc_cnts, double* dsc_cnts, double* tots) {
   struct iv iv = {0};
   double asc_woe = 0;
   double dsc_woe = 0;
   double asc_iv  = 0;
   double dsc_iv  = 0;
   
-  asc_woe = log((asc_zero/tots[0])/(asc_ones/tots[1]));
-  dsc_woe = log((dsc_zero/tots[0])/(dsc_ones/tots[1]));
-  asc_iv  = asc_woe * (asc_zero/tots[0] - asc_ones/tots[1]);
-  dsc_iv  = dsc_woe * (dsc_zero/tots[0] - dsc_ones/tots[1]);
+  asc_woe = log((asc_cnts[0]/tots[0])/(asc_cnts[1]/tots[1]));
+  dsc_woe = log((dsc_cnts[0]/tots[0])/(dsc_cnts[1]/tots[1]));
+  asc_iv  = asc_woe * (asc_cnts[0]/tots[0] - asc_cnts[1]/tots[1]);
+  dsc_iv  = dsc_woe * (dsc_cnts[0]/tots[0] - dsc_cnts[1]/tots[1]);
   
   iv.asc_woe = asc_woe;
   iv.dsc_woe = dsc_woe;
