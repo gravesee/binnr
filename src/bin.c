@@ -22,6 +22,7 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   
   // create a vector to store the split rows and init to zero
   size_t* breaks = calloc(xtab->size, sizeof(size_t));
+  double* woes = calloc(xtab->size, sizeof(double));
   double* grand_tots = get_xtab_totals(xtab, 0, xtab->size);
   int num_bins = 1;
   
@@ -51,16 +52,33 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
 
   // return breaks in an R object
 #ifdef RETURN_R
-  SEXP out = PROTECT(allocVector(REALSXP, num_bins + 1));
+  SEXP retList = PROTECT(retList = allocVector(VECSXP, 2));
+  SEXP names;
+  PROTECT(names = allocVector(STRSXP, 2));
+  SET_STRING_ELT(names, 0, mkChar("breaks"));
+  SET_STRING_ELT(names, 1, mkChar("woe"));
+  setAttrib(retList, R_NamesSymbol, names);
+  
+  SEXP r_brk = PROTECT(allocVector(REALSXP, num_bins + 1));
+  SEXP r_woe = PROTECT(allocVector(REALSXP, num_bins));
   size_t j = 0;
-  REAL(out)[0] = R_NegInf;
+  REAL(r_brk)[0] = R_NegInf;
+  double ones_ct = 0, zero_ct = 0;
   for(size_t i = 0; i < xtab->size; i++) {
+    zero_ct += xtab->zero_ct[i];
+    ones_ct += xtab->ones_ct[i];
     if (breaks[i] == 1) {
       j++;
-      REAL(out)[j] = xtab->values[i];
+      REAL(r_brk)[j] = xtab->values[i];
+      REAL(r_woe)[j-1] = log((zero_ct/grand_tots[0])/(ones_ct/grand_tots[1]));
+      zero_ct = ones_ct = 0;
     }
-    REAL(out)[j + 1] = R_PosInf;
+    REAL(r_brk)[j + 1] = R_PosInf;
+    REAL(r_woe)[j] = log((zero_ct/grand_tots[0])/(ones_ct/grand_tots[1]));
   }
+  
+  SET_VECTOR_ELT(retList, 0, r_brk);
+  SET_VECTOR_ELT(retList, 1, r_woe);
 #endif 
   
   // Release resources
@@ -68,11 +86,12 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   release_xtab(xtab);
   release_queue(q);
   free(breaks);
+  free(woes);
   free(grand_tots);
   
 #ifdef RETURN_R 
-  UNPROTECT(1);
-  return out;
+  UNPROTECT(4);
+  return retList;
 #endif
   
   return R_NilValue;
