@@ -7,13 +7,14 @@
  
 #define RETURN_R 
 
-// called from R and handles passing of data to and from
-SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity) {
+// called from R and handles passing of data to and from 
+SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity, SEXP sv) {
   
   double *dx = REAL(x);
   double *dy = REAL(y);
+  double *dsv = REAL(sv);
   
-  struct variable* v = variable_factory(dx, LENGTH(x));
+  struct variable* v = variable_factory(dx, LENGTH(x), dsv, LENGTH(sv));
   struct xtab* xtab = xtab_factory(v, dy); // create the xtab
   
   struct queue* q = queue_factory(); // create the queue

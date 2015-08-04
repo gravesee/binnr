@@ -8,17 +8,32 @@
 double* base_array = NULL;
 
 // create and initalized a variable struct
-struct variable* variable_factory(double* data, int size) {
+struct variable* variable_factory(double* data, int size, double* sv, int sv_size) {
+  
+  // don't use NAs
+  size_t num_real = 0, num_special = 0;
+  for (size_t i = 0; i < size; i++){
+    num_real += !ISNA(data[i]);
+    for (size_t j = 0; j < sv_size; j++){
+      num_special += (data[i] == sv[j]);
+    }
+  }
+  Rprintf("Number of real values: %d\n", num_real);
+  Rprintf("Number of special values: %d\n", num_special);
+  
   
   struct variable* v = malloc(sizeof(*v));
   v->data = data;
-  v->size = size;
+  v->size = num_real;
   
-  v->order = malloc(sizeof(int) * size); // create storage for index
+  v->order = malloc(sizeof(int) * num_real); // create storage for index
   
   // initialize v->order with sequence
-  for(size_t i = 0; i < v->size; i++) {
-    v->order[i] = i;
+  for(size_t i = 0, j = 0; i < size; i++) {
+    if (!ISNA(data[i])) {
+      v->order[j] = i;
+      j++;
+    }
   }
   
   sort_variable_index(v); // create sorted index
