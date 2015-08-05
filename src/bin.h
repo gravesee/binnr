@@ -28,4 +28,6 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
 
 struct iv calc_iv(double* asc_cnts, double* dsc_cnts, double* tots);
 
+double calc_sv_woe(double* dx, double* dy, int size, double value, double* tots);
+
 #endif

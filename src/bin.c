@@ -1,3 +1,4 @@
+
 #include "R.h"
 #include "stdio.h"
 #include "variable.h"
@@ -6,8 +7,6 @@
 #include "bin.h"
  
 #define RETURN_R 
-
-double calc_sv_woe(struct xtab* xtab, double value, double* tots);
 
 // called from R and handles passing of data to and from 
 SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity, SEXP sv) {
@@ -25,10 +24,21 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   
   // create a vector to store the split rows and init to zero
   size_t* breaks = calloc(xtab->size, sizeof(size_t));
-  double* woes = calloc(xtab->size, sizeof(double));
-  double* grand_tots = get_xtab_totals(xtab, 0, xtab->size);
   int num_bins = 1;
   
+  // calculate totals where not missing
+  double grand_tots[2] = {0, 0};
+  for (size_t i = 0; i < LENGTH(y); i++){
+    if (!ISNA(dx[i])) {
+      if (dy[i] == 0) {
+        grand_tots[0]++;
+      } else {
+        grand_tots[1]++;
+      }
+    }
+  }
+  
+  // fille options structure
   struct opts opts;
   opts.max_bin = *INTEGER(maxbin);
   opts.min_cnt = *INTEGER(mincnt);
@@ -59,11 +69,16 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   SEXP names;
   PROTECT(names = allocVector(STRSXP, 5));
   SET_STRING_ELT(names, 0, mkChar("breaks"));
-  SET_STRING_ELT(names, 1, mkChar("woe"));
-  SET_STRING_ELT(names, 2, mkChar("na.woe"));
-  SET_STRING_ELT(names, 3, mkChar("special.breaks"));
-  SET_STRING_ELT(names, 4, mkChar("special.woe"));
+  SET_STRING_ELT(names, 1, mkChar("values"));
+  SET_STRING_ELT(names, 2, mkChar("na"));
+  SET_STRING_ELT(names, 3, mkChar("sb"));
+  SET_STRING_ELT(names, 4, mkChar("sv"));
   setAttrib(retList, R_NamesSymbol, names);
+  
+  SEXP class_name;
+  PROTECT(class_name = allocVector(STRSXP, 1));
+  SET_STRING_ELT(class_name, 0, mkChar("tm"));
+  setAttrib(retList, R_ClassSymbol, class_name);
   
   SEXP r_brk = PROTECT(allocVector(REALSXP, num_bins + 1));
   SEXP r_woe = PROTECT(allocVector(REALSXP, num_bins));
@@ -86,18 +101,24 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
     REAL(r_woe)[j] = log((ones_ct/grand_tots[1])/(zero_ct/grand_tots[0]));
   }
   
-  double mean = 0;
+  double overall_woe = 0;
   for (size_t i = 0; i < LENGTH(y); i++){
-    mean += REAL(y)[i];
+    overall_woe += REAL(y)[i];
   }
-  mean = mean/(double)LENGTH(y);  
-  REAL(r_na_woe)[0] = log(mean/(1-mean));
+  overall_woe = overall_woe/(double)LENGTH(y);
+  overall_woe = log(overall_woe/(1-overall_woe));
+  
+  REAL(r_na_woe)[0] = 0;
   
   for (size_t i = 0; i < LENGTH(sv); i++) {
     REAL(r_sv_breaks)[i] = dsv[i];
-    REAL(r_sv_woe)[i] = calc_sv_woe(xtab, dsv[i], grand_tots);
+    double sv_woe = calc_sv_woe(dx, dy, LENGTH(x), dsv[i], grand_tots);
+    if (ISNAN(sv_woe) | isinf(sv_woe)) {
+      REAL(r_sv_woe)[i] = overall_woe;  
+    } else {
+      REAL(r_sv_woe)[i] = sv_woe;
+    }
   }
-  
   
   SET_VECTOR_ELT(retList, 0, r_brk);
   SET_VECTOR_ELT(retList, 1, r_woe);
@@ -111,11 +132,9 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   release_xtab(xtab);
   release_queue(q);
   free(breaks);
-  free(woes);
-  free(grand_tots);
   
 #ifdef RETURN_R 
-  UNPROTECT(7);
+  UNPROTECT(8);
   return retList;
 #endif
   
@@ -184,12 +203,15 @@ struct iv calc_iv(double* asc_cnts, double* dsc_cnts, double* tots) {
   return iv;
 }
 
-double calc_sv_woe(struct xtab* xtab, double value, double* tots) {
+double calc_sv_woe(double* dx, double* dy, int size, double value, double* tots) {
   double ones_ct = 0, zero_ct = 0;
-  for (size_t i = 0; i < xtab->size; i++) {
-    if (xtab->values[i] == value) {
-      zero_ct += xtab->zero_ct[i];
-      ones_ct += xtab->ones_ct[i];
+  for (size_t i = 0; i < size; i++) {
+    if (dx[i] == value) {
+      if (dy[i] == 0) {
+        zero_ct++;  
+      } else {
+        ones_ct++;
+      }
     }
   }
   double woe = log((ones_ct/tots[1])/(zero_ct/tots[0]));

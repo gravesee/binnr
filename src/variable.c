@@ -10,7 +10,7 @@ double* base_array = NULL;
 // create and initalized a variable struct
 struct variable* variable_factory(double* data, int size, double* sv, int sv_size) {
   
-  // don't use NAs
+  // don't use NAs or special values
   size_t num_real = 0, num_special = 0;
   for (size_t i = 0; i < size; i++){
     num_real += !ISNA(data[i]);
@@ -18,24 +18,24 @@ struct variable* variable_factory(double* data, int size, double* sv, int sv_siz
       num_special += (data[i] == sv[j]);
     }
   }
-  Rprintf("Number of real values: %d\n", num_real);
-  Rprintf("Number of special values: %d\n", num_special);
-  
   
   struct variable* v = malloc(sizeof(*v));
   v->data = data;
-  v->size = num_real;
-  
-  v->order = malloc(sizeof(int) * num_real); // create storage for index
+  v->size = num_real - num_special;
+  v->order = malloc(sizeof(int) * (v->size)); // create storage for index
   
   // initialize v->order with sequence
   for(size_t i = 0, j = 0; i < size; i++) {
-    if (!ISNA(data[i])) {
+    int valid = 1;
+    if (ISNA(data[i])) {valid = 0;}
+    for (size_t k = 0; k < sv_size; k++) {
+      if (data[i] == sv[k]) {valid = 0;}
+    }
+    if (valid == 1) {
       v->order[j] = i;
       j++;
     }
   }
-  
   sort_variable_index(v); // create sorted index
   
   return v;
@@ -58,7 +58,7 @@ int compare(const void* a, const void* b) {
     : 0;
 }
 
-// sort the 
+// sort the index based on the values
 void sort_variable_index(struct variable* v) {
   // put data array into global temporarily and sort it
   base_array = v->data;
