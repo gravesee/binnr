@@ -1,4 +1,3 @@
-
 #include "R.h"
 #include "stdio.h"
 #include "variable.h"
@@ -11,9 +10,7 @@
 // called from R and handles passing of data to and from 
 SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity, SEXP sv) {
   
-  double *dx = REAL(x);
-  double *dy = REAL(y);
-  double *dsv = REAL(sv);
+  double *dx = REAL(x), *dy = REAL(y), *dsv = REAL(sv);
   
   struct variable* v = variable_factory(dx, LENGTH(x), dsv, LENGTH(sv));
   struct xtab* xtab = xtab_factory(v, dy); // create the xtab
@@ -26,7 +23,7 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   size_t* breaks = calloc(xtab->size, sizeof(size_t));
   int num_bins = 1;
   
-  // calculate totals where not missing
+  // TODO: replace with function -- calculate totals where not missing
   double grand_tots[2] = {0, 0};
   for (size_t i = 0; i < LENGTH(y); i++){
     if (!ISNA(dx[i])) {
@@ -50,14 +47,11 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
     struct work w = dequeue(q); // take work from queue
     size_t split = find_best_split(w.start, w.stop, xtab, grand_tots, opts);
     
-    // add two pieces of work to the queue
-    if ((split != -1) & (num_bins < opts.max_bin)) {
+    if ((split != -1) & (num_bins < opts.max_bin)) { // split found!
       num_bins++;
       breaks[split] = 1; // update breaks array
-      
       struct work w1 = {w.start, split};
       struct work w2 = {split + 1, w.stop};
-      
       enqueue(q, w1); // add work to queue
       enqueue(q, w2);
     }
@@ -77,7 +71,7 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
   
   SEXP class_name;
   PROTECT(class_name = allocVector(STRSXP, 1));
-  SET_STRING_ELT(class_name, 0, mkChar("tm"));
+  SET_STRING_ELT(class_name, 0, mkChar("bin"));
   setAttrib(retList, R_ClassSymbol, class_name);
   
   SEXP r_brk = PROTECT(allocVector(REALSXP, num_bins + 1));
@@ -94,13 +88,16 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity
     if (breaks[i] == 1) {
       j++;
       REAL(r_brk)[j] = xtab->values[i];
-      REAL(r_woe)[j-1] = log((ones_ct/grand_tots[1])/(zero_ct/grand_tots[0]));
+      // TODO: make woe function
+      double woe = log((ones_ct/grand_tots[1])/(zero_ct/grand_tots[0]));
+      REAL(r_woe)[j-1] = isinf(woe) ? 0 : woe;
       zero_ct = ones_ct = 0;
     }
     REAL(r_brk)[j + 1] = R_PosInf;
     REAL(r_woe)[j] = log((ones_ct/grand_tots[1])/(zero_ct/grand_tots[0]));
   }
   
+  // TODO: move to function and tidy up
   double overall_woe = 0;
   for (size_t i = 0; i < LENGTH(y); i++){
     overall_woe += REAL(y)[i];
@@ -148,7 +145,6 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
   double dsc_cnts[2] = {0};
   double best_iv = -1;
   int valid = 0;
-  int woe_sign = 0;
   size_t best_split_idx = -1;
 
   for (size_t i = start; i <= stop; i++) {
@@ -161,6 +157,7 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
     dsc_cnts[1] = tot[1] - asc_cnts[1];
     
     struct iv iv = calc_iv(asc_cnts, dsc_cnts, grand_tot);
+    int woe_sign = (iv.asc_woe > iv.dsc_woe) ? 1 : -1;
     
     if ((asc_cnts[0] + asc_cnts[1]) < opts.min_cnt) { // minsplit
       valid = -1;
@@ -171,7 +168,6 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
     } else if (isinf(iv.iv)) { // infinite iv
       valid = -1;
     } else if (opts.mono != 0) {
-      woe_sign = (iv.asc_woe > iv.dsc_woe) ? 1 : -1;
       if (woe_sign != opts.mono) {
         valid = -1;
       }
@@ -184,20 +180,16 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
   }
   
   free(tot);
-  
   return best_split_idx;
 }
 
 struct iv calc_iv(double* asc_cnts, double* dsc_cnts, double* tots) {
   struct iv iv = {0};
+  iv.asc_woe = log((asc_cnts[0]/tots[0])/(asc_cnts[1]/tots[1]));
+  iv.dsc_woe = log((dsc_cnts[0]/tots[0])/(dsc_cnts[1]/tots[1]));
   
-  double asc_woe = log((asc_cnts[0]/tots[0])/(asc_cnts[1]/tots[1]));
-  double dsc_woe = log((dsc_cnts[0]/tots[0])/(dsc_cnts[1]/tots[1]));
-  double asc_iv  = asc_woe * (asc_cnts[0]/tots[0] - asc_cnts[1]/tots[1]);
-  double dsc_iv  = dsc_woe * (dsc_cnts[0]/tots[0] - dsc_cnts[1]/tots[1]);
-  
-  iv.asc_woe = asc_woe;
-  iv.dsc_woe = dsc_woe;
+  double asc_iv  = iv.asc_woe * (asc_cnts[0]/tots[0] - asc_cnts[1]/tots[1]);
+  double dsc_iv  = iv.dsc_woe * (dsc_cnts[0]/tots[0] - dsc_cnts[1]/tots[1]);
   iv.iv = asc_iv + dsc_iv;
   
   return iv;
@@ -207,13 +199,9 @@ double calc_sv_woe(double* dx, double* dy, int size, double value, double* tots)
   double ones_ct = 0, zero_ct = 0;
   for (size_t i = 0; i < size; i++) {
     if (dx[i] == value) {
-      if (dy[i] == 0) {
-        zero_ct++;  
-      } else {
-        ones_ct++;
-      }
+        zero_ct += (dy[i] == 0);
+        ones_ct += (dy[i] == 1);
     }
   }
-  double woe = log((ones_ct/tots[1])/(zero_ct/tots[0]));
-  return(woe);
+  return(log((ones_ct/tots[1])/(zero_ct/tots[0])));
 }
