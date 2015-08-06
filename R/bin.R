@@ -69,7 +69,7 @@ bin <- function(x, y, min.iv=.025, min.cnt = NULL, max.bin=10, mono=0, sv=NULL){
   out
 }
 
-bin.data <- function(df, y, ...) {
+bin.data <- function(df, y, mono, ...) {
   vars <- colnames(df)
   
   res <- list()
@@ -77,8 +77,58 @@ bin.data <- function(df, y, ...) {
     nm <- vars[i]    
     cat(sprintf("\rProgress: %%%3d", as.integer(100*i/length(vars))))
     flush.console()
+    if (!(is.na(mono[x]))) {
+      res[[nm]] <- bin(df[,nm], y, mono=mono[x], ...)
+    }
     res[[nm]] <- bin(df[,nm], y, ...)
   }
   cat("\n")
   return(structure(res, class='bin.list'))
 }
+
+xeno.table <- function(x, y, object) {
+  if (class(x) %in% c('numeric', 'integer')) {
+    res <- cut(x, object$breaks)
+  } else {
+    # check if breaks are actual characters
+    res <- levels(x)[match(as.character(x), object$breaks)]
+  }
+  
+  if (length(object$sv) != 0) { # special values
+    levels(res) <- levels(res, sv)
+    for (i in seq_along(object$sb)) {
+      res[x == object$sb[i]] <- object$sv[i]
+    }
+  }
+  
+  if (!is.null(object$na)) {
+    res <- addNA(res)
+  }
+  
+  # add the stats
+  tbl <- table(res, y)
+  pct <- prop.table(tbl, margin = 2)
+  tot <- prop.table(table(res))
+  prb <- apply(tbl, 1, function(x) x[2]/sum(x))
+  woe <- log(pct[,2]/pct[,1])
+  iv  <- woe * (pct[,2] - pct[,1])
+  
+  out <- cbind(tbl, pct, tot, prb, woe, iv) 
+  colnames(out) <- c('#0', '#1', 'W%0', 'W%1', 'W%' ,'P(1)', 'WoE', 'IV')
+  return(out)
+}
+
+
+bins <- bin.data(rv50[,keep50], rv50$depvar, mono=1)
+xeno <- lapply(names(bins), function(x) xeno.table(rv50[,x], rv50$depvar, bins[[x]]))
+names(xeno) <- names(bins)
+ivs <- sapply(xeno, function(x) {f <- !(is.na(x[,'IV']) | is.infinite(x[,'IV'])); sum(x[f,'IV'])})
+
+for(x in names(xeno[order(-ivs)])) {
+  cat(sprintf("Variable %32s | IV: %1.5f\n", x, ivs[x]), file='test2.txt', append = T);
+  write.table(xeno[[x]], file = 'test2.txt', append = T, sep = '\t', col.names = NA)
+  cat("\n", file='test2.txt', append = T);
+}
+
+  
+  
