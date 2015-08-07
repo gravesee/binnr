@@ -5,37 +5,22 @@
 #include "stdlib.h"
 
 // global to store the currently processed array of values
-double* base_array = NULL;
+static double* base_array = NULL;
 
 // create and initalized a variable struct
-struct variable* variable_factory(double* data, int size, double* sv, int sv_size) {
-  
-  // don't use NAs or special values
-  size_t num_real = 0, num_special = 0;
-  for (size_t i = 0; i < size; i++){
-    num_real += !ISNA(data[i]);
-    for (size_t j = 0; j < sv_size; j++){
-      num_special += (data[i] == sv[j]);
-    }
-  }
+struct variable* variable_factory(double* data, int size) {
   
   struct variable* v = malloc(sizeof(*v));
   v->data = data;
-  v->size = num_real - num_special;
+  v->size = size;
   v->order = malloc(sizeof(int) * (v->size)); // create storage for index
   
   // initialize v->order with sequence
   for(size_t i = 0, j = 0; i < size; i++) {
-    int valid = 1;
-    if (ISNA(data[i])) {valid = 0;}
-    for (size_t k = 0; k < sv_size; k++) {
-      if (data[i] == sv[k]) {valid = 0;}
-    }
-    if (valid == 1) {
       v->order[j] = i;
       j++;
     }
-  }
+
   sort_variable_index(v); // create sorted index
   
   return v;

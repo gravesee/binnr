@@ -12,7 +12,7 @@ struct variable {
 };
 
 // create, initialize and return variables
-struct variable* variable_factory(double* data, int size, double* sv, int sv_size);
+struct variable* variable_factory(double* data, int size);
 
 // release variable storage
 void release_variable(struct variable* v);
