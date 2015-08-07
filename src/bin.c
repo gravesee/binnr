@@ -5,14 +5,11 @@
 #include "xtab.h"
 #include "bin.h"
  
-#define RETURN_R 
+#define RETURN_R
 
 // called from R and handles passing of data to and from
-SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono) {
+SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono, SEXP except) {
   
-  //double *dx = REAL(x);
-  //double *dy = REAL(y);
-
   struct xtab* xtab = xtab_factory(variable_factory(REAL(x), LENGTH(x)), REAL(y)); // create the xtab
   double* grand_tots = get_xtab_totals(xtab, 0, xtab->size);
   
@@ -24,9 +21,8 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono) {
   size_t* breaks = calloc(xtab->size, sizeof(size_t));
   int num_bins = 1;
   
-  
   // fille options structure
-  struct opts o = {*REAL(miniv), *INTEGER(mincnt), *INTEGER(maxbin), *INTEGER(mono)};
+  struct opts o = {*REAL(miniv), *INTEGER(mincnt), *INTEGER(maxbin), *INTEGER(mono), except};
 
   // bin the variable until it's done
   while(!is_empty(q)) {
@@ -51,8 +47,7 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono) {
   for(size_t i = 0; i < xtab->size; i++) {
     if (breaks[i] == 1) {
       j++;
-      REAL(r_brk)[j] = xtab->values[i];
-      
+      REAL(r_brk)[j] = (xtab->values[i] + xtab->values[i+1]) / 2;
     }
   }
   REAL(r_brk)[j + 1] = R_PosInf;
@@ -84,10 +79,14 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
   for (size_t i = start; i <= stop; i++) {
     valid = 0;
     
-    asc[0] += xtab->zero_ct[i];
-    asc[1] += xtab->ones_ct[i];
-    dsc[0] = tot[0] - asc[0];
-    dsc[1] = tot[1] - asc[1];
+    for (size_t j = 0; j < LENGTH(o.except); j++){
+      if (xtab->values[i] != REAL(o.except)[j]) {
+        asc[0] += xtab->zero_ct[i];
+        asc[1] += xtab->ones_ct[i];
+        dsc[0] = tot[0] - asc[0];
+        dsc[1] = tot[1] - asc[1];
+      }
+    }
     
     struct iv iv = calc_iv(asc, dsc, grand_tot);
     int woe_sign = (iv.asc_woe > iv.dsc_woe) ? 1 : -1;
