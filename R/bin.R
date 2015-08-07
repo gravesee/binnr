@@ -164,6 +164,33 @@ predict.bin.list <- function(object, newdata) {
   out
 }
 
+xeno.table <- function(x, y, object) {
+  if (class(x) %in% c('numeric', 'integer')) {
+    res <- cut(x, object$breaks)
+  } else {
+    # check if breaks are actual characters
+    res <- levels(x)[match(as.character(x), object$breaks)]
+  }
+  if (length(object$exceptions) != 0) { # special values
+    levels(res) <- c(levels(res), object$exceptions)
+    for (i in seq_along(object$exceptions)) {
+    res[x == object$exceptions[i]] <- object$exceptions[i]
+    }
+  }
+  if (!is.null(object$na)) res <- addNA(res)
+  # add the stats
+  tbl <- table(res, y)
+  pct <- prop.table(tbl, margin = 2)
+  tot <- prop.table(table(res))
+  prb <- apply(tbl, 1, function(x) x[2]/sum(x))
+  woe <- log(pct[,2]/pct[,1])
+  iv  <- woe * (pct[,2] - pct[,1])
+  out <- cbind(tbl, pct, tot, prb, woe, iv)
+  colnames(out) <- c('#0', '#1', 'W%0', 'W%1', 'W%' ,'P(1)', 'WoE', 'IV')
+  return(out)
+}
+
+
 
 ### TESTING ###
 # s <- sample(nrow(titanic), nrow(titanic)/2)
@@ -178,10 +205,32 @@ predict.bin.list <- function(object, newdata) {
 # ks.table(-phat, titanic$Survived)
 
 
-# bins <- bin.data(rv50[,keep50], y = rv50$depvar, mono = NULL, exceptions = -1)
-# for (i in names(bins)) {
-#   print(i)
-#   tmp <- predict(bins[[i]], rv50[,i])
-# }
-# binned <- predict(bins, rv50)
+bins <- bin.data(rv50[,keep50], y = rv50$depvar, mono = mono50, exceptions = -1, min.iv=.01)
+bins$confirmationsubjectfound <- bin(rv50$confirmationsubjectfound, rv50$depvar, min.iv=0)
+binned <- predict(bins, rv50)
+library(glmnet)
+
+s <- sample(nrow(binned), nrow(binned)/10)
+fit <- cv.glmnet(binned[s,], rv50$depvar[s], alpha=1, lower.limit=0, family="binomial", nfolds=3)
+phat <- predict(fit, binned[-s,], s="lambda.min")
+
+library(mjollnir)
+ks.table(-phat, rv50$depvar[-s])
+
+tables <- lapply(names(bins), function(v) xeno.table(rv50[,v], rv50$depvar, bins[[v]]))
+names(tables) <- names(bins)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
