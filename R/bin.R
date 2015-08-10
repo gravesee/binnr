@@ -1,3 +1,7 @@
+library(ggplot2)
+library(scales)
+library(gridExtra)
+
 woe <- function(x, y, y0, y1) {
   #if (is.null(tot)) tot <- table(y)
   if (length(x) == 0)  return(NULL)
@@ -66,6 +70,8 @@ bin <- function(x, y, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions
   num_zero <- counts[,1]
   
   structure(list(
+    x = x,
+    y = y,
     type = type,
     breaks = brks,
     values = woe,
@@ -184,6 +190,49 @@ predict.bin.list <- function(object, newdata) {
   out
 }
 
+`+.bin` <- function(e1, e2) {
+  if (e1$type == "factor") {
+    print("factors currently not supported for grouping")
+    return(e1)
+  }
+  
+  out <- e1
+  n <- length(e1$num_ones)
+  f <-  (e1$x > e1$breaks[e2] & e1$x <= e1$breaks[e2 + 1]) &
+        !(e1$x %in% e1$exceptoins) &
+        !is.na(e1$x)
+  
+  # break into quintiles if possible else split in twain
+  q <- unique(quantile(e1$x[f], seq(0, 1, 0.2)))
+  q <- if (length(q) > 2) q else 2
+  b <- bin(cut(e1$x[f], q), e1$y[f])
+  
+  # grab endpoints from expanded range
+  eps <- sapply(strsplit(b$breaks, ','), '[[', 2)
+  eps <- head(as.numeric(gsub('\\(|\\]', '', eps)), -1)
+  
+  if (e2 == 1) { # if first
+    new_ones <- c(b$num_ones, e1$num_ones[(e2+1):n])
+    new_zero <- c(b$num_zero, e1$num_zero[(e2+1):n])
+  } else if (e2 == n) { # if last
+    new_ones <- c(e1$num_ones[1:(e2-1)], b$num_ones)
+    new_zero <- c(e1$num_zero[1:(e2-1)], b$num_zero)
+  } else { # if in-between
+    new_ones <- c(e1$num_ones[1:(e2-1)], b$num_ones, e1$num_ones[(e2+1):length(e1$num_ones)])
+    new_zero <- c(e1$num_zero[1:(e2-1)], b$num_zero, e1$num_zero[(e2+1):length(e1$num_zero)])  
+  }
+  
+  pct1 <- new_ones/sum(new_ones)
+  pct0 <- new_zero/sum(new_zero)
+  
+  out$values   <- log(pct1/pct0)
+  out$num_ones <- new_ones
+  out$num_zero <- new_zero
+  out$breaks   <- c(e1$breaks[1:(e2)], eps, e1$breaks[(e2 + 1):length(e1$breaks)])
+  out$history[[length(out$history) + 1]] <- e1
+  out
+}
+
 undo <- function(x) {
   if (length(x$history) == 0) {
     return(x)
@@ -235,6 +284,38 @@ print.bin <- function(x) {
   
   print(out)
 }
+
+bin.theme <- theme(
+  axis.line=element_blank(),
+  axis.text.y=element_blank(),axis.ticks=element_blank(),
+  axis.title.y=element_blank(),legend.position="none")
+
+
+plot.bin <- function(x, y, ...) {
+  tmp <- as.data.frame(x)
+  n <- 1:(nrow(tmp) - 2)
+  plt <- data.frame(
+    "Range"=factor(row.names(tmp[n,]), levels=rev(unique(row.names(tmp[n,])))),
+    "Count"=apply(tmp[n,1:2], 1, sum),
+    "Pct"=tmp[n,5],
+    "Prob"=tmp[n,6],
+    "WoE"=tmp[n,7],
+    row.names=NULL
+  )
+  
+  # number of data points
+  h <- nrow(plt) *.1
+  
+  with(plt, barplot(WoE, names.arg = Range, horiz=T, las=2))
+  
+#   g1 <- ggplot(plt, aes(x=Range, y=Count)) + geom_bar(stat="identity", width=h) + coord_flip()
+#   g2 <- ggplot(plt, aes(x=Range, y=WoE, fill=WoE)) + geom_bar(stat="identity", width=h) +
+#     scale_fill_gradient(low=muted("blue"), high=muted("red")) + coord_flip()
+#   g3 <- ggplot(plt, aes(x=Range, y=Prob)) + geom_bar(stat="identity", width=h) +
+#     geom_hline(yintercept=tmp[nrow(tmp),6], col="red", size=1) + coord_flip()
+#   grid.arrange(g1, g2 + plt.theme, g3 + plt.theme, as.table = T, ncol=3)
+}
+
 
 
 

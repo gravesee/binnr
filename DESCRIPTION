@@ -1,9 +1,13 @@
 Package: binnr
 Type: Package
-Title: What the package does (short line)
+Title: Create, manage, and explore variable binnings for model development
 Version: 1.0
 Date: 2015-07-06
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Eric E. Graves
+Maintainer: Eric E. Graves <gravcon5@gmail.com>
+Description: To be continued!
+Imports:
+    ggplot2,
+    scales,
+    gridExtra
+License: Free as in beer
