@@ -77,7 +77,8 @@ bin <- function(x, y, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions
     exceptions = exceptions,
     except_woe = except_woe,
     except_ones = except_ones,
-    except_zero = except_zero
+    except_zero = except_zero,
+    history=list()
   ), class = "bin")
 }
 
@@ -160,104 +161,80 @@ predict.bin.list <- function(object, newdata) {
 `-.bin` <- function(e1, e2) {
   out <- e1
   
-  new_breaks <- e1$breaks[-(e2 + 1)]
+  if(e2[1] == 1 & length(e2) == 1) e2 <- 1:2
   
-  new_ones <- e1$num_ones[-e2]
-  new_zero <- e1$num_zero[-e2]
+  a <- e2[1]
+  z <- max(a + 1, e2[length(e2)])
   
-  new_ones[e2] <- e1$num_ones[e2] + e1$num_ones[e2 + 1]
-  new_zero[e2] <- e1$num_zero[e2] + e1$num_zero[e2 + 1]
+  new_breaks <- e1$breaks[-((a+1):z)]
+  new_ones   <- e1$num_ones[-(a:(z-1))]
+  new_zero   <- e1$num_zero[-(a:(z-1))]
+  
+  new_ones[e2[1]] <- sum(e1$num_ones[a:z])
+  new_zero[e2[1]] <- sum(e1$num_zero[a:z])
   
   pct1 <- new_ones/sum(new_ones)
   pct0 <- new_zero/sum(new_zero)
   
-  out$values <- log(pct1/pct0)
+  out$values   <- log(pct1/pct0)
   out$num_ones <- new_ones
   out$num_zero <- new_zero
-  out$breaks <- new_breaks
+  out$breaks   <- new_breaks
+  out$history[[length(out$history) + 1]] <- e1
   out
 }
 
-xeno.table <- function(x, y, object) {
-  if (class(x) %in% c('numeric', 'integer')) {
-    res <- cut(x, object$breaks)
+undo <- function(x) {
+  if (length(x$history) == 0) {
+    return(x)
   } else {
-    # check if breaks are actual characters
-    res <- levels(x)[match(as.character(x), object$breaks)]
+    out <- x$history[[length(x$history)]]
+    out$history <- x$history[-length(x$history)]
   }
-  if (length(object$exceptions) != 0) { # special values
-    levels(res) <- c(levels(res), object$exceptions)
-    for (i in seq_along(object$exceptions)) {
-    res[x == object$exceptions[i]] <- object$exceptions[i]
-    }
-  }
-  if (!is.null(object$na)) res <- addNA(res)
-  # add the stats
-  tbl <- table(res, y)
-  pct <- prop.table(tbl, margin = 2)
-  tot <- prop.table(table(res))
-  prb <- apply(tbl, 1, function(x) x[2]/sum(x))
-  woe <- log(pct[,2]/pct[,1])
-  iv  <- woe * (pct[,2] - pct[,1])
-  out <- cbind(tbl, pct, tot, prb, woe, iv)
-  colnames(out) <- c('#0', '#1', 'W%0', 'W%1', 'W%' ,'P(1)', 'WoE', 'IV')
-  rownames(out)[is.na(rownames(out))] <- "Missing"
-  return(structure(out, class='xeno.table'))
+  return(out)
 }
 
-#plot.xeno.table
+as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
+  zero_ct <- c(x$num_zero, x$except_zero, x$na_zero)
+  ones_ct <- c(x$num_ones, x$except_ones, x$na_ones)
+  tot_ct  <- zero_ct + ones_ct
+  zero_pct <- c(head(zero_ct, -1) / sum(head(zero_ct, -1), na.rm=T), NA)
+  ones_pct <- c(head(ones_ct, -1) / sum(head(ones_ct, -1), na.rm=T), NA)
+  tot_pct  <- c(head(tot_ct , -1) / sum(head(tot_ct , -1), na.rm=T), NA)
+  prob <- c(ones_ct / tot_ct)
+  woe  <- log(ones_pct / zero_pct)
+  iv   <- woe * (ones_pct - zero_pct)
+  
+  out <- data.frame(zero_ct, ones_ct, zero_pct, ones_pct, tot_pct,
+                    prob, woe, iv)
+  
+  colnames(out) <- c('#0', '#1', 'W%0', 'W%1', 'W%' ,'P(1)', 'WoE', 'IV')
+  
+  if(x$type == "numeric") {
+    rnames <- paste(seq(1, length(x$breaks) - 1), ' (', paste(head(x$breaks, -1), x$breaks[-1], sep = " - "), ']', sep='')
+    rnames <- c(rnames, x$exceptions, "Missing")
+    rownames(out) <- rnames[!is.na(rnames)] # filter out NA exceptions
+  } else {
+    rnames <- paste(seq(1, length(x$breaks)), c(x$breaks))
+    rownames(out) <- c(rnames, x$exceptions, "Missing")
+  }
+  
+  tot.row <- apply(out, 2, sum, na.rm=T)
+  tot.row["WoE"] <- 0
+  tot.row["P(1)"] <- tot.row["#1"] / sum(tot.row["#1"], tot.row["#0"])
+  rbind(out, Total=tot.row)
+}
 
-
-titanic <- read.csv('~/Downloads/train.csv', header=T)
-
-x <- titanic$Fare
-y <- titanic$Survived
-
-# bin(x, y)
-
-#bins <- bin.data(titanic[,-1], titanic[,1], min.iv=)
-
-
-
-### TESTING ###
-# s <- sample(nrow(titanic), nrow(titanic)/2)
-# bins <- bin.data(titanic[s,], titanic$Survived[s], min.iv=.025, mono=c(Age=-1, Fare=1))
-# binned <- predict(bins, titanic)
-# 
-# library(glmnet)
-# fit <- cv.glmnet(binned, titanic$Survived, family='binomial', alpha=1, nfolds=10, keep = T)
-# phat <- fit$fit.preval[,which.min(fit$cvm)]
-# 
-# library(mjollnir)
-# ks.table(-phat, titanic$Survived)
-
-
-# bins <- bin.data(rv50[,keep50], y = rv50$depvar, mono = mono50, exceptions = -1, min.iv=.01)
-# bins$confirmationsubjectfound <- bin(rv50$confirmationsubjectfound, rv50$depvar, min.iv=0)
-# binned <- predict(bins, rv50)
-# library(glmnet)
-# 
-# s <- sample(nrow(binned), nrow(binned)/10)
-# fit <- cv.glmnet(binned[s,], rv50$depvar[s], alpha=1, lower.limit=0, family="binomial", nfolds=3)
-# phat <- predict(fit, binned[-s,], s="lambda.min")
-# 
-# library(mjollnir)
-# ks.table(-phat, rv50$depvar[-s])
-# 
-# tables <- lapply(names(bins), function(v) xeno.table(rv50[,v], rv50$depvar, bins[[v]]))
-# names(tables) <- names(bins)
-# 
-# 
-
-
-
-
-
-
-
-
-
-
+print.bin <- function(x) {
+  out <- as.data.frame(x)
+  fmts <- c("%d", "%d", rep("%1.3f", 5), "%0.5f")
+  
+  for (i in seq_along(out)) {
+    out[,i] <- sprintf(fmts[i], out[,i])
+  }
+  
+  print(out)
+}
 
 
 
