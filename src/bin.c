@@ -76,6 +76,8 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
   int valid = 0;
   size_t best_split_idx = -1;
 
+  Rprintf("Length of Exceptions: %d\n", LENGTH(o.except));
+
   for (size_t i = start; i <= stop; i++) {
     valid = 0;
     
