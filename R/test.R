@@ -1,4 +1,4 @@
-# library(binnr)
+#library(binnr)
 
 #titanic <- read.csv('~/Downloads/train.csv', header=T)
 data(titanic, package='mjollnir')
@@ -8,15 +8,11 @@ y <- titanic$Survived
 keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
 
 # createe an as.data 
+load("F:/SANT1507_5516/R-Santander/rv40_vs_rv50.analysis.rData")
+bins <- bin.data(rv50[,keep50], rv50$depvar, mono=mono50, min.iv=0, exceptions=list(ALL=-1))
 
 
-bins <- bin.data(rv50[,keep50], rv50$depvar, mono=mono50, min.iv=0)
 
-pdf(file = 'test.pdf')
-for (i in seq_along(bins)) {
-  plot(bins[[i]])
-}
-dev.off()
 
 # library(glmnet)
 # fit <- cv.glmnet(binned, rv50$depvar, alpha=1, nfolds=5, keep=TRUE, family='binomial')
