@@ -26,7 +26,7 @@ bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, excep
   # get the name of the variable
   if (is.bin(x)) {
     b <- bin(x$x, x$y, min.iv, min.cnt, max.bin, mono, exceptions)
-    b$history[[length(history) + 1]] <- x
+    b$history <- x
     return(b)
   }
   
@@ -205,7 +205,7 @@ predict.bin.list <- function(object, newdata) {
   out$breaks   <- new_breaks
   e1$x <- NULL
   e1$y <- NULL
-  out$history[[length(out$history) + 1]] <- e1
+  out$history <- e1
   out
 }
 
@@ -268,7 +268,7 @@ predict.bin.list <- function(object, newdata) {
   out$num_ones <- new_ones
   out$num_zero <- new_zero
   out$breaks   <- c(e1$breaks[1:(e2)], eps, e1$breaks[(e2 + 1):length(e1$breaks)])
-  out$history[[length(out$history) + 1]] <- e1
+  out$history <- e1
   out
 }
 
@@ -282,18 +282,13 @@ predict.bin.list <- function(object, newdata) {
   values <- as.data.frame(out)[,'WoE']
   values[is.nan(values)] <- 0
   out$values  <- values
-  out$history[[length(out$history) + 1]] <- e1
+  out$history <- e1
   out
 }
 
 undo <- function(x) {
-  if (length(x$history) == 0) {
-    return(x)
-  } else {
-    out <- x$history[[length(x$history)]]
-    out$history <- x$history[-length(x$history)]
-  }
-  return(out)
+  if (is.null(x$history)) return(x)
+  return(x$history)
 }
 
 as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
