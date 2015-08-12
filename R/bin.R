@@ -66,10 +66,16 @@ bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, excep
     
     except_woe <- if(any(f0)) woe(x[f0], y[f0], y0, y1) else 0
     
+    map <- NULL
+    
   } else {
     type <- "factor"
+    
+    map <- as.list(levels(x))
+    names(map) <- levels(x)
+      
     woe <- woe(x, y, y0, y1)
-    brks <- names(woe)
+    brks <- levels(x)
     exceptions <- NULL
     except_woe <- NULL
     counts <- table(x, y)
@@ -84,6 +90,7 @@ bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, excep
     x = x,
     y = y,
     type = type,
+    map = map,
     breaks = brks,
     values = woe,
     num_ones = num_ones,
@@ -180,8 +187,7 @@ predict.bin.list <- function(object, newdata) {
   return(res)
 }
 
-
-`-.bin` <- function(e1, e2) {
+collapse.bin.numeric <- function(e1, e2) {
   out <- e1
   
   if(e2[1] == 1 & length(e2) == 1) e2 <- 1:2
@@ -203,8 +209,16 @@ predict.bin.list <- function(object, newdata) {
   out$num_ones <- new_ones
   out$num_zero <- new_zero
   out$breaks   <- new_breaks
-  e1$x <- NULL
-  e1$y <- NULL
+  out
+}
+
+
+`-.bin` <- function(e1, e2) {
+  if (e1$type == "numeric") {
+    out <- collapse.bin.numeric(e1, e2)
+  } else if (e1$type == "factor") {
+    out <- collapse.bin.factor(e1, e2)
+  }
   out$history <- e1
   out
 }
@@ -222,17 +236,16 @@ predict.bin.list <- function(object, newdata) {
       mono = e1$mono, exceptions = e1$exceptions)
 }
 
-`+.bin` <- function(e1, e2) {
-  if (e1$type == "factor") {
-    print("factors currently not supported for grouping")
-    return(e1)
-  }
+expand.bin.factor <- function(e1, e2) {
   
+}
+
+expand.bin.numeric <- function(e1, e2) {
   out <- e1
   n <- length(e1$num_ones)
   f <-  (e1$x > e1$breaks[e2] & e1$x <= e1$breaks[e2 + 1]) &
-        !(e1$x %in% e1$exceptions) &
-        !is.na(e1$x)
+    !(e1$x %in% e1$exceptions) &
+    !is.na(e1$x)
   
   nvals <- length(unique(e1$x[f]))
   
@@ -270,6 +283,36 @@ predict.bin.list <- function(object, newdata) {
   out$breaks   <- c(e1$breaks[1:(e2)], eps, e1$breaks[(e2 + 1):length(e1$breaks)])
   out$history <- e1
   out
+}
+
+### some work to do yet
+collapse.bin.factor <- function(e1, e2) {
+  map <- e1$map
+  map[e2] <- paste(e1$breaks[e2], collapse=',')
+  x <- e1$x
+  levels(x) <- unlist(map)
+  b <- bin(x, e1$y)
+  b$map <- map
+  b$x <- e1$x
+  b
+}
+
+expand.bin.factor <- function(e1, e2) {
+  orig.lvls <- e1$levels
+  curr.lvls <- levels(e1$x)
+  splt.lvls <- strsplit(e1$breaks[e2], ',')[[1]]
+  
+#b <- bin(e1$x, e1$y)
+  
+}
+
+`+.bin` <- function(e1, e2) {
+  if (e1$type == "factor") {
+    print("factors currently not supported for grouping")
+    return(e1)
+  } else {
+    expand.bin.numeric(e1, e2)
+  }
 }
 
 # neutralize levels
