@@ -23,6 +23,7 @@ is.bin <- function(x) {
 
 ### TODO: pass in own breaks as well if necessary also caps... 
 bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
+  # get the name of the variable
   if (is.bin(x)) {
     b <- bin(x$x, x$y, min.iv, min.cnt, max.bin, mono, exceptions)
     b$history[[length(history) + 1]] <- x
@@ -133,18 +134,15 @@ bin.list <- function(bins){
   out <- structure(bins, class='bin.list')
 }
 
-bin.data <- function(df, y, mono=NULL, exceptions=NULL, ...) {
-  mono.fill <- if(!is.na(mono["ALL"])) mono["ALL"] else 0
-  .mono <- rep(mono.fill, ncol(df))
-  
-  except.fill <- if(!is.null(exceptions[["ALL"]])) exceptions[["ALL"]] else NA
-  .exceptions <- as.list(rep( except.fill, ncol(df)))
+bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
+  stopifnot(is.list(exceptions))
   
   vars <- colnames(df)
+  .mono <- rep(mono["ALL"], ncol(df))
   names(.mono) <- vars
-  names(.exceptions) <- vars
-  
   .mono[names(mono)] <- mono
+  .exceptions <- rep(list(exceptions[['ALL']]), length.out=ncol(df))
+  names(.exceptions) <- vars
   .exceptions[names(exceptions)] <- exceptions
   
   res <- list()
@@ -205,6 +203,8 @@ predict.bin.list <- function(object, newdata) {
   out$num_ones <- new_ones
   out$num_zero <- new_zero
   out$breaks   <- new_breaks
+  e1$x <- NULL
+  e1$y <- NULL
   out$history[[length(out$history) + 1]] <- e1
   out
 }
@@ -244,7 +244,7 @@ predict.bin.list <- function(object, newdata) {
     eps <- head(as.numeric(b$breaks), -1)
   } else {
     q <- unique(quantile(e1$x[f], seq(0, 1, 0.2)))
-    b <- bin(cut(e1$x[f], c(-Inf, q)), e1$y[f])
+    b <- bin(cut(e1$x[f], c(-Inf, q[-1])), e1$y[f])
     # grab endpoints from expanded range
     eps <- sapply(strsplit(b$breaks, ','), '[[', 2)
     eps <- head(as.numeric(gsub('\\(|\\]', '', eps)), -1)
@@ -331,14 +331,22 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   rbind(out, Total=tot.row)
 }
 
-print.bin <- function(x) {
-  out <- as.data.frame(x)
-  fmts <- c("%d", "%d", rep("%1.3f", 5), "%0.5f")
+show.bin <- function(x, ...) {
+  print("Calling this function!")
+  print.bin(x)
+}
+
+print.bin <- function(x, ...) {
+  var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
   
+  out <- as.data.frame(x)
+  iv <- out['Total', 'IV']
+  fmts <- c("%d", "%d", rep("%1.3f", 5), "%0.5f")
   for (i in seq_along(out)) {
     out[,i] <- sprintf(fmts[i], out[,i])
   }
-  
+  cat(sprintf("IV: %0.3f | Variable: %s\n", iv, var))
+  cat("---------------------------------------------------------------\n")
   print(out)
 }
 
@@ -349,6 +357,8 @@ bin.theme <- theme(
 
 
 plot.bin <- function(x, y, ...) {
+  var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
+  
   tmp <- as.data.frame(x)
   n <- 1:(nrow(tmp) - 2)
   plt <- data.frame(
@@ -360,13 +370,34 @@ plot.bin <- function(x, y, ...) {
     row.names=NULL
   )
   
-  plt$WoE[is.nan(plt$WoE)] <- 0
-  print(plt)
+  plt$WoE[is.nan(plt$WoE) | is.infinite(plt$WoE)] <- 0
   
-  # number of data points
-  h <- nrow(plt) *.1
+  plt.theme <- theme(axis.line=element_blank(),
+    axis.text.y=element_blank(),axis.ticks=element_blank(),
+    axis.title.y=element_blank(),legend.position="none")
   
-  with(plt[order(plt$Range),], barplot(WoE, names.arg = Range, horiz=T, las=2, ylim=c(0,10), xlim=c(min(WoE)-1,max(WoE)+1)))
+  g1 <- ggplot(plt, aes(x=Range, y=Count)) +
+    geom_bar(stat="identity", position="identity") +
+    coord_flip()
+  
+  g2 <- ggplot(plt, aes(x=Range, y=WoE, fill=WoE)) +
+    geom_bar(stat="identity", position="identity") +
+  scale_fill_gradient(low="blue", high="red") + coord_flip() + plt.theme
+  
+  g3 <- ggplot(plt, aes(x=Range, y=Prob)) +
+    geom_bar(stat="identity", position="identity") +
+    geom_hline(yintercept=tmp[nrow(tmp),6], col="red", size=1) +
+    coord_flip() + plt.theme
+  
+  grid.newpage()
+  pushViewport(viewport(layout = grid.layout(2, 3, heights = unit(c(1, 10), "null"))))
+  grid.text(var, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
+  print(g1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+  print(g2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
+  print(g3, vp = viewport(layout.pos.row = 2, layout.pos.col = 3))
+  
+  
+  #grid.arrange(g1, g2 + plt.theme, g3 + plt.theme, ncol=3, top=textGrob(var))
   
 }
 
@@ -376,6 +407,7 @@ print.bin.list <- function(x) {
   
   for (v in vars[order(-ivs)]) {
     cat(sprintf("\nIV: %0.3f | Variable: %s\n", ivs[v], v))
+    cat("---------------------------------------------------------------\n")
     print(x[[v]])
   }
 }

@@ -5,11 +5,11 @@ data(titanic, package='mjollnir')
 x <- titanic$Fare
 y <- titanic$Survived
 
-keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
+#keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
 
 # createe an as.data 
 load("F:/SANT1507_5516/R-Santander/rv40_vs_rv50.analysis.rData")
-bins <- bin.data(rv50[,keep50], rv50$depvar, mono=mono50, min.iv=0, exceptions=list(ALL=-1))
+bins <- bin.data(rv50[,keep50], rv50$depvar, mono=mono50, min.iv=0.03, exceptions=list(ALL=-1))
 
 
 
@@ -19,7 +19,7 @@ bins <- bin.data(rv50[,keep50], rv50$depvar, mono=mono50, min.iv=0, exceptions=l
 # 
 # phat <- fit$fit.preval[,which.min(fit$cvm)]
 # phat <- log(phat/(1-phat))
-# 
+# bin
 # library(mjollnir)
 # ks.table()
 # 
