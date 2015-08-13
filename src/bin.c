@@ -79,13 +79,20 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
   for (size_t i = start; i <= stop; i++) {
     valid = 0;
     
-    for (size_t j = 0; j < LENGTH(o.except); j++){
-      if (xtab->values[i] != REAL(o.except)[j]) {
-        asc[0] += xtab->zero_ct[i];
-        asc[1] += xtab->ones_ct[i];
-        dsc[0] = tot[0] - asc[0];
-        dsc[1] = tot[1] - asc[1];
+    if (LENGTH(o.except) > 0) {
+      for (size_t j = 0; j < LENGTH(o.except); j++){
+        if (xtab->values[i] != REAL(o.except)[j]) {
+          asc[0] += xtab->zero_ct[i];
+          asc[1] += xtab->ones_ct[i];
+          dsc[0] = tot[0] - asc[0];
+          dsc[1] = tot[1] - asc[1];
+        }
       }
+    } else {
+      asc[0] += xtab->zero_ct[i];
+      asc[1] += xtab->ones_ct[i];
+      dsc[0] = tot[0] - asc[0];
+      dsc[1] = tot[1] - asc[1];
     }
     
     struct iv iv = calc_iv(asc, dsc, grand_tot);

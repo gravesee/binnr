@@ -298,18 +298,20 @@ collapse.bin.factor <- function(e1, e2) {
 }
 
 expand.bin.factor <- function(e1, e2) {
-  orig.lvls <- e1$levels
-  curr.lvls <- levels(e1$x)
-  splt.lvls <- strsplit(e1$breaks[e2], ',')[[1]]
-  
-#b <- bin(e1$x, e1$y)
-  
+  x <- e1$x
+  f <- e1$map == e1$breaks[e2]
+  map <- e1$map
+  map[f] <- levels(e1$x)[f]
+  levels(x) <- unlist(map)
+  b <- bin(x, e1$y)
+  b$map <- map
+  b$x <- e1$x
+  b
 }
-
+2
 `+.bin` <- function(e1, e2) {
   if (e1$type == "factor") {
-    print("factors currently not supported for grouping")
-    return(e1)
+    expand.bin.factor(e1, e2)
   } else {
     expand.bin.numeric(e1, e2)
   }
@@ -449,7 +451,4 @@ print.bin.list <- function(x) {
     print(x[[v]])
   }
 }
-
-
-
 
