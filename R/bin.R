@@ -285,11 +285,14 @@ expand.bin.numeric <- function(e1, e2) {
   out
 }
 
+### need to figure out how to combine *combined* bins!
+
 ### some work to do yet
 collapse.bin.factor <- function(e1, e2) {
-  map <- e1$map
-  map[e2] <- paste(e1$breaks[e2], collapse=',')
   x <- e1$x
+  map <- e1$map
+  f <- e1$map %in% e1$breaks[e2]
+  map[f] <- paste(e1$breaks[e2], collapse=',')
   levels(x) <- unlist(map)
   b <- bin(x, e1$y)
   b$map <- map
