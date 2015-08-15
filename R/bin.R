@@ -117,7 +117,8 @@ predict.bin <- function(object, x) {
     res <- object$values[cut(x, object$breaks, labels = FALSE)]
   } else {
     # check if breaks are actual characters
-    res <- object$values[match(as.character(x), object$breaks)]
+    #res <- object$values[match(as.character(x), object$breaks)]
+    res <- object$values[unlist(object$map[x])]
   }
   
   if (length(object$exceptions) != 0) { # exception values
@@ -388,8 +389,8 @@ print.bin <- function(x, ...) {
   for (i in seq_along(out)) {
     out[,i] <- sprintf(fmts[i], out[,i])
   }
-  cat(sprintf("IV: %0.3f | Variable: %s\n", iv, var))
-  cat("---------------------------------------------------------------\n")
+  #cat(sprintf("IV: %0.3f | Variable: %s\n", iv, var))
+  #cat("---------------------------------------------------------------\n")
   print(out)
 }
 
