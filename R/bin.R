@@ -1,3 +1,5 @@
+#' @useDynLib binnr
+
 library(ggplot2)
 library(scales)
 library(gridExtra)
@@ -22,6 +24,7 @@ is.bin <- function(x) {
 }
 
 ### TODO: pass in own breaks as well if necessary also caps... 
+#' @export
 bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
   # get the name of the variable
   if (is.bin(x)) {
@@ -111,6 +114,7 @@ bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, excep
   ), class = "bin")
 }
 
+#' @export
 predict.bin <- function(object, x) {
   # two types of maps -- numeric and character/factor 
   if (is.numeric(x)) {
@@ -142,6 +146,7 @@ bin.list <- function(bins){
   out <- structure(bins, class='bin.list')
 }
 
+#' @export
 bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   stopifnot(is.list(exceptions))
   
@@ -165,6 +170,7 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   return(bin.list(res))
 }
 
+#' @export
 predict.bin.list <- function(object, newdata) {
   if (is.null(names(object))) stop("bin.list object must have names attribute")
   if(is.null(colnames(newdata))) stop("newdata requires column names")
@@ -213,7 +219,7 @@ collapse.bin.numeric <- function(e1, e2) {
   out
 }
 
-
+#' @export
 `-.bin` <- function(e1, e2) {
   if (e1$type == "numeric") {
     out <- collapse.bin.numeric(e1, e2)
@@ -224,6 +230,7 @@ collapse.bin.numeric <- function(e1, e2) {
   out
 }
 
+#' @export
 `<=.bin` <- function(e1, e2, ...) {
   if (e1$type == "factor") {
     print("cannot place cap on a factor")
@@ -235,10 +242,6 @@ collapse.bin.numeric <- function(e1, e2) {
   
   bin(x, e1$y, e1$min.iv, min.cnt = e1$min.ctn, max.bin = e1$max.bin,
       mono = e1$mono, exceptions = e1$exceptions)
-}
-
-expand.bin.factor <- function(e1, e2) {
-  
 }
 
 expand.bin.numeric <- function(e1, e2) {
@@ -312,7 +315,8 @@ expand.bin.factor <- function(e1, e2) {
   b$x <- e1$x
   b
 }
-2
+
+#' @export
 `+.bin` <- function(e1, e2) {
   if (e1$type == "factor") {
     expand.bin.factor(e1, e2)
@@ -322,6 +326,7 @@ expand.bin.factor <- function(e1, e2) {
 }
 
 # neutralize levels
+#' @export
 `!=.bin` <- function(e1, e2) {
   out <- e1
   # simply zero out the counts?
@@ -335,11 +340,13 @@ expand.bin.factor <- function(e1, e2) {
   out
 }
 
+#' @export
 undo <- function(x) {
   if (is.null(x$history)) return(x)
   return(x$history)
 }
 
+#' @export
 as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   zero_ct <- c(x$num_zero, x$except_zero, x$na_zero)
   ones_ct <- c(x$num_ones, x$except_ones, x$na_ones)
@@ -375,11 +382,7 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   rbind(out, Total=tot.row)
 }
 
-show.bin <- function(x, ...) {
-  print("Calling this function!")
-  print.bin(x)
-}
-
+#' @export
 print.bin <- function(x, ...) {
   var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
   
@@ -399,7 +402,7 @@ bin.theme <- theme(
   axis.text.y=element_blank(),axis.ticks=element_blank(),
   axis.title.y=element_blank(),legend.position="none")
 
-
+#' @export
 plot.bin <- function(x, y, ...) {
   var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
   
@@ -445,6 +448,7 @@ plot.bin <- function(x, y, ...) {
   
 }
 
+#' @export
 print.bin.list <- function(x) {
   vars <- names(x)
   ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])

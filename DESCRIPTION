@@ -9,5 +9,5 @@ Description: To be continued!
 Imports:
     ggplot2,
     scales,
-    gridExtra
+    grid
 License: Free as in beer
