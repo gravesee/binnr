@@ -10,7 +10,10 @@
 // called from R and handles passing of data to and from
 SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono, SEXP except) {
   
-  struct xtab* xtab = xtab_factory(variable_factory(REAL(x), LENGTH(x)), REAL(y)); // create the xtab
+  struct variable* v = variable_factory(REAL(x), LENGTH(x));
+  //print_variable(v);
+  
+  struct xtab* xtab = xtab_factory(v, REAL(y)); // create the xtab
   double* grand_tots = get_xtab_totals(xtab, 0, xtab->size);
   
   struct queue* q = queue_factory(); // create the queue
@@ -54,7 +57,7 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono, SEXP e
 #endif 
   
   // Release resources
-  //release_variable(v);
+  release_variable(v);
   release_xtab(xtab);
   release_queue(q);
   free(breaks);
@@ -70,25 +73,42 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono, SEXP e
 
 size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot, struct opts o) {
   
-  double* tot = get_xtab_totals(xtab, start, stop + 1);
+  //double* tot = get_xtab_totals(xtab, start, stop + 1);
+  double tot[2] = {0}; 
   double asc[2] = {0}, dsc[2] = {0};
   double best_iv = -1;
   int valid = 0;
   size_t best_split_idx = -1;
-
+  
+  // need totals without exceptions
+  for (size_t i = start; i <= stop; i++) {
+    int skip = 0;
+    if (LENGTH(o.except) > 0) {
+      for (size_t j = 0; j < LENGTH(o.except); j++){
+        if (xtab->values[i] == REAL(o.except)[j]) skip = 1;
+      }
+    }
+    
+    if (!skip) {
+      tot[0] += xtab->zero_ct[i];
+      tot[1] += xtab->ones_ct[i];
+    }
+  }
+    
+  
+  // now get cumulative counts
   for (size_t i = start; i <= stop; i++) {
     valid = 0;
     
+    int skip = 0;
     if (LENGTH(o.except) > 0) {
       for (size_t j = 0; j < LENGTH(o.except); j++){
-        if (xtab->values[i] != REAL(o.except)[j]) {
-          asc[0] += xtab->zero_ct[i];
-          asc[1] += xtab->ones_ct[i];
-          dsc[0] = tot[0] - asc[0];
-          dsc[1] = tot[1] - asc[1];
-        }
+        // Rprintf("exception: %f\n", REAL(o.except)[j]);
+        if (xtab->values[i] == REAL(o.except)[j]) skip = 1;
       }
-    } else {
+    }
+    
+    if (!skip) {
       asc[0] += xtab->zero_ct[i];
       asc[1] += xtab->ones_ct[i];
       dsc[0] = tot[0] - asc[0];
@@ -118,7 +138,7 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
     }
   }
   
-  free(tot);
+  //free(tot);
   return best_split_idx;
 }
 

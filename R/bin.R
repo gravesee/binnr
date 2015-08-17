@@ -50,10 +50,11 @@ bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, excep
   y1 <- sum(y[!f1] == 1)
   
   # different approach for factors and numerics
+  
   if (is.numeric(x)) {
     type <- "numeric"
     brks <-
-      .Call('bin', as.double(x[!f]), as.double(y[!f]), as.double(min.iv),
+      .Call('bin', as.double(x[!f1]), as.double(y[!f1]), as.double(min.iv),
                    as.integer(min.cnt), as.integer(max.bin), as.integer(mono),
                    as.double(exceptions))
     
@@ -103,7 +104,7 @@ bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, excep
     na = 0,
     na_ones = sum(y[is.na(x)] == 1),
     na_zero = sum(y[is.na(x)] == 0),
-    exceptions = sort(exceptions),
+    exceptions = sort(unique(x[f0])),
     except_woe = except_woe,
     except_ones = except_ones,
     except_zero = except_zero,
@@ -162,8 +163,8 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   
   res <- list()
   for (i in seq_along(vars)) {
-    nm <- vars[i]    
-    cat(sprintf("\rProgress: %%%6.2f", (100*i/length(vars))))
+    nm <- vars[i]
+    cat(sprintf("\rProgress: %%%6.2f Var: %s", (100*i/length(vars)), nm))
     flush.console()
     res[[nm]] <- bin(df[,nm], y, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
   }
@@ -373,7 +374,7 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
     rownames(out) <- rnames[keep] # filter out NA exceptions
   } else {
     rnames <- paste(seq(1, length(x$breaks)), c(x$breaks))
-    rownames(out) <- c(rnames, x$exceptions, "Missing")
+    rownames(out) <- c(rnames, "Missing")
   }
   
   out['Missing', c('WoE', 'IV')] <- 0
