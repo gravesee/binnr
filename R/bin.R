@@ -122,16 +122,14 @@ predict.bin <- function(object, x) {
   # two types of maps -- numeric and character/factor 
   if (is.numeric(x)) {
     res <- object$values[cut(x, object$breaks, labels = FALSE)]
-  } else {
-    # check if breaks are actual characters
-    #res <- object$values[match(as.character(x), object$breaks)]
-    res <- object$values[unlist(object$map[x])]
-  }
-  
-  if (length(object$exceptions) != 0) { # exception values
-    for (i in seq_along(object$exceptions)) {
-      res[x == object$exceptions[i]] <- object$except_woe[i]
+    
+    if (length(object$exceptions) != 0) { # exception values
+      for (i in seq_along(object$exceptions)) {
+        res[x == object$exceptions[i]] <- object$except_woe[i]
+      }
     }
+  } else {
+    res <- ifelse(is.na(x), NA, object$values[unlist(object$map[x])])
   }
   
   res[is.na(res)] <- object$na # nas
