@@ -78,7 +78,7 @@ But it can also be plotted by calling the `plot` function on the binned variable
 plot(bins$Age)
 ```
 
-![plot of chunk unnamed-chunk-5](README-unnamed-chunk-5-1.png) 
+![plot of chunk unnamed-chunk-5](plots/README-unnamed-chunk-5-1.png) 
 
 The y-axis displays the bin ranges for all of the plots. The first plot shows
 bin counts, the second shows bin WoE, and the third shows bin probability of the
@@ -100,7 +100,7 @@ bins <- bin.data(titanic[,-1], titanic$Survived, mono = c(Age=-1))
 plot(bins$Age)
 ```
 
-![plot of chunk unnamed-chunk-7](README-unnamed-chunk-7-1.png) 
+![plot of chunk unnamed-chunk-7](plots/README-unnamed-chunk-7-1.png) 
 
 Notice that a named vector of the form `c(VAR=MONO)` is passed in to the `mono`
 argument. A global default may be passed in using the name `ALL`. `mono` can
@@ -126,7 +126,7 @@ bins <- bin.data(titanic[,-1], titanic$Survived, exceptions = list(SibSp=c(0,1))
 plot(bins$SibSp)
 ```
 
-![plot of chunk unnamed-chunk-9](README-unnamed-chunk-9-1.png) 
+![plot of chunk unnamed-chunk-9](plots/README-unnamed-chunk-9-1.png) 
 
 Notice that 0s and 1s are now on their own levels below the binned continuous
 values. 
@@ -147,7 +147,7 @@ bins <- bin.data(titanic[,-1], titanic$Survived, min.iv=0, mono=c(Age=-1))
 plot(bins$Age)
 ```
 
-![plot of chunk unnamed-chunk-11](README-unnamed-chunk-11-1.png) 
+![plot of chunk unnamed-chunk-11](plots/README-unnamed-chunk-11-1.png) 
 
 ### `min.cnt` & `max.bin`
 
@@ -174,13 +174,13 @@ sign followed by a vector of the bin levels to collapse:
 plot(bins$Fare)
 ```
 
-![plot of chunk unnamed-chunk-12](README-unnamed-chunk-12-1.png) 
+![plot of chunk unnamed-chunk-12](plots/README-unnamed-chunk-12-1.png) 
 
 ```r
 plot(bins$Fare - 2:5)
 ```
 
-![plot of chunk unnamed-chunk-12](README-unnamed-chunk-12-2.png) 
+![plot of chunk unnamed-chunk-12](plots/README-unnamed-chunk-12-2.png) 
 
 Discrete bins can also be collapsed using the same notation:
 
@@ -189,13 +189,13 @@ Discrete bins can also be collapsed using the same notation:
 plot(bins$Embarked)
 ```
 
-![plot of chunk unnamed-chunk-13](README-unnamed-chunk-13-1.png) 
+![plot of chunk unnamed-chunk-13](plots/README-unnamed-chunk-13-1.png) 
 
 ```r
 plot(bins$Embarked - 1:3)
 ```
 
-![plot of chunk unnamed-chunk-13](README-unnamed-chunk-13-2.png) 
+![plot of chunk unnamed-chunk-13](plots/README-unnamed-chunk-13-2.png) 
 
 
 
