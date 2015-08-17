@@ -103,7 +103,7 @@ bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, excep
     na = 0,
     na_ones = sum(y[is.na(x)] == 1),
     na_zero = sum(y[is.na(x)] == 0),
-    exceptions = exceptions,
+    exceptions = sort(exceptions),
     except_woe = except_woe,
     except_ones = except_ones,
     except_zero = except_zero,

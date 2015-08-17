@@ -1,11 +1,11 @@
 #library(binnr)
 
-titanic <- read.csv('~/Downloads/train.csv', header=T)
+#titanic <- read.csv('~/Downloads/train.csv', header=T)
 #data(titanic, package='mjollnir')
-x <- titanic$Fare
-y <- titanic$Survived
+#x <- titanic$Fare
+#y <- titanic$Survived
 
-keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
+#keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
 
 # createe an as.data 
 #load("F:/SANT1507_5516/R-Santander/rv40_vs_rv50.analysis.rData")
