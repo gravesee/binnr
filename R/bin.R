@@ -417,34 +417,30 @@ plot.bin <- function(x, y, ...) {
   
   plt$WoE[is.nan(plt$WoE) | is.infinite(plt$WoE)] <- 0
   
-  plt.theme <- ggplot2::theme(
-    axis.line=ggplot2::element_blank(),
-    axis.text.y=ggplot2::element_blank(),axis.ticks=ggplot2::element_blank(),
-    axis.title.y=ggplot2::element_blank(),legend.position="none")
+  plt.theme <- theme(
+    axis.line=element_blank(),
+    axis.text.y=element_blank(),axis.ticks=element_blank(),
+    axis.title.y=element_blank(),legend.position="none")
   
-  g1 <- ggplot2::ggplot(plt, ggplot2::aes(x=Range, y=Count)) +
-    ggplot2::geom_bar(stat="identity", position="identity") +
-    ggplot2::coord_flip()
+  g1 <- ggplot(plt, aes(x=Range, y=Count)) +
+    geom_bar(stat="identity", position="identity") +
+    coord_flip()
   
-  g2 <- ggplot2::ggplot(plt, ggplot2::aes(x=Range, y=WoE, fill=WoE)) +
-    ggplot2::geom_bar(stat="identity", position="identity") +
-    ggplot2::scale_fill_gradient(low="blue", high="red") + ggplot2::coord_flip() + plt.theme
+  g2 <- ggplot(plt, aes(x=Range, y=WoE, fill=WoE)) +
+    geom_bar(stat="identity", position="identity") +
+    scale_fill_gradient(low="blue", high="red") + coord_flip() + plt.theme
   
-  g3 <- ggplot2::ggplot(plt, ggplot2::aes(x=Range, y=Prob)) +
-    ggplot2::geom_bar(stat="identity", position="identity") +
-    ggplot2::geom_hline(yintercept=tmp[nrow(tmp),6], col="red", size=1) +
-    ggplot2::coord_flip() + plt.theme
+  g3 <- ggplot(plt, aes(x=Range, y=Prob)) +
+    geom_bar(stat="identity", position="identity") +
+    geom_hline(yintercept=tmp[nrow(tmp),6], col="red", size=1) +
+    coord_flip() + plt.theme
   
-  grid::grid.newpage()
-  grid::pushViewport(grid::viewport(layout = grid::grid.layout(2, 3, heights = unit(c(1, 10), "null"))))
-  grid::grid.text(var, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 1:3))
-  print(g1, vp = grid::viewport(layout.pos.row = 2, layout.pos.col = 1))
-  print(g2, vp = grid::viewport(layout.pos.row = 2, layout.pos.col = 2))
-  print(g3, vp = grid::viewport(layout.pos.row = 2, layout.pos.col = 3))
-  
-  
-  #grid.arrange(g1, g2 + plt.theme, g3 + plt.theme, ncol=3, top=textGrob(var))
-  
+  grid.newpage()
+  pushViewport(viewport(layout = grid.layout(2, 3, heights = unit(c(1, 10), "null"))))
+  grid.text(var, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
+  print(g1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
+  print(g2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
+  print(g3, vp = viewport(layout.pos.row = 2, layout.pos.col = 3))  
 }
 
 #' @export
