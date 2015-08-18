@@ -27,10 +27,10 @@ is.bin <- function(x) {
 
 ### TODO: pass in own breaks as well if necessary also caps... 
 #' @export
-bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
+bin <- function(x, y=NULL, name, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
   # get the name of the variable
   if (is.bin(x)) {
-    b <- bin(x$x, x$y, min.iv, min.cnt, max.bin, mono, exceptions)
+    b <- bin(x$x, x$y, x$name, min.iv, min.cnt, max.bin, mono, exceptions)
     b$history <- x
     return(b)
   }
@@ -95,6 +95,7 @@ bin <- function(x, y=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, excep
   structure(list(
     x = x,
     y = y,
+    name = name,
     type = type,
     map = map,
     breaks = brks,
@@ -162,9 +163,9 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   res <- list()
   for (i in seq_along(vars)) {
     nm <- vars[i]
-    cat(sprintf("\rProgress: %%%6.2f Var: %s", (100*i/length(vars)), nm))
+    cat(sprintf("\rProgress: %%%6.2f", (100*i/length(vars))))
     flush.console()
-    res[[nm]] <- bin(df[,nm], y, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
+    res[[nm]] <- bin(df[,nm], y, nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
   }
   cat("\n")
   
@@ -196,6 +197,10 @@ predict.bin.list <- function(object, newdata) {
 }
 
 collapse.bin.numeric <- function(e1, e2) {
+  if (max(e2) > length(e1$values)) {
+    warning("Cannot collapse exception bins")
+    return(e1)
+  }
   out <- e1
   
   if(e2[1] == 1 & length(e2) == 1) e2 <- 1:2
@@ -330,13 +335,25 @@ expand.bin.factor <- function(e1, e2) {
 #' @export
 `!=.bin` <- function(e1, e2) {
   out <- e1
+  n <- length(out$values)
+  N <- n + length(out$except_zero)
   # simply zero out the counts?
-  out$num_ones[e2] <- 0
-  out$num_zero[e2] <- 0
+  num_zero <- c(out$num_zero, out$except_zero)
+  num_ones <- c(out$num_ones, out$except_ones)
   
-  values <- as.data.frame(out)[,'WoE']
+  num_ones[e2] <- 0
+  num_zero[e2] <- 0
+  
+  out$num_zero <- num_zero[1:n]
+  out$num_ones <- num_ones[1:n]
+  
+  out$except_zero <- num_zero[(n+1):N]
+  out$except_ones <- num_ones[(n+1):N]
+  
+  values <- as.data.frame(out)[1:N,'WoE']
   values[is.nan(values)] <- 0
-  out$values  <- values
+  out$values  <- values[1:n]
+  out$except_woe <- values[(n+1):N]
   out$history <- e1
   out
 }
@@ -367,25 +384,30 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   out <- out[keep,]
   
   if(x$type == "numeric") {
-    rnames <- paste(seq(1, length(x$breaks) - 1), ' (', paste(head(x$breaks, -1), x$breaks[-1], sep = " - "), ']', sep='')
-    rnames <- c(rnames, x$exceptions, "Missing")
-    rownames(out) <- rnames[keep] # filter out NA exceptions
+    rnames <- paste('(', paste(head(x$breaks, -1), x$breaks[-1], sep = " - "), ']', sep='')
+    rnames <- c(rnames, x$exceptions)[head(keep, -1)]
+    rnames <- c(paste(sprintf("%2d:", seq(1,length(rnames))), rnames), "Missing")
+    #rnames <- sprintf("%30s",rnames) # filter out NA exceptions
+    #rownames(out) <- rnames # filter out NA exceptions
   } else {
-    rnames <- paste(seq(1, length(x$breaks)), c(x$breaks))
-    rownames(out) <- c(rnames, "Missing")
+    rnames <- paste(sprintf("%2d:", seq(1, length(x$breaks))), c(x$breaks))
+    rnames <- c(rnames, "Missing")
+    #rnames <- sprintf("%30s",rnames)
   }
   
-  out['Missing', c('WoE', 'IV')] <- 0
+  out[nrow(out), c('WoE', 'IV')] <- 0
   
-  tot.row <- apply(out, 2, sum, na.rm=T)
+  tot.row <- apply(out, 2, function(x) sum(x[!is.infinite(x)], na.rm=T))
   tot.row["WoE"] <- 0
   tot.row["P(1)"] <- tot.row["#1"] / sum(tot.row["#1"], tot.row["#0"])
-  rbind(out, Total=tot.row)
+  out <- rbind(out, Total=tot.row)
+  rownames(out) <- c(rnames, "Total")
+  out
 }
 
 #' @export
 print.bin <- function(x, ...) {
-  var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
+  #var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
   
   out <- as.data.frame(x)
   iv <- out['Total', 'IV']
@@ -393,8 +415,7 @@ print.bin <- function(x, ...) {
   for (i in seq_along(out)) {
     out[,i] <- sprintf(fmts[i], out[,i])
   }
-  #cat(sprintf("IV: %0.3f | Variable: %s\n", iv, var))
-  #cat("---------------------------------------------------------------\n")
+  cat(sprintf("\nIV: %0.5f | Variable: %s\n", iv, x$name))
   print(out)
 }
 
@@ -443,14 +464,17 @@ plot.bin <- function(x, y, ...) {
 }
 
 #' @export
-print.bin.list <- function(x) {
-  vars <- names(x)
+print.bin.list <- function(x, n=NULL) {
+  if (is.null(n)) {
+    n <- 1:length(x)
+  } else {
+    n <- 1:min(length(x), n)
+  }
+  
   ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])
   
-  for (v in vars[order(-ivs)]) {
-    cat(sprintf("\nIV: %0.3f | Variable: %s\n", ivs[v], v))
-    cat("---------------------------------------------------------------\n")
-    print(x[[v]])
+  for (b in x[order(-ivs)[n]]) {
+    print(b)
   }
 }
 
