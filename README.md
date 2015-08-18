@@ -1,28 +1,21 @@
-  - [What is `binnr`?](#what-is-binnr)
-  - [Usage](#usage)
-  - [Examples](#examples)
-  - [IV: 0.211 | Variable: Age
-](#iv-0211--variable-age)
-  - [`bin.data` options](#bindata-options)
-    - [`mono`](#mono)
-    - [`exception`](#exception)
-    - [`min.iv`](#miniv)
-    - [`min.cnt` & `max.bin`](#mincnt-&-maxbin)
-  - [Modyfing bins](#modyfing-bins)
-    - [Collapsing Bins](#collapsing-bins)
-    - [Expanding Bins](#expanding-bins)
-    - [Capping Bins](#capping-bins)
-    - [Neutralizing Bins](#neutralizing-bins)
-  - [IV: Inf | Variable: Embarked
-](#iv-inf--variable-embarked)
-  - [IV: 0.123 | Variable: Embarked
-](#iv-0123--variable-embarked)
-  - [Modeling with `binnr`](#modeling-with-binnr)
-    - [Applying `binnr` transformations](#applying-binnr-transformations)
-  - [IV: 1.342 | Variable: Sex
-](#iv-1342--variable-sex)
-    - [Logistic Regression](#logistic-regression)
-- [TO BE CONTINUED...](#to-be-continued)
+    - [What is binnr?](#what-is-binnr)
+    - [Usage](#usage)
+    - [Examples](#examples)
+    - [bin.data options](#bin-data-options)
+        - [mono](#mono)
+        - [exception](#exception)
+        - [min.iv](#min-iv)
+        - [min.cnt & max.bin](#min-cnt-max-bin)
+    - [Modyfing bins](#modyfing-bins)
+        - [Collapsing Bins](#collapsing-bins)
+        - [Expanding Bins](#expanding-bins)
+        - [Capping Bins](#capping-bins)
+        - [Neutralizing Bins](#neutralizing-bins)
+    - [Modeling with binnr](#modeling-with-binnr)
+        - [Applying binnr transformations](#applying-binnr-transformations)
+        - [Logistic Regression](#logistic-regression)
+    - [TO BE CONTINUED...](#to-be-continued)
+
 
 ## What is `binnr`?
 `binnr` is a package that creates, manages, and applies simple binning
