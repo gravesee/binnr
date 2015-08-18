@@ -1,22 +1,3 @@
-    - [What is binnr?](#what-is-binnr)
-    - [Usage](#usage)
-    - [Examples](#examples)
-    - [bin.data options](#bin-data-options)
-        - [mono](#mono)
-        - [exception](#exception)
-        - [min.iv](#min-iv)
-        - [min.cnt & max.bin](#min-cnt-max-bin)
-    - [Modyfing bins](#modyfing-bins)
-        - [Collapsing Bins](#collapsing-bins)
-        - [Expanding Bins](#expanding-bins)
-        - [Capping Bins](#capping-bins)
-        - [Neutralizing Bins](#neutralizing-bins)
-    - [Modeling with binnr](#modeling-with-binnr)
-        - [Applying binnr transformations](#applying-binnr-transformations)
-        - [Logistic Regression](#logistic-regression)
-    - [TO BE CONTINUED...](#to-be-continued)
-
-
 ## What is `binnr`?
 `binnr` is a package that creates, manages, and applies simple binning
 transformations for further use in regression models. It provides a variety of
