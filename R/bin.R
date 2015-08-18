@@ -399,8 +399,6 @@ print.bin <- function(x, ...) {
 
 #' @export
 plot.bin <- function(x, y, ...) {
-  var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
-  
   tmp <- as.data.frame(x)
   n <- 1:(nrow(tmp) - 2)
   plt <- data.frame(
@@ -421,11 +419,11 @@ plot.bin <- function(x, y, ...) {
   
   g1 <- ggplot(plt, aes(x=Range, y=Count)) +
     geom_bar(stat="identity", position="identity") +
-    coord_flip()
+    coord_flip() + theme(axis.title.y=element_blank())
   
   g2 <- ggplot(plt, aes(x=Range, y=WoE, fill=WoE)) +
     geom_bar(stat="identity", position="identity") +
-    scale_fill_gradient(low="blue", high="red") + coord_flip() + plt.theme
+    scale_fill_gradient(low="blue", high="red") + coord_flip()  + plt.theme
   
   g3 <- ggplot(plt, aes(x=Range, y=Prob)) +
     geom_bar(stat="identity", position="identity") +
@@ -434,7 +432,7 @@ plot.bin <- function(x, y, ...) {
   
   grid.newpage()
   pushViewport(viewport(layout = grid.layout(2, 3, heights = unit(c(1, 10), "null"))))
-  grid.text(var, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
+  grid.text(x$name, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
   print(g1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
   print(g2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
   print(g3, vp = viewport(layout.pos.row = 2, layout.pos.col = 3))  
