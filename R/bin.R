@@ -27,8 +27,8 @@ is.bin <- function(x) {
 
 ### TODO: pass in own breaks as well if necessary also caps... 
 #' @export
-bin <- function(x, y=NULL, name, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
-  # get the name of the variable
+bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
+  
   if (is.bin(x)) {
     b <- bin(x$x, x$y, x$name, min.iv, min.cnt, max.bin, mono, exceptions)
     b$history <- x
@@ -36,11 +36,11 @@ bin <- function(x, y=NULL, name, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0,
   }
   
   if (is.na(mono)) mono <- 0
-  stopifnot(length(x) == length(y))
   stopifnot(mono %in% c(-1,0,1))
   stopifnot(max.bin > 0)
   if (is.null(min.cnt)) min.cnt <- sqrt(length(x))
   stopifnot(min.cnt > 0)
+  stopifnot(length(x) == length(y))
   
   # filter NAs and special values
   f0 <- x %in% exceptions
@@ -114,7 +114,8 @@ bin <- function(x, y=NULL, name, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0,
     min.cnt = min.cnt,
     max.bin=max.bin,
     mono=mono,
-    exceptions=exceptions
+    exceptions=exceptions,
+    skip=FALSE
   ), class = "bin")
 }
 
@@ -160,12 +161,15 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   names(.exceptions) <- vars
   .exceptions[names(exceptions)] <- exceptions
   
+  dashes <- c('\\','|','/','-')
+  
   res <- list()
   for (i in seq_along(vars)) {
     nm <- vars[i]
-    cat(sprintf("\rProgress: %%%6.2f", (100*i/length(vars))))
+    
+    cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(vars))))
     flush.console()
-    res[[nm]] <- bin(df[,nm], y, nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
+    res[[nm]] <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
   }
   cat("\n")
   
@@ -188,7 +192,9 @@ predict.bin.list <- function(object, newdata) {
     nm <- vars[i]
     cat(sprintf("\rProgress: %%%3d", as.integer(100*i/length(vars))))
     flush.console()
-    res[[i]] <- predict(object[[nm]], newdata[,nm])
+    if (!object[[nm]]$skip) {
+      res[[i]] <- predict(object[[nm]], newdata[,nm])
+    }
   }
   cat("\n")
   res <- do.call(cbind, res)
@@ -335,26 +341,33 @@ expand.bin.factor <- function(e1, e2) {
 #' @export
 `!=.bin` <- function(e1, e2) {
   out <- e1
-  n <- length(out$values)
-  N <- n + length(out$except_zero)
-  # simply zero out the counts?
-  num_zero <- c(out$num_zero, out$except_zero)
-  num_ones <- c(out$num_ones, out$except_ones)
-  
-  num_ones[e2] <- 0
-  num_zero[e2] <- 0
-  
-  out$num_zero <- num_zero[1:n]
-  out$num_ones <- num_ones[1:n]
-  
-  out$except_zero <- num_zero[(n+1):N]
-  out$except_ones <- num_ones[(n+1):N]
-  
-  values <- as.data.frame(out)[1:N,'WoE']
-  values[is.nan(values)] <- 0
-  out$values  <- values[1:n]
-  out$except_woe <- values[(n+1):N]
-  out$history <- e1
+  if (e1$type == 'numeric') {
+    n <- length(out$values)
+    N <- n + length(out$except_zero)
+    # simply zero out the counts?
+    num_zero <- c(out$num_zero, out$except_zero)
+    num_ones <- c(out$num_ones, out$except_ones)
+    
+    num_ones[e2] <- 0
+    num_zero[e2] <- 0
+    
+    out$num_zero <- num_zero[1:n]
+    out$num_ones <- num_ones[1:n]
+    
+    out$except_zero <- num_zero[(n+1):N]
+    out$except_ones <- num_ones[(n+1):N]
+    
+    values <- as.data.frame(out)[1:N,'WoE']
+    values[is.nan(values)] <- 0
+    out$values  <- values[1:n]
+    out$except_woe <- values[(n+1):N]
+    out$history <- e1
+  } else {
+    if (max(e2) > length(out$breaks)) return(out)
+    out$num_zero[e2] <- 0
+    out$num_ones[e2] <- 0
+    out$history <- e1
+  }
   out
 }
 
@@ -396,6 +409,8 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   }
   
   out[nrow(out), c('WoE', 'IV')] <- 0
+  out[is.infinite(out[,'WoE']),'WoE'] <- 0
+  out[is.infinite(out[,'IV']),'IV'] <- 0
   
   tot.row <- apply(out, 2, function(x) sum(x[!is.infinite(x)], na.rm=T))
   tot.row["WoE"] <- 0
@@ -422,8 +437,6 @@ print.bin <- function(x, ...) {
 
 #' @export
 plot.bin <- function(x, y, ...) {
-  var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
-  
   tmp <- as.data.frame(x)
   n <- 1:(nrow(tmp) - 2)
   plt <- data.frame(
@@ -457,14 +470,14 @@ plot.bin <- function(x, y, ...) {
   
   grid.newpage()
   pushViewport(viewport(layout = grid.layout(2, 3, heights = unit(c(1, 10), "null"))))
-  grid.text(var, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
+  grid.text(x$name, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
   print(g1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
   print(g2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
   print(g3, vp = viewport(layout.pos.row = 2, layout.pos.col = 3))  
 }
 
 #' @export
-print.bin.list <- function(x, n=NULL) {
+print.bin.list <- function(x, n=NULL, plot=F) {
   if (is.null(n)) {
     n <- 1:length(x)
   } else {
@@ -473,8 +486,79 @@ print.bin.list <- function(x, n=NULL) {
   
   ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])
   
-  for (b in x[order(-ivs)[n]]) {
+  for (b in x[order(-ivs)]) {
     print(b)
   }
 }
+
+#' @export
+adjust <- function(x) {
+  eval(parse(text = paste(substitute(x), "<<- adjust.bins(x)")))
+}
+
+#' @export
+adjust.bins <- function(x) {
+#   if (is.null(n)) {
+#     n <- 1:length(x)
+#   } else {
+#     n <- 1:min(length(x), n)
+#   }
+  
+  out <- x
+  i <- 1
+  while(i <= length(x)) {
+    print(out[[i]])
+    plot(out[[i]])
+    print ("Enter command (Q to quit):")
+    command <- readLines(n = 1)
+    if (command == "Q") {
+      break
+    }  else if (command %in% c("h", "help")) {
+      cat(
+"binnr interactive commands:
+ (Q)uit
+ (n)ext
+ (p)revious
+ (u)ndo
+ (b)in
+ (d)elete
+binnr bin operations
+ != <#> : Neutralize level
+ + <#>  : Expand level
+ - <#>  : Collapse level(s)
+ <= <#> : Cap at # and rebin\n")
+      print("Press [Enter] to continue")
+      scan(n=1)
+    } else if (command == "d") {
+      out[[i]]$skip <- TRUE
+      i <- i + 1
+    } else if (command == "n") {
+      i <- i + 1
+    } else if (command == "p") {
+      if (i > 1) {
+        i <- i - 1 
+      } else {
+        print("At beginning of list")
+      }
+    } else if (command == "u") {
+      out[[i]] <- undo(out[[i]])
+    } else if (command == "b") {
+      print("Enter bin commands separated by commas:")
+      args <- readLines(n = 1)
+      tryCatch({
+        out[[i]] <- eval(parse(text=sprintf("bin(out[[i]], %s)", paste(args, sep=','))))
+      }, error = function(err) {
+        print("Invalid command entered")
+      })
+    } else {
+      tryCatch({
+        out[[i]] <- eval(parse(text=paste("out[[i]]", command)))
+      }, error = function(err) {
+        print("Invalid command entered")
+      })
+    }
+  }
+  out
+}
+
 
