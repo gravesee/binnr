@@ -1,18 +1,3 @@
----
-title: "binnr documentation"
-output:
-  md_document:
-    toc: true
-    toc_depth: 2
-    variant: markdown_github
----
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
-
-
-
-
 ## What is `binner`?
 `binnr` is a package that creates, manages, and applies simple binning
 transformations.
@@ -60,21 +45,21 @@ variable and pressing `<enter>` is to display a WoE table:
 
 ```r
 bins$Age
-IV: 0.211 | Variable: Age
----------------------------------------------------------------
-                   #0  #1   W%0   W%1    W%  P(1)    WoE      IV
-1 (-Inf - 6.5]     14  33 0.033 0.114 0.066 0.702  1.237 0.09994
-2 (6.5 - 17.5]     38  28 0.090 0.097 0.092 0.424  0.074 0.00052
-3 (17.5 - 21.5]    65  26 0.153 0.090 0.127 0.286 -0.536 0.03414
-4 (21.5 - 30.75]  128  79 0.302 0.272 0.290 0.382 -0.103 0.00303
-5 (30.75 - 34.75]  38  30 0.090 0.103 0.095 0.441  0.143 0.00198
-6 (34.75 - 36.25]  18  22 0.042 0.076 0.056 0.550  0.581 0.01939
-7 (36.25 - 42.5]   41  25 0.097 0.086 0.092 0.379 -0.115 0.00120
-8 (42.5 - 47.5]    30  10 0.071 0.034 0.056 0.250 -0.719 0.02607
-9 (47.5 - 56.5]    27  27 0.064 0.093 0.076 0.500  0.380 0.01118
-10 (56.5 - Inf]    25  10 0.059 0.034 0.049 0.286 -0.536 0.01313
-Missing           125  52    NA    NA    NA 0.294  0.000 0.00000
-Total             549 342 1.000 1.000 1.000 0.384  0.000 0.21059
+
+IV: 0.21059 | Variable: Age
+                     #0  #1   W%0   W%1    W%  P(1)    WoE      IV
+ 1: (-Inf - 6.5]     14  33 0.033 0.114 0.066 0.702  1.237 0.09994
+ 2: (6.5 - 17.5]     38  28 0.090 0.097 0.092 0.424  0.074 0.00052
+ 3: (17.5 - 21.5]    65  26 0.153 0.090 0.127 0.286 -0.536 0.03414
+ 4: (21.5 - 30.75]  128  79 0.302 0.272 0.290 0.382 -0.103 0.00303
+ 5: (30.75 - 34.75]  38  30 0.090 0.103 0.095 0.441  0.143 0.00198
+ 6: (34.75 - 36.25]  18  22 0.042 0.076 0.056 0.550  0.581 0.01939
+ 7: (36.25 - 42.5]   41  25 0.097 0.086 0.092 0.379 -0.115 0.00120
+ 8: (42.5 - 47.5]    30  10 0.071 0.034 0.056 0.250 -0.719 0.02607
+ 9: (47.5 - 56.5]    27  27 0.064 0.093 0.076 0.500  0.380 0.01118
+10: (56.5 - Inf]     25  10 0.059 0.034 0.049 0.286 -0.536 0.01313
+Missing             125  52    NA    NA    NA 0.294  0.000 0.00000
+Total               549 342 1.000 1.000 1.000 0.384  0.000 0.21059
 ```
 
 But it can also be plotted by calling the `plot` function on the binned variable:
@@ -275,15 +260,15 @@ first row.
 
 ```r
 bins$Embarked
-IV: Inf | Variable: Embarked
----------------------------------------------------------------
+
+IV: 0.12237 | Variable: Embarked
          #0  #1   W%0   W%1    W%  P(1)    WoE      IV
-1         0   2 0.000 0.006 0.002 1.000    Inf     Inf
-2 C      75  93 0.137 0.272 0.189 0.554  0.688 0.09315
-3 Q      47  30 0.086 0.088 0.086 0.390  0.024 0.00005
-4 S     427 217 0.778 0.635 0.723 0.337 -0.204 0.02917
+ 1:       0   2 0.000 0.006 0.002 1.000    Inf     Inf
+ 2: C    75  93 0.137 0.272 0.189 0.554  0.688 0.09315
+ 3: Q    47  30 0.086 0.088 0.086 0.390  0.024 0.00005
+ 4: S   427 217 0.778 0.635 0.723 0.337 -0.204 0.02917
 Missing   0   0    NA    NA    NA   NaN  0.000 0.00000
-Total   549 342 1.000 1.000 1.000 0.384  0.000     Inf
+Total   549 342 1.000 1.000 1.000 0.384  0.000 0.12237
 ```
 
 We can neutralize this level effectively removing its influence:
@@ -291,15 +276,7 @@ We can neutralize this level effectively removing its influence:
 
 ```r
 bins$Embarked != 1
-IV: 0.123 | Variable: Embarked
----------------------------------------------------------------
-         #0  #1   W%0   W%1    W%  P(1)    WoE      IV
-1         0   0 0.000 0.000 0.000   NaN    NaN     NaN
-2 C      75  93 0.137 0.274 0.189 0.554  0.694 0.09506
-3 Q      47  30 0.086 0.088 0.087 0.390  0.030 0.00008
-4 S     427 217 0.778 0.638 0.724 0.337 -0.198 0.02759
-Missing   0   0    NA    NA    NA   NaN  0.000 0.00000
-Total   549 340 1.000 1.000 1.000 0.382  0.000 0.12273
+Error in `row.names<-.data.frame`(`*tmp*`, value = value): invalid 'row.names' length
 ```
 
 ## Modeling with `binnr`
@@ -339,13 +316,13 @@ corresponding variable. To understand what has happened, we can print a table:
 Here is the WoE table for the variable `Sex`:
 
 ```
-IV: 1.342 | Variable: Sex
----------------------------------------------------------------
-          #0  #1   W%0   W%1    W%  P(1)    WoE      IV
-1 female  81 233 0.148 0.681 0.352 0.742  1.530 0.81657
-2 male   468 109 0.852 0.319 0.648 0.189 -0.984 0.52512
-Missing    0   0    NA    NA    NA   NaN  0.000 0.00000
-Total    549 342 1.000 1.000 1.000 0.384  0.000 1.34168
+
+IV: 1.34168 | Variable: Sex
+            #0  #1   W%0   W%1    W%  P(1)    WoE      IV
+ 1: female  81 233 0.148 0.681 0.352 0.742  1.530 0.81657
+ 2: male   468 109 0.852 0.319 0.648 0.189 -0.984 0.52512
+Missing      0   0    NA    NA    NA   NaN  0.000 0.00000
+Total      549 342 1.000 1.000 1.000 0.384  0.000 1.34168
 ```
 
 And here is the raw variable crossed with the transformed variable:
@@ -375,6 +352,15 @@ prevent any "flips" from occuring in our final model.
 
 And here is the raw variable crossed with the transformed variable:
 
+```
+Warning: package 'glmnet' was built under R version 3.2.1
+Loading required package: Matrix
+Loading required package: foreach
+foreach: simple, scalable parallel programming from Revolution Analytics
+Use Revolution R for scalability, fault tolerance and more.
+http://www.revolutionanalytics.com
+Loaded glmnet 2.0-2
+```
 
 
 ```r
@@ -397,14 +383,14 @@ to find the optimal coefficients:
 coef(fit, s="lambda.min")
 8 x 1 sparse Matrix of class "dgCMatrix"
                      1
-(Intercept) -0.4727612
-Pclass       0.9551438
-Sex          0.9781791
-Age          1.4504149
-SibSp        0.4606033
+(Intercept) -0.4717027
+Pclass       0.9412971
+Sex          0.9694168
+Age          1.4137839
+SibSp        0.4451863
 Parch        .        
-Fare         0.2561144
-Embarked     0.5601308
+Fare         0.2538829
+Embarked     0.5406737
 ```
 
 
