@@ -22,9 +22,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-## What is `binner`?
+## What is `binnr`?
 `binnr` is a package that creates, manages, and applies simple binning
-transformations.
+transformations for further use in regression models. It provides a variety of
+methods for collapsing and expanding variables to achieve the desired modeling
+relationship.
 
 ## Usage
 The easiest way to use `binnr` is with the `bin.data` function. When applied to 
@@ -73,8 +75,8 @@ bin counts, the second shows bin WoE, and the third shows bin probability of the
 ## `bin.data` options
 
 ### `mono`
-The WoE  pattern for this varibale flips alot. A monotonic replationship can be
-enforced by passing a mono argument to the bin.data function like so:
+The WoE  pattern for the above varibale flips alot. A monotonic replationship
+can be enforced by passing a mono argument to the `bin.data` function like so:
 
 ```{r, echo = TRUE, eval=TRUE, results='hide'}
 bins <- bin.data(titanic[,-1], titanic$Survived, mono = c(Age=-1))
@@ -89,15 +91,15 @@ argument. A global default may be passed in using the name `ALL`. `mono` can
 take on the following values: `{-1, 0, 1}`. The monotonic relationship assumes
 that the 1-class of the dependent variable is the target. Therefore a `-1` value
 represents a target variable that decreases in likelihood as the independent
-variable increases whereas a `1` value indicates an increases in the likelihood
+variable increases whereas a `1` value indicates an increase in the likelihood
 of the target variable as the dependent variable increases.
 
 ### `exception`
 
-It is not uncommon to have special values that should be considered valid for
+It is not uncommon to have special values that should be excluded from
 binning. In such cases we wish to hold them out from the binning process yet
-still use them for purposes of calculating information value. The `exception`
-argument takes a named list of values that should be excluded from binning:
+still use them for calculating information value. The `exception` argument
+takes a named list of values that should be excluded from binning:
 
 ```{r, echo = TRUE, eval=TRUE, results='hide'}
 bins <- bin.data(titanic[,-1], titanic$Survived, exceptions = list(SibSp=c(0,1)))
@@ -128,7 +130,7 @@ plot(bins$Age)
 `bin.data` can also be passed values controlling the size of resulting bins as
 well as the maximum number of bins achieved. The default value for the `min.cnt`
 is the square root of the number of observations. This generally results in 
-adequate counts for the final binning scheme.
+adequate counts for the final binning scheme. `max.bin` defaults to 10 levels.
 
 ## Modyfing bins
 
@@ -140,8 +142,8 @@ variables.
 
 Continuous variables can only collapse adjacent bins. Discrete variables may
 collapse non-adjacent bins. By default, `binnr` treats factors as discrete and
-numeric variabls as continuous. To collapse bins, simply use the minus, `-`,
-sign followed by a vector of the bin levels to collapse:
+numeric variabls as continuous. To collapse bins, simply use the minus sign, `-`
+, followed by a vector of the bin levels to collapse:
 
 ```{r, echo = TRUE, fig.height=1+10/3, fig.width=12}
 plot(bins$Fare)
@@ -164,21 +166,11 @@ plot(bins$Embarked - c(2,4))
 
 Bins may also be expanded. Like collapsing bins, the behavior depends on whether
 the variable is discrete or continuous. Expanding a continuous range will
-attempt to create five equally sized bins within the expanded range. Where there
+attempt to create five equally sized bins within the expanded range. When there
 are fewer than five unique values in a bin, all of them will be expanded. For
 discrete variables, only previously collapsed bins may be expanded. The notation
-is to apply the plus, `+`, sign after a bin object followed by the number of the
+is to apply the plus sign, `+`, after a bin object followed by the number of the
 level to expand:
-
-```{r, echo = TRUE, fig.height=1 + 3/3, fig.width=12}
-tmp <- bins$Embarked - c(2,4)
-plot(tmp)
-```
-```{r, echo = TRUE, fig.height=1 + 4/3, fig.width=12}
-plot(tmp + 2)
-```
-
-Discrete bins can also be collapsed using the same notation:
 
 ```{r, echo = TRUE, fig.height=1+3/3, fig.width=12}
 plot(bins$Parch)
@@ -187,10 +179,20 @@ plot(bins$Parch)
 plot(bins$Parch + 3)
 ```
 
+Discrete bins can also be collapsed using the same notation:
+
+```{r, echo = TRUE, fig.height=1 + 3/3, fig.width=12}
+tmp <- bins$Embarked - c(2,4) # collapse bins 2 & 4
+plot(tmp)
+```
+```{r, echo = TRUE, fig.height=1 + 4/3, fig.width=12}
+plot(tmp + 2) # expand bin 2 back to its original state
+```
+
 ### Capping Bins
 
 For adverse action reasons it might be desirable to cap a variable at a specific
-level. Using the less-than-or-equal, `<=`, sign followed by a number will cap
+level. Using the less-than-or-equal sign, `<=`, followed by a number will cap
 the variable at that number and rebin.
 
 ```{r, echo = TRUE, fig.height=1 + 10/3, fig.width=12}
@@ -202,7 +204,7 @@ plot(bins$Fare <= 30)
 
 `binnr` also allows the user to neutralize levels of a variable. The WoE
 substitution will be zero for such levels and the remaining levels will be
-udated to reflect the new counts. When passed into a regression model, neutral 
+updated to reflect the new counts. When passed into a regression model, neutral 
 levels will contribute nothing to the final prediction. Neutralize levels by 
 using the not-equal operator, `!=`, followed by the level to neutralize:
 
@@ -213,7 +215,7 @@ first row.
 bins$Embarked
 ```
 
-We can neutralize this level effectively removing its influence:
+We can neutralize this level -- effectively removing its influence:
 
 ```{r, echo = TRUE}
 bins$Embarked != 1
@@ -225,8 +227,8 @@ The goal of `binnr` is to enable the modeler to apply variable transformations
 with an eye towards training a logistic regression model. `binnr` will
 substitute the WoE for each variable creating a dataset of continuous values.
 The WoE substitution is particularly desirable because the resulting logistic
-regressions parameters are then on the same scale and can be compared directly.
-The model building process involves applying the bin transformations, fitting a 
+regression parameters are on the same scale and can be compared directly. The
+model building process involves applying the bin transformations, fitting a 
 model, and analyzing the results.
 
 ### Applying `binnr` transformations
@@ -259,10 +261,11 @@ in the WoE table. The same holds true for `female`.
 
 ### Logistic Regression
 
-Once the variable transoformations have been applied, a logistic regression
+Once the variable transformations have been applied, a logistic regression
 model may be fit. We will be applying a new logistic regression algorithm called
 `LASSO`. It fits the model and performs variable selection at the same time.
-More about LASSO regression can be found [here](http://statweb.stanford.edu/~tibs/lasso.html).
+More about LASSO regression can be found
+[here](http://statweb.stanford.edu/~tibs/lasso.html).
 
 LASSO regression requires that we specify a penalty argument to constrain the 
 coefficients. We will be using cross-validation to determine this parameter
@@ -270,11 +273,9 @@ automatically. Furthermore, since our variables are already transformed the way
 we like, we will also force the parameters to be greater than zero. This will
 prevent any "flips" from occuring in our final model.
 
-And here is the raw variable crossed with the transformed variable:
 ```{r, echo = FALSE}
 library(glmnet)
 ```
-
 ```{r, echo = TRUE}
 fit <- cv.glmnet(binned, titanic$Survived, alpha=1, family="binomial",
                  nfolds = 5, lower.limits=0)
@@ -292,4 +293,4 @@ to find the optimal coefficients:
 coef(fit, s="lambda.min")
 ```
 
-
+# TO BE CONTINUED...
