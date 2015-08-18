@@ -1,0 +1,296 @@
+---
+title: "binnr documentation"
+output:
+  md_document:
+    toc: true
+    toc_depth: 2
+    variant: markdown_github
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width=120)
+```
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "",
+  fig.path = "plots/README-",
+  cache=TRUE,
+  width=12
+)
+```
+
+## What is `binner`?
+`binnr` is a package that creates, manages, and applies simple binning
+transformations.
+
+## Usage
+The easiest way to use `binnr` is with the `bin.data` function. When applied to 
+a `data.frame`, `bin.data` creates a `bin` object for every variable and stores
+the information necessary to apply a weight-of-evidence (WoE) substitution. Why
+is this beneficial? Data is often not well-behaved or continuous. Variables can 
+have exception values, missing values, or monotonic relationships that need to
+be enforced. `binnr` accomodates all of these situations and further enables the
+modeler to tweak variable transformations to their liking.
+
+## Examples
+We will use the titanic dataset that can be found in the `mjollnir` package for
+all of the examples in this walkthrough.
+
+```{r, echo = TRUE}
+data(titanic, package='mjollnir')
+head(titanic)
+```
+
+Inspecting the columns, we can see that this dataset encompases a variety
+of data types: numeric & character, continuous & discrete. We can "class" these
+variables by calling the `bin.data` function on this dataset and storing in
+an object called `bins`:
+
+```{r, echo = TRUE, eval=TRUE, results='hide'}
+bins <- bin.data(titanic[,-1], titanic$Survived)
+```
+
+This stores all of the bin transformations in a list called `bins` that can be
+accessed using standard R `$` indexing. The default action when typing a binned
+variable and pressing `<enter>` is to display a WoE table:
+
+```{r, echo = TRUE, tidy=TRUE}
+bins$Age
+```
+
+But it can also be plotted by calling the `plot` function on the binned variable:
+```{r, echo = TRUE, fig.height=1 + 10/3, fig.width=12}
+plot(bins$Age)
+```
+
+The y-axis displays the bin ranges for all of the plots. The first plot shows
+bin counts, the second shows bin WoE, and the third shows bin probability of the
+1-class for the dependent variable. The red line is the overall mean.
+
+## `bin.data` options
+
+### `mono`
+The WoE  pattern for this varibale flips alot. A monotonic replationship can be
+enforced by passing a mono argument to the bin.data function like so:
+
+```{r, echo = TRUE, eval=TRUE, results='hide'}
+bins <- bin.data(titanic[,-1], titanic$Survived, mono = c(Age=-1))
+```
+
+```{r, echo = TRUE, fig.height=1 + 3/3, fig.width=12, fig.cap='Age binned with mono=-1'}
+plot(bins$Age)
+```
+
+Notice that a named vector of the form `c(var=mono)` is passed in to the `mono`
+argument. A global default may be passed in using the name `ALL`. `mono` can
+take on the following values: `{-1, 0, 1}`. The monotonic relationship assumes
+that the 1-class of the dependent variable is the target. Therefore a `-1` value
+represents a target variable that decreases in likelihood as the independent
+variable increases whereas a `1` value indicates an increases in the likelihood
+of the target variable as the dependent variable increases.
+
+### `exception`
+
+It is not uncommon to have special values that should be considered valid for
+binning. In such cases we wish to hold them out from the binning process yet
+still use them for purposes of calculating information value. The `exception`
+argument takes a named list of values that should be excluded from binning:
+
+```{r, echo = TRUE, eval=TRUE, results='hide'}
+bins <- bin.data(titanic[,-1], titanic$Survived, exceptions = list(SibSp=c(0,1)))
+```
+```{r, echo = TRUE, fig.height=1 + 4/3, fig.width=12}
+plot(bins$SibSp)
+```
+
+Notice that 0s and 1s are now on their own levels below the binned continuous
+values. 
+
+### `min.iv`
+
+The binning algorithm uses information value to break continuous variables into 
+bins. The algorithm will only create a split if the resulting bins increase the 
+overall variable information value by some value specified by `min.iv`. Larger
+values will result in fewer bins.
+
+```{r, echo = TRUE, eval=TRUE, results='hide'}
+bins <- bin.data(titanic[,-1], titanic$Survived, min.iv=0, mono=c(Age=-1))
+```
+```{r, echo = TRUE, fig.height=1 + 5/3, fig.width=12}
+plot(bins$Age)
+```
+
+### `min.cnt` & `max.bin`
+
+`bin.data` can also be passed values controlling the size of resulting bins as
+well as the maximum number of bins achieved. The default value for the `min.cnt`
+is the square root of the number of observations. This generally results in 
+adequate counts for the final binning scheme.
+
+## Modyfing bins
+
+`binnr` provides a number of convenience functions to expand, collapse, and
+neutralize bin levels. The results are different for continuous and discrete
+variables.
+
+### Collapsing Bins
+
+Continuous variables can only collapse adjacent bins. Discrete variables may
+collapse non-adjacent bins. By default, `binnr` treats factors as discrete and
+numeric variabls as continuous. To collapse bins, simply use the minus, `-`,
+sign followed by a vector of the bin levels to collapse:
+
+```{r, echo = TRUE, fig.height=1+10/3, fig.width=12}
+plot(bins$Fare)
+```
+
+```{r, echo = TRUE, fig.height=1+7/3, fig.width=12}
+plot(bins$Fare - 2:5)
+```
+
+Discrete bins can also be collapsed using the same notation:
+
+```{r, echo = TRUE, fig.height=1+4/3, fig.width=12}
+plot(bins$Embarked)
+```
+```{r, echo = TRUE, fig.height=1+3/3, fig.width=12}
+plot(bins$Embarked - c(2,4))
+```
+
+### Expanding Bins
+
+Bins may also be expanded. Like collapsing bins, the behavior depends on whether
+the variable is discrete or continuous. Expanding a continuous range will
+attempt to create five equally sized bins within the expanded range. Where there
+are fewer than five unique values in a bin, all of them will be expanded. For
+discrete variables, only previously collapsed bins may be expanded. The notation
+is to apply the plus, `+`, sign after a bin object followed by the number of the
+level to expand:
+
+```{r, echo = TRUE, fig.height=1 + 3/3, fig.width=12}
+tmp <- bins$Embarked - c(2,4)
+plot(tmp)
+```
+```{r, echo = TRUE, fig.height=1 + 4/3, fig.width=12}
+plot(tmp + 2)
+```
+
+Discrete bins can also be collapsed using the same notation:
+
+```{r, echo = TRUE, fig.height=1+3/3, fig.width=12}
+plot(bins$Parch)
+```
+```{r, echo = TRUE, fig.height=1+7/3, fig.width=12}
+plot(bins$Parch + 3)
+```
+
+### Capping Bins
+
+For adverse action reasons it might be desirable to cap a variable at a specific
+level. Using the less-than-or-equal, `<=`, sign followed by a number will cap
+the variable at that number and rebin.
+
+```{r, echo = TRUE, fig.height=1 + 10/3, fig.width=12}
+plot(bins$Fare)
+plot(bins$Fare <= 30)
+```
+
+### Neutralizing Bins
+
+`binnr` also allows the user to neutralize levels of a variable. The WoE
+substitution will be zero for such levels and the remaining levels will be
+udated to reflect the new counts. When passed into a regression model, neutral 
+levels will contribute nothing to the final prediction. Neutralize levels by 
+using the not-equal operator, `!=`, followed by the level to neutralize:
+
+Inspecting the WoE table for Embarked, we see a nusiance level of 'blank' in the
+first row.
+
+```{r, echo = TRUE}
+bins$Embarked
+```
+
+We can neutralize this level effectively removing its influence:
+
+```{r, echo = TRUE}
+bins$Embarked != 1
+```
+
+## Modeling with `binnr`
+
+The goal of `binnr` is to enable the modeler to apply variable transformations
+with an eye towards training a logistic regression model. `binnr` will
+substitute the WoE for each variable creating a dataset of continuous values.
+The WoE substitution is particularly desirable because the resulting logistic
+regressions parameters are then on the same scale and can be compared directly.
+The model building process involves applying the bin transformations, fitting a 
+model, and analyzing the results.
+
+### Applying `binnr` transformations
+
+Applying transformations is as simple as calling predict on the list of `bin`
+objects and passing in a dataset.
+
+```{r, echo = TRUE, results='hide'}
+binned <- predict(bins, titanic)
+```
+```{r, echo = TRUE}
+head(binned)
+```
+
+We now have a matrix where every transformation has been applied to its
+corresponding variable. To understand what has happened, we can print a table:
+
+Here is the WoE table for the variable `Sex`:
+```{r, echo = FALSE}
+bins$Sex
+```
+
+And here is the raw variable crossed with the transformed variable:
+```{r, echo = FALSE}
+table(binned[,'Sex'], titanic[,'Sex'])
+```
+
+We can verify that values of `male` are being coded correctly to the value found
+in the WoE table. The same holds true for `female`.
+
+### Logistic Regression
+
+Once the variable transoformations have been applied, a logistic regression
+model may be fit. We will be applying a new logistic regression algorithm called
+`LASSO`. It fits the model and performs variable selection at the same time.
+More about LASSO regression can be found [here](http://statweb.stanford.edu/~tibs/lasso.html).
+
+LASSO regression requires that we specify a penalty argument to constrain the 
+coefficients. We will be using cross-validation to determine this parameter
+automatically. Furthermore, since our variables are already transformed the way
+we like, we will also force the parameters to be greater than zero. This will
+prevent any "flips" from occuring in our final model.
+
+And here is the raw variable crossed with the transformed variable:
+```{r, echo = FALSE}
+library(glmnet)
+```
+
+```{r, echo = TRUE}
+fit <- cv.glmnet(binned, titanic$Survived, alpha=1, family="binomial",
+                 nfolds = 5, lower.limits=0)
+plot(fit)
+```
+
+The resulting plot shows the error on the y-axis and the penalty term on the
+x-axis. The penalty term controls the size of the coefficients and how many of
+them are not equal to zero. The first dashed line represents the size of the
+penalty term that has the lowest cross-validation error. We can access this
+value easily by using the "lambda.min" argument where appropriate. For example, 
+to find the optimal coefficients:
+
+```{r, echo = TRUE}
+coef(fit, s="lambda.min")
+```
+
+

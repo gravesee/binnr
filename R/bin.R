@@ -93,6 +93,7 @@ bin <- function(x, y=NULL, name, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0,
   num_zero <- counts[,1]
   
   structure(list(
+    name = name,
     x = x,
     y = y,
     name = name,
@@ -243,10 +244,9 @@ collapse.bin.numeric <- function(e1, e2) {
     return(e1)
   }
   
-  #f <- !(e1$x %in% e1$exceptions) & !is.na(e1$x)
   x <- pmin(e1$x, e2)
   
-  bin(x, e1$y, e1$min.iv, min.cnt = e1$min.ctn, max.bin = e1$max.bin,
+  bin(x, e1$y, e1$name, e1$min.iv, min.cnt = e1$min.ctn, max.bin = e1$max.bin,
       mono = e1$mono, exceptions = e1$exceptions)
 }
 
@@ -263,11 +263,11 @@ expand.bin.numeric <- function(e1, e2) {
   if ((nvals) == 1){
     return(e1)
   } else if (nvals <= 5) {
-    b <- bin(factor(e1$x[f]), e1$y[f])
+    b <- bin(factor(e1$x[f]), e1$y[f], e1$name)
     eps <- head(as.numeric(b$breaks), -1)
   } else {
     q <- unique(quantile(e1$x[f], seq(0, 1, 0.2)))
-    b <- bin(cut(e1$x[f], c(-Inf, q[-1])), e1$y[f])
+    b <- bin(cut(e1$x[f], c(-Inf, q[-1])), e1$y[f], e1$name)
     # grab endpoints from expanded range
     eps <- sapply(strsplit(b$breaks, ','), '[[', 2)
     eps <- head(as.numeric(gsub('\\(|\\]', '', eps)), -1)
@@ -304,7 +304,7 @@ collapse.bin.factor <- function(e1, e2) {
   f <- e1$map %in% e1$breaks[e2]
   map[f] <- paste(e1$breaks[e2], collapse=',')
   levels(x) <- unlist(map)
-  b <- bin(x, e1$y)
+  b <- bin(x, e1$y, e1$name)
   b$map <- map
   b$x <- e1$x
   b
@@ -316,7 +316,7 @@ expand.bin.factor <- function(e1, e2) {
   map <- e1$map
   map[f] <- levels(e1$x)[f]
   levels(x) <- unlist(map)
-  b <- bin(x, e1$y)
+  b <- bin(x, e1$y, e1$name)
   b$map <- map
   b$x <- e1$x
   b
@@ -407,8 +407,6 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
 
 #' @export
 print.bin <- function(x, ...) {
-  #var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
-  
   out <- as.data.frame(x)
   iv <- out['Total', 'IV']
   fmts <- c("%d", "%d", rep("%1.3f", 5), "%0.5f")
@@ -422,8 +420,6 @@ print.bin <- function(x, ...) {
 
 #' @export
 plot.bin <- function(x, y, ...) {
-  var <- strsplit(deparse(match.call()$x), "\\$|\\s+")[[1]][2]
-  
   tmp <- as.data.frame(x)
   n <- 1:(nrow(tmp) - 2)
   plt <- data.frame(
@@ -444,11 +440,11 @@ plot.bin <- function(x, y, ...) {
   
   g1 <- ggplot(plt, aes(x=Range, y=Count)) +
     geom_bar(stat="identity", position="identity") +
-    coord_flip()
+    coord_flip() + theme(axis.title.y=element_blank())
   
   g2 <- ggplot(plt, aes(x=Range, y=WoE, fill=WoE)) +
     geom_bar(stat="identity", position="identity") +
-    scale_fill_gradient(low="blue", high="red") + coord_flip() + plt.theme
+    scale_fill_gradient(low="blue", high="red") + coord_flip()  + plt.theme
   
   g3 <- ggplot(plt, aes(x=Range, y=Prob)) +
     geom_bar(stat="identity", position="identity") +
@@ -457,7 +453,7 @@ plot.bin <- function(x, y, ...) {
   
   grid.newpage()
   pushViewport(viewport(layout = grid.layout(2, 3, heights = unit(c(1, 10), "null"))))
-  grid.text(var, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
+  grid.text(x$name, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
   print(g1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
   print(g2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
   print(g3, vp = viewport(layout.pos.row = 2, layout.pos.col = 3))  
@@ -472,7 +468,7 @@ print.bin.list <- function(x, n=NULL) {
   }
   
   ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])
-  
+
   for (b in x[order(-ivs)[n]]) {
     print(b)
   }
