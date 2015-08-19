@@ -22,7 +22,7 @@ is.bin <- function(x) {
 
 # TODO: split bin into bin.factor and bin.numeric
 #' @export
-bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
+bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=20, mono=0, exceptions=NULL){
   
   if (is.bin(x)) {
     b <- bin(x$x, x$y, x$name, min.iv, min.cnt, max.bin, mono, exceptions)
@@ -121,7 +121,9 @@ predict.bin <- function(object, x) {
       }
     }
   } else {
-    res <- ifelse(is.na(x), NA, object$values[unlist(object$map[x])])
+    res <- numeric(length(x))
+    res[is.na(x)] <- NA
+    res[!is.na(x)] <- object$values[unlist(object$map[x])]
   }
   
   res[is.na(res)] <- object$na
@@ -468,6 +470,7 @@ print.bin.list <- function(x, n=NULL, plot=F) {
     n <- 1:min(length(x), n)
   }
   
+  # TODOD: make iv a part of the bin object?
   ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])
   
   for (b in x[order(-ivs)]) {
@@ -476,20 +479,23 @@ print.bin.list <- function(x, n=NULL, plot=F) {
 }
 
 #' @export
-adjust <- function(x) {
-  eval(parse(text = paste(substitute(x), "<<- adjust.bins(x)")))
+adjust <- function(x, vars=NULL, min.iv=0) {
+  eval(parse(text = paste(substitute(x), "<<- adjust.bins(x, vars, min.iv)")))
 }
 
 #' @export
-adjust.bins <- function(x) {
+adjust.bins <- function(x, vars=NULL, min.iv=0) {
   
-  idx <- names(x)
-
+  if (is.null(vars)) vars <- names(x)
+  ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])
+  f <- (names(x) %in% vars) & (ivs >= min.iv)
+  idx <- seq_along(names(x))[f]
+  
   out <- x
   i <- 1
-  while(i <= length(x)) {
-    print(out[[i]])
-    plot(out[[i]])
+  while(i <= length(idx)) {
+    print(out[[idx[i]]])
+    plot(out[[idx[i]]])
     cat ("\nEnter command (Q to quit):")
     command <- readLines(n = 1)
     if (command == "Q") {
@@ -516,18 +522,18 @@ binnr bin operations
       v <- readLines(n = 1)
       # find the position of the variable
       while (v != "Q") {
-        pos <- which(idx == v)[1]
+        pos <- which(vars[f] == v)[1]
         if (is.na(pos)) {
           # find similar matches
-          sim <- agrep(v, idx, ignore.case = T, max.distance = 0.1)
+          sim <- agrep(v, vars[f], ignore.case = T, max.distance = 0.1)
           if (length(sim) > 0){
             cat(sprintf("%s not found, similar matches:", v))
-            cat(sprintf("\n %2d: %s", seq_along(sim), idx[sim]))
+            cat(sprintf("\n %2d: %s", seq_along(sim), vars[f][sim]))
             cat("\nGoto variable:")
             inp <- readLines(n = 1)
             n <- suppressWarnings(as.integer(inp))
             if (!is.na(n) & n <= length(sim)) { # check if number entered
-              v <- idx[sim][n]
+              v <- vars[f][sim[n]]
             }
           } else {
             cat("No similar variables found")
@@ -542,7 +548,7 @@ binnr bin operations
         }
       }
     } else if (command == "d") {
-      out[[i]]$skip <- !out[[i]]$skip
+      out[[idx[i]]]$skip <- !out[[idx[i]]]$skip
       #i <- i + 1
     } else if (command == "n") {
       i <- i + 1
@@ -553,18 +559,18 @@ binnr bin operations
         cat("\nAt beginning of list")
       }
     } else if (command == "u") {
-      out[[i]] <- undo(out[[i]])
+      out[[idx[i]]] <- undo(out[[idx[i]]])
     } else if (command == "b") {
       cat("\nEnter bin commands separated by commas:")
       args <- readLines(n = 1)
       tryCatch({
-        out[[i]] <- eval(parse(text=sprintf("bin(out[[i]], %s)", paste(args, sep=','))))
+        out[[idx[i]]] <- eval(parse(text=sprintf("bin(out[[idx[i]]], %s)", paste(args, sep=','))))
       }, error = function(err) {
         cat("\nInvalid command entered")
       })
     } else {
       tryCatch({
-        out[[i]] <- eval(parse(text=paste("out[[i]]", command)))
+        out[[idx[i]]] <- eval(parse(text=paste("out[[idx[i]]]", command)))
       }, error = function(err) {
         cat("\nInvalid command entered")
       })
