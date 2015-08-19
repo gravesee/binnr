@@ -106,7 +106,12 @@ bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mo
     except_ones = except_ones,
     except_zero = except_zero,
     history=list(),
-    skip=FALSE
+    skip=FALSE,
+    mono=mono,
+    min.iv=min.iv,
+    exceptions=exceptions,
+    min.cnt=min.cnt,
+    max.bin=max.bin
   ), class = "bin")
 }
 
@@ -238,11 +243,10 @@ collapse.bin.numeric <- function(e1, e2) {
     return(e1)
   }
   
-  #f <- !(e1$x %in% e1$exceptions) & !is.na(e1$x)
-  x <- pmin(e1$x, e2)
-  
-  bin(x, e1$y, e1$name, e1$min.iv, min.cnt = e1$min.ctn, max.bin = e1$max.bin,
-      mono = e1$mono, exceptions = e1$exceptions)
+  b <- bin(pmin(e1$x, e2), e1$y, e1$name, e1$min.iv, min.cnt = e1$min.ctn,
+           max.bin = e1$max.bin, mono = e1$mono, exceptions = e1$exceptions)
+  b$history <- e1
+  b
 }
 
 expand.bin.numeric <- function(e1, e2) {
@@ -537,6 +541,8 @@ binnr bin operations
             n <- suppressWarnings(as.integer(inp))
             if (!is.na(n) & n <= length(sim)) { # check if number entered
               v <- vars[f][sim[n]]
+            } else {
+              v <- inp
             }
           } else {
             cat("No similar variables found")
