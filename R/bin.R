@@ -7,17 +7,12 @@ library(scales)
 library(gridExtra)
 
 woe <- function(x, y, y0, y1) {
-  #if (is.null(tot)) tot <- table(y)
   if (length(x) == 0)  return(NULL)
-  pt  <- table(x, y) # need to make sure dims are the same
-  if (dim(pt)[2] == 2) {
-    pct0 <- pt[,1]/y0
-    pct1 <- pt[,2]/y1
-    woe <- log(pct1/pct0)
-    woe[(is.infinite(woe))] <- 0
-  } else {
-    woe <- NULL
-  }
+  pt <- table(x, factor(y, levels=c(0,1)))
+  pct0 <- pt[,1]/y0
+  pct1 <- pt[,2]/y1
+  woe <- log(pct1/pct0)
+  woe[(is.infinite(woe))] <- 0
   woe
 }
 
@@ -25,7 +20,7 @@ is.bin <- function(x) {
   inherits(x, "bin")
 }
 
-### TODO: pass in own breaks as well if necessary also caps... 
+# TODO: split bin into bin.factor and bin.numeric
 #' @export
 bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
   
@@ -66,15 +61,10 @@ bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mo
     xb <- cut(x[!f], brks, labels = brks[-1]) # x-binned witout na or exceptions
     counts <- table(xb, factor(y[!f], levels=c(0, 1)))
     woe <- woe(xb, y[!f], y0, y1)
-    except_counts <- table(x[f0], y[f0])
-    if (dim(except_counts)[2] != 2) {
-      except_ones <- NULL
-      except_zero <- NULL
-    } else {
-      except_ones <-  except_counts[,2]
-      except_zero <-  except_counts[,1]
-    }
     
+    except_counts <- table(x[f0], factor(y[f0], levels=c(0,1)))
+    except_zero <- except_counts[,1]
+    except_ones <- except_counts[,2]
     except_woe <- if(any(f0) & all(c(y0, y1)) > 0) woe(x[f0], y[f0], y0, y1) else 0
     
     map <- NULL
@@ -89,7 +79,7 @@ bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mo
     brks <- levels(x)
     exceptions <- NULL
     except_woe <- NULL
-    counts <- table(x, y)
+    counts <- table(x, factor(y, levels=c(0,1)))
     except_ones <- NULL
     except_zero <- NULL
   }
@@ -115,11 +105,6 @@ bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mo
     except_ones = except_ones,
     except_zero = except_zero,
     history=list(),
-    min.iv=min.iv,
-    min.cnt = min.cnt,
-    max.bin=max.bin,
-    mono=mono,
-    exceptions=exceptions,
     skip=FALSE
   ), class = "bin")
 }
@@ -139,16 +124,13 @@ predict.bin <- function(object, x) {
     res <- ifelse(is.na(x), NA, object$values[unlist(object$map[x])])
   }
   
-  res[is.na(res)] <- object$na # nas
+  res[is.na(res)] <- object$na
   
   names(res) <- NULL
   return(res)
 }
 
 bin.list <- function(bins){
-  #names <- names(bins)
-  #if(is.null(names)) stop("list of bins must be named")
-  #stopifnot(length(bins) == length(names))
   stopifnot(all(sapply(bins, is.bin)))
   structure(bins, class='bin.list')
 }
@@ -175,6 +157,7 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
     flush.console()
     
     # allow for any mono relationship
+    # TODO: move mono == 2 to bin.c
     if (.mono[nm] == 2) {
       bins <- list(
         bin(df[,nm], y, name = nm, mono=-1, exceptions=.exceptions[[nm]], ...),
