@@ -22,7 +22,7 @@ is.bin <- function(x) {
 
 # TODO: split bin into bin.factor and bin.numeric
 #' @export
-bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=20, mono=0, exceptions=NULL){
+bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=NULL){
   
   if (is.bin(x)) {
     b <- bin(x$x, x$y, x$name, min.iv, min.cnt, max.bin, mono, exceptions)
@@ -38,16 +38,17 @@ bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=20, mo
   if (is.null(min.cnt)) min.cnt <- sqrt(length(x))
   stopifnot(min.cnt > 0)
   
-  if (all(is.na(x))) {
-    stop("All independent variables are missing!")
-  }
-  
   # filter NAs and special values
   f0 <- x %in% exceptions
   f1 <- is.na(x)
   f <- f1 | f0
   y0 <- sum(y[!f1] == 0)
   y1 <- sum(y[!f1] == 1)
+  
+  if (all(is.na(x[!f0]))) {
+    warning("\nnon-exception levels are all NA: ", name)
+    return(NULL)
+  }
   
   # different approach for factors and numerics
   
@@ -151,12 +152,14 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   
   dashes <- c('\\','|','/','-')
   
+  drop.vars <- list()
   res <- list()
   for (i in seq_along(vars)) {
     nm <- vars[i]
     cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(vars))))
     flush.console()
-    res[[nm]] <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
+    b <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
+    if (!is.null(b)) res[[nm]] <- b
   }
   cat("\n")
   
