@@ -23,7 +23,7 @@ struct opts {
 };
 
 // prototype for main working function
-size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot, struct opts opts);
+size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot, struct opts* opts);
 
 SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP monotonicity, SEXP except);
 

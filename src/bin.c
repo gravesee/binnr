@@ -30,7 +30,7 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono, SEXP e
   // bin the variable until it's done
   while(!is_empty(q)) {
     struct work w = dequeue(q); // take work from queue
-    size_t split = find_best_split(w.start, w.stop, xtab, grand_tots, o);
+    size_t split = find_best_split(w.start, w.stop, xtab, grand_tots, &o);
     
     if ((split != -1) & (num_bins < o.max_bin)) { // split found!
       num_bins++;
@@ -71,7 +71,7 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono, SEXP e
   return R_NilValue;
 }
 
-size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot, struct opts o) {
+size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot, struct opts* o) {
   
   //double* tot = get_xtab_totals(xtab, start, stop + 1);
   double tot[2] = {0}; 
@@ -83,9 +83,9 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
   // need totals without exceptions
   for (size_t i = start; i <= stop; i++) {
     int skip = 0;
-    if (LENGTH(o.except) > 0) {
-      for (size_t j = 0; j < LENGTH(o.except); j++){
-        if (xtab->values[i] == REAL(o.except)[j]) skip = 1;
+    if (LENGTH(o->except) > 0) {
+      for (size_t j = 0; j < LENGTH(o->except); j++){
+        if (xtab->values[i] == REAL(o->except)[j]) skip = 1;
       }
     }
     
@@ -101,10 +101,10 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
     valid = 0;
     
     int skip = 0;
-    if (LENGTH(o.except) > 0) {
-      for (size_t j = 0; j < LENGTH(o.except); j++){
+    if (LENGTH(o->except) > 0) {
+      for (size_t j = 0; j < LENGTH(o->except); j++){
         // Rprintf("exception: %f\n", REAL(o.except)[j]);
-        if (xtab->values[i] == REAL(o.except)[j]) skip = 1;
+        if (xtab->values[i] == REAL(o->except)[j]) skip = 1;
       }
     }
     
@@ -118,16 +118,16 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
     struct iv iv = calc_iv(asc, dsc, grand_tot);
     int woe_sign = (iv.asc_woe > iv.dsc_woe) ? 1 : -1;
     
-    if ((asc[0] + asc[1]) < o.min_cnt) { // minsplit
+    if ((asc[0] + asc[1]) < o->min_cnt) { // minsplit
       valid = -1;
-    } else if ((dsc[0] + dsc[1]) < o.min_cnt) { // minsplit
+    } else if ((dsc[0] + dsc[1]) < o->min_cnt) { // minsplit
       valid = -1;
-    } else if (iv.iv < o.min_iv) { // min iv
+    } else if (iv.iv < o->min_iv) { // min iv
       valid = -1;
     } else if (isinf(iv.iv)) { // infinite iv
       valid = -1;
-    } else if (o.mono != 0) {
-      if (woe_sign != o.mono) {
+    } else if (o->mono == 1 | o->mono == -1) {
+      if (woe_sign != o->mono) {
         valid = -1;
       }
     }
@@ -135,6 +135,7 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
     if ((valid != -1) & (iv.iv > best_iv)) {
       best_iv = iv.iv;
       best_split_idx = i;
+      if (o->mono == 2) o->mono = woe_sign;
     }
   }
   

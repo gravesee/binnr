@@ -33,7 +33,7 @@ bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mo
   # Error checking 
   stopifnot(length(x) == length(y))
   if (is.na(mono)) mono <- 0
-  stopifnot(mono %in% c(-1,0,1))
+  stopifnot(mono %in% c(-1,0,1,2))
   stopifnot(max.bin > 0)
   if (is.null(min.cnt)) min.cnt <- sqrt(length(x))
   stopifnot(min.cnt > 0)
@@ -152,24 +152,9 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   res <- list()
   for (i in seq_along(vars)) {
     nm <- vars[i]
-    
     cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(vars))))
     flush.console()
-    
-    # allow for any mono relationship
-    # TODO: move mono == 2 to bin.c
-    if (.mono[nm] == 2) {
-      bins <- list(
-        bin(df[,nm], y, name = nm, mono=-1, exceptions=.exceptions[[nm]], ...),
-        bin(df[,nm], y, name = nm, mono= 1, exceptions=.exceptions[[nm]], ...))
-      
-      ivs <- c(as.data.frame(bins[[1]])['Total', 'IV'],
-               as.data.frame(bins[[2]])['Total', 'IV'])
-      
-      res[[nm]] <- bins[[which.max(ivs)]]
-    } else {
-      res[[nm]] <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
-    }
+    res[[nm]] <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
   }
   cat("\n")
   
