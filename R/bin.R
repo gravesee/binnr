@@ -454,19 +454,20 @@ plot.bin <- function(x, y, ...) {
   
   g2 <- ggplot(plt, aes(x=Range, y=WoE, fill=WoE)) +
     geom_bar(stat="identity", position="identity") +
-    scale_fill_gradient(low="blue", high="red") + coord_flip() + plt.theme
+    scale_fill_gradient(low="blue", high="red") + coord_flip() +
+    theme(legend.position="none")
   
   g3 <- ggplot(plt, aes(x=Range, y=Prob)) +
     geom_bar(stat="identity", position="identity") +
     geom_hline(yintercept=tmp[nrow(tmp),6], col="red", size=1) +
-    coord_flip() + plt.theme
+    coord_flip()
   
   grid.newpage()
-  pushViewport(viewport(layout = grid.layout(2, 3, heights = unit(c(1, 10), "null"))))
-  grid.text(x$name, vp = viewport(layout.pos.row = 1, layout.pos.col = 1:3))
+  pushViewport(viewport(layout = grid.layout(4, 1, heights = unit(c(1, 8, 8, 8), "null"))))
+  grid.text(x$name, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
   print(g1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
-  print(g2, vp = viewport(layout.pos.row = 2, layout.pos.col = 2))
-  print(g3, vp = viewport(layout.pos.row = 2, layout.pos.col = 3))  
+  print(g2, vp = viewport(layout.pos.row = 3, layout.pos.col = 1))
+  print(g3, vp = viewport(layout.pos.row = 4, layout.pos.col = 1))
 }
 
 #' @export
