@@ -2,10 +2,6 @@
 #' @import ggplot2
 #' @import grid
 
-library(ggplot2)
-library(scales)
-library(gridExtra)
-
 woe <- function(x, y, y0, y1) {
   if (length(x) == 0)  return(NULL)
   pt <- table(x, factor(y, levels=c(0,1)))
