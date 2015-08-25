@@ -1,5 +1,9 @@
-bin2 <- function(x, y, name, min.iv, min.cnt, max.bin, mono, exceptions){
+bin <- function(x, y, name, min.iv, min.cnt, max.bin, mono, exceptions){
   UseMethod("bin", x)
+}
+
+bin.factory <- function(x, ...) {
+  UseMethod("bin.factory")
 }
 
 woe <- function(cnts, y) {
@@ -13,7 +17,11 @@ woe <- function(cnts, y) {
 }
 
 cnts <- function(x, y) {
-  table(x, factor(y, levels=c(0,1)), useNA='ifany')
+  tbl <- table(x, factor(y, levels=c(0,1)), useNA='ifany')
+  if (sum(tbl) == 0) return(matrix(nrow = 0, ncol=2))
+  out <- matrix(tbl, ncol=2)
+  rownames(out) <- rownames(tbl)
+  out
 }
 
 bin.factory.numeric <- function(x, y, breaks, name, options) {
@@ -51,7 +59,7 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
   counts <- list(
     var=cnts(x[!is.na(x)], y[!is.na(x)]),
     exc=numeric(0),
-    nas=margin.table(cnts(x[is.na(x)], y[is.na(x)]), 2)
+    nas=cnts(factor(x[is.na(x)], levels=NA), y[is.na(x)])
   )
   
   values <- list(
@@ -111,26 +119,33 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin
 
 }
   
-as.data.frame.bin.numeric <- function(x, row.names = NULL, optional = FALSE, ...) {
+as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   cnts <- do.call(rbind, x$core$counts)
-  rnames <- rownames(cnts)
-  if (any(is.na(rnames))) {
-    tots <- apply(cnts[-which(is.na(rnames)),], 2, sum)
-  } else {
-    tots <- apply(cnts, 2, sum)
-  }
+#  rnames <- rownames(cnts)
+#   if (any(is.na(rnames))) { # exclude NAs from total calculations
+#     f <- !is.na(rnames)
+#     tots <- apply(cnts[-which(is.na(rnames)),], 2, sum)
+#   } else {
+#     tots <- apply(cnts, 2, sum)
+#   }
+  f <- !is.na(rownames(cnts))
+  tots <- apply(cnts[f,], 2, sum)
+  
   pcts <- t(apply(cnts, 1, '/',  tots))
   cnts <- cbind(cnts, apply(cnts, 1, sum))
-  woe  <- log(pcts[,2]/pcts[,1])
-  ivs  <- woe * (pcts[,2] - pcts[,1])
+  woe <- na.omit(unlist(x$core$values))
+  ivs <- woe * (pcts[,2] - pcts[,1])
   prob <- cnts[,2] / cnts[,3]
+  pcts[!f,] <- 0
   out <- cbind(cnts, pcts, prob, woe, ivs)
   colnames(out) <- c("#0","#1","N","%0","%1","P(1)","WoE","IV")
-  out
+  
+  # rbind total and output
+  rbind(out, Total=apply(out, 2, sum))
 }
 
 print.bin <- function(x, ...) {
-  print(as.data.frame(x))
+  print(as.data.frame.bin(x))
 }
 
 `-.bin.numeric` <- function(e1, e2) {

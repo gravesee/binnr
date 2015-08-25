@@ -1,23 +1,15 @@
-library(binnr)
+#library(binnr)
 # # 
-titanic <- read.csv('~/Downloads/train.csv', header=T)
-# # data(titanic, package='mjollnir')
+#titanic <- read.csv('~/Downloads/train.csv', header=T)
+data(titanic, package='mjollnir')
 #bins <- bin.data(titanic[,-1], titanic$Survived)
 # # adjust(bins)
 # # #
-# # #x <- titanic$Fare
-# # #y <- titanic$Survived
+x <- titanic$Fare
+y <- titanic$Survived
 # # 
-keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
-bins <- bin.data(titanic[,keep], titanic$Survived, mono=c(ALL=2))
-
-for (i in seq_along(bins)) {
-  x <- bins[[i]]
-  skeleton <- list(v=x$values, n=x$na, e=x$except_woe)
-  flesh <- unlist(skeleton)
-  bins[[i]][] <- sprintf("RC%d%02d", i, seq_along(flesh))
-}
-
+#keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
+#bins <- bin.data(titanic[,keep], titanic$Survived, mono=c(ALL=2))
 
 # # 
 # # # createe an as.data 
