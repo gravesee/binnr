@@ -1,14 +1,24 @@
-#  library(binnr)
+library(binnr)
 # # 
-# # #titanic <- read.csv('~/Downloads/train.csv', header=T)
+titanic <- read.csv('~/Downloads/train.csv', header=T)
 # # data(titanic, package='mjollnir')
-# # bins <- bin.data(titanic[,-1], titanic$Survived)
+#bins <- bin.data(titanic[,-1], titanic$Survived)
 # # adjust(bins)
 # # #
 # # #x <- titanic$Fare
 # # #y <- titanic$Survived
 # # 
-# # #keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
+keep <- c('Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')
+bins <- bin.data(titanic[,keep], titanic$Survived, mono=c(ALL=2))
+
+for (i in seq_along(bins)) {
+  x <- bins[[i]]
+  skeleton <- list(v=x$values, n=x$na, e=x$except_woe)
+  flesh <- unlist(skeleton)
+  bins[[i]][] <- sprintf("RC%d%02d", i, seq_along(flesh))
+}
+
+
 # # 
 # # # createe an as.data 
 # load("F:/SANT1507_5516/R-Santander/rv40_vs_rv50.analysis.rData")

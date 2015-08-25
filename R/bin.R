@@ -75,7 +75,7 @@ bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mo
     woe <- woe(x, y, y0, y1)
     brks <- levels(x)
     exceptions <- NULL
-    except_woe <- NULL
+    except_woe <- numeric(0)
     counts <- table(x, factor(y, levels=c(0,1)))
     except_ones <- NULL
     except_zero <- NULL
@@ -107,28 +107,45 @@ bin <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mo
     min.iv=min.iv,
     exceptions=exceptions,
     min.cnt=min.cnt,
-    max.bin=max.bin
+    max.bin=max.bin,
+    rcs=NULL
   ), class = "bin")
 }
 
 #' @export
-predict.bin <- function(object, x) {
+predict.bin <- function(object, x, type=NULL) {
   # two types of maps -- numeric and character/factor 
   if (is.numeric(x)) {
-    res <- object$values[cut(x, object$breaks, labels = FALSE)]
-    
-    if (length(object$exceptions) != 0) { # exception values
-      for (i in seq_along(object$exceptions)) {
-        res[x == object$exceptions[i]] <- object$except_woe[i]
+    if (type == "RCS") {
+      res <- object$rcs$v[cut(x, object$breaks, labels = FALSE)]
+      if (length(object$exceptions) != 0) { # exception values
+        for (i in seq_along(object$exceptions)) {
+          res[x == object$exceptions[i]] <- object$rcs$e[i]
+        }
+      }
+    } else {
+      res <- object$values[cut(x, object$breaks, labels = FALSE)]
+      if (length(object$exceptions) != 0) { # exception values
+        for (i in seq_along(object$exceptions)) {
+          res[x == object$exceptions[i]] <- object$except_woe[i]
+        }
       }
     }
   } else {
     res <- numeric(length(x))
     res[is.na(x)] <- NA
-    res[!is.na(x)] <- object$values[unlist(object$map[x])]
+    if (type == "RCS") {
+      res[!is.na(x)] <- object$rcs$v[unlist(object$map[x])]
+    } else {
+      res[!is.na(x)] <- object$values[unlist(object$map[x])]
+    }
   }
   
-  res[is.na(res)] <- object$na
+  if (type == "RCS") {
+    res[is.na(res)] <- object$rcs$n
+  } else {
+    res[is.na(res)] <- object$na
+  }
   
   names(res) <- NULL
   return(res)
@@ -168,7 +185,7 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
 }
 
 #' @export
-predict.bin.list <- function(object, newdata) {
+predict.bin.list <- function(object, newdata, type="WOE") {
   if (is.null(names(object))) stop("bin.list object must have names attribute")
   if(is.null(colnames(newdata))) stop("newdata requires column names")
   
@@ -184,7 +201,7 @@ predict.bin.list <- function(object, newdata) {
     cat(sprintf("\rProgress: %%%3d", as.integer(100*i/length(vars))))
     flush.console()
     if (!object[[nm]]$skip) {
-      res[[vars[i]]] <- predict(object[[nm]], newdata[,nm])
+      res[[vars[i]]] <- predict(object[[nm]], newdata[,nm], type)
     }
   }
   cat("\n")
