@@ -1,5 +1,10 @@
-### functions for exporting bin objects to SAS code
-sas <- function(x, ...) {
+#' Create character vector of SAS code for printing
+#' 
+#' @param x a \code{bin} or \code{bin.list} object
+#' @return a character vector of SAS statements. Use \code{cat} to export
+
+#' @export
+sas <- function(x) {
   UseMethod("sas", x)
 }
 

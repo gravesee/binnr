@@ -1,7 +1,34 @@
-#' @import ggplot2
-#' @import grid
-#' @useDynLib binnr
-
+#' Bin variables for credit modeling
+#' 
+#' @description bin returns a \code{bin} object containing information necessary
+#' for modeler interaction. With a \code{bin} object, a modeler can collapse,
+#' expand, neutralize, cap, and predict variable transformations
+#' 
+#' @param x a \code{factor} or \code{numeric} variable. Can also be a
+#' \code{data.frame} in which case a \code{bin.list} object is returned.
+#' @param y a binary response variable
+#' @param name the name used for plotting and printing. Automatically supplied
+#' if called on a \code{data.frame}
+#' @param min.iv minimum information value required to split a continuous
+#' predictor
+#' @param min.cnt minimum number of observations to split a continuous
+#' predictor. Defaults to the square root of the number of observations.
+#' @param max.bin maximum number of levels in resulting discretized, continuous
+#' predictor.
+#' @param mono monotonicity constraint for binning algorith. \code{binnr} uses 
+#' the sane assumption that the 1-labelled target is of most interest. Therefore
+#' monotonicity of 1 implies the target rate increases with the predictor. The
+#' opposite for -1. A value of 0 enforces no monotonicity constraint and a 2
+#' enforces *any* monotonic constraint but doesn't assume a particular
+#' direction. If \code{bin} is used on a \code{data.frame}, mono can be a named
+#' vector. The reserved name ALL is used for global values.
+#' @param exceptions a \code{list} of values to be excluded from the binning
+#' algorithm. These levels count towards weight of evidence calculations but are
+#' not collapsed. Exceptions values for \code{factors} are ignored. A reserved
+#' name, ALL, can be used to supply global exception values.
+#' 
+#' @return a \code{bin} or \code{bin.list} object
+#' 
 #' @export
 bin <- function(x, y, name, min.iv, min.cnt, max.bin, mono, exceptions){
   UseMethod("bin", x)
@@ -81,7 +108,6 @@ print.bin <- function(x, ...) {
   #print(as.data.frame.bin(x))
 }
 
-#' @export
 `!=.bin` <- function(e1, e2) {
   # TODO: add bounds checking for NAs
   y <- e1$data$y
