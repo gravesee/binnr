@@ -1,3 +1,4 @@
+#' @export
 bin.factory.factor <- function(x, y, breaks, name, options) {
   counts <- list(
     var=cnts(x[!is.na(x)], y[!is.na(x)]),
@@ -26,6 +27,7 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
   
 }
 
+#' @export
 bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=numeric(0)) {
   if(is.null(min.cnt)) min.cnt <- sqrt(length(x))
   
@@ -43,6 +45,7 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin
   
 }
 
+#' @export
 `-.bin.factor` <- function(e1, e2) {
   x <- e1$data$x
   map <- e1$core$breaks
@@ -56,6 +59,7 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin
   b
 }
 
+#' @export
 `+.bin.factor` <- function(e1, e2) {
   x <- e1$data$x
   map <- e1$core$breaks
@@ -69,6 +73,7 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin
   b
 }
 
+#' @export
 predict.bin.factor <- function(object, x, ...) {
   vals <- object$core$values$var
   res <- numeric(length(x))

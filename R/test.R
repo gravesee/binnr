@@ -13,10 +13,10 @@ y <- titanic$Survived
 
 # # 
 # # # createe an as.data 
-# load("F:/SANT1507_5516/R-Santander/rv40_vs_rv50.analysis.rData")
-# mono <- mono50
-# mono[seq_along(mono50)] <- 2
-# bins <- bin.data(rv50[,keep50], rv50$depvar, mono=mono, min.iv=0, exceptions=list(ALL=-1))
+load("F:/SANT1507_5516/R-Santander/rv40_vs_rv50.analysis.rData")
+#mono <- mono50
+#mono[seq_along(mono50)] <- 2
+#bins <- bin(rv50[,keep50], rv50$depvar, mono=c(ALL=2), min.iv=0, exceptions=list(ALL=-1))
 # # 
 # # 
 # # 

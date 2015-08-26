@@ -1,11 +1,18 @@
+#' @import ggplot2
+#' @import grid
+#' @useDynLib binnr
+
+#' @export
 bin <- function(x, y, name, min.iv, min.cnt, max.bin, mono, exceptions){
   UseMethod("bin", x)
 }
 
+#' @export
 bin.factory <- function(x, ...) {
   UseMethod("bin.factory")
 }
 
+#' @export
 is.bin <- function(x) {
   inherits(x, "bin")
 }
@@ -28,6 +35,7 @@ cnts <- function(x, y) {
   out
 }
 
+#' @export
 as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   # create filters excluding NAs
   cnts <- do.call(rbind, x$core$counts)
@@ -58,6 +66,7 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   out
 }
 
+#' @export
 print.bin <- function(x, ...) {
   out <- as.data.frame(x)
   iv <- out['Total', 'IV']
@@ -72,13 +81,13 @@ print.bin <- function(x, ...) {
   #print(as.data.frame.bin(x))
 }
 
-# need to zero out the counts
+#' @export
 `!=.bin` <- function(e1, e2) {
   # TODO: add bounds checking for NAs
   y <- e1$data$y
   zero <- unlist.matrix(e1, 1, e2)
   ones <- unlist.matrix(e1, 2, e2)
-  counts <- mapply(cbind, zero, ones)
+  counts <- mapply(cbind, zero, ones, SIMPLIFY = F)
   
   tots <- matrix(apply(rbind(counts$var, counts$exc), 2, sum), ncol=2)
   
@@ -100,6 +109,7 @@ unlist.matrix <- function(b, i, e2) {
   relist(flesh, skeleton)
 }
 
+#' @export
 reset <- function(b) {
   do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
 }

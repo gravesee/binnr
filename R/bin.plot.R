@@ -24,12 +24,12 @@ plot.bin <- function(x, y, ...) {
     geom_bar(stat="identity", position="identity") + 
     coord_flip()
   
-  g2 <- ggplot(plt, aes_string(x="Range", y="WoE", fill="WoE")) +
+  g2 <- ggplot(plt, aes(x=Range, y=WoE, fill=WoE)) +
     geom_bar(stat="identity", position="identity") +
     scale_fill_gradient(low="blue", high="red") + coord_flip() +
     theme(legend.position="none")
   
-  g3 <- ggplot(plt, aes_string(x="Range", y="Prob")) +
+  g3 <- ggplot(plt, aes(x=Range, y=Prob)) +
     geom_bar(stat="identity", position="identity") +
     geom_hline(yintercept=full["Total","P(1)"], col="red", size=1) +
     coord_flip()

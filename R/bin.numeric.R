@@ -1,7 +1,8 @@
+#' @export
 bin.factory.numeric <- function(x, y, breaks, name, options) {
   exc <- (x %in% options$exceptions)
   f   <- !(is.na(x) | exc)
-  xb  <- cut(x[f], breaks)
+  xb  <- cut(x[f], breaks, dig.lab = 10)
   
   counts <- list(
     var=cnts(xb, y[f]),
@@ -11,7 +12,7 @@ bin.factory.numeric <- function(x, y, breaks, name, options) {
   
   values <- list(
     var=woe(counts$var, y[!is.na(x)]),
-    exc=woe(counts$exc, y[exc]),
+    exc=woe(counts$exc, y[!is.na(x)]),
     nas=woe(counts$nas, y[is.na(x)])
   )
   
@@ -30,6 +31,7 @@ bin.factory.numeric <- function(x, y, breaks, name, options) {
   
 }
 
+#' @export
 bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=numeric(0)) {
   if(is.null(min.cnt)) min.cnt <- sqrt(length(x))
   
@@ -45,11 +47,10 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bi
           as.integer(min.cnt), as.integer(max.bin), as.integer(mono),
           as.double(exceptions))
   
-  
   bin.factory.numeric(x, y, breaks, name, options)
-  
 }
 
+#' @export
 `-.bin.numeric` <- function(e1, e2) {
   # need to handle when 1 is included in the range
   # error check that the range is continuous
@@ -62,6 +63,7 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bi
   b
 }
 
+#' @export
 `+.bin.numeric` <- function(e1, e2) {
   # insert new break points into selected bin range
   b <- e1$core$breaks
@@ -78,13 +80,16 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bi
   b
 }
 
+#' @export
 `<=.bin.numeric` <- function(e1, e2) {
-  new_breaks <- c(unique(pmin(e1$core$breaks, e2)), Inf)
-  b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
+  b <- do.call(bin,c(list(x=pmin(e1$data$x, e2), y=e1$data$y, name=e1$name),
+                     e1$opts))
   b$history <- e1
+  b$data$x <- e1$data$x
   b
 }
 
+#' @export
 predict.bin.numeric <- function(object, x, ...) {
   breaks <- object$core$breaks
   values <- object$core$values

@@ -4,7 +4,12 @@ bin.list <- function(bins){
 }
 
 #' @export
-bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
+is.bin.list <- function(x) {
+  inherits(x, "bin.list")
+}
+
+#' @export
+bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   stopifnot(is.list(exceptions))
   
   vars <- colnames(df)
@@ -31,6 +36,7 @@ bin.data <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   return(bin.list(res))
 }
 
+#' @export
 predict.bin.list <- function(object, newdata) {
   if (is.null(names(object))) stop("bin.list object must have names attribute")
   if (is.null(colnames(newdata))) stop("newdata requires column names")
@@ -56,6 +62,7 @@ predict.bin.list <- function(object, newdata) {
   return(res)
 }
 
+#' @export
 print.bin.list <- function(x, n=NULL) {
   if (is.null(n)) {
     n <- 1:length(x)
@@ -69,4 +76,23 @@ print.bin.list <- function(x, n=NULL) {
   for (b in x[order(-ivs)]) {
     print(b)
   }
+}
+
+#' @export
+`!=.bin.list` <- function(e1, e2) {
+  stopifnot(is.bin.list(e1))
+  out <- e1
+  for (i in seq_along(e1)) {
+    b <- as.data.frame(e1[[i]])
+    nms <- rownames(as.data.frame(b))
+    nms <- nms[-which(nms %in% c("Missing", "Total"))]
+    nms <- sapply(strsplit(nms, '^\\s*\\d+\\.'), '[[', 2)
+    nms <- gsub('\\s*', '', nms)
+    
+    d <- nms %in% e2
+    if (any(d)) {
+      out[[i]] <- e1[[i]] != which(d)
+    }
+  }
+  eval(parse(text = paste(substitute(e1), "<<- out")))
 }

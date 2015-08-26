@@ -3,7 +3,6 @@ adjust <- function(x, vars=NULL, min.iv=0) {
   eval(parse(text = paste(substitute(x), "<<- adjust.bins(x, vars, min.iv)")))
 }
 
-#' @export
 adjust.bins <- function(x, vars=NULL, min.iv=0) {
   
   if (is.null(vars)) vars <- names(x)
