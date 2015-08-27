@@ -4,7 +4,7 @@
 \alias{sas}
 \title{Create character vector of SAS code for printing}
 \usage{
-sas(x, ...)
+sas(x)
 }
 \arguments{
 \item{x}{a \code{bin} or \code{bin.list} object}
