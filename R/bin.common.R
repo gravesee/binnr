@@ -140,6 +140,12 @@ reset <- function(b) {
   do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
 }
 
+mono <- function(b, v) {
+  v <- if(v %in% c(-1,0,1,2)) v else 0
+  b$opts$mono <- v
+  do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
+}
+
 #' @export
 undo <- function(x) {
   if (is.null(x$history)) return(x)

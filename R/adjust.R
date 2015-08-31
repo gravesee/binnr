@@ -1,21 +1,15 @@
 #' @export
-adjust <- function(x, vars=NULL, min.iv=0) {
-  eval(parse(text = paste(substitute(x), "<<- adjust.bins(x, vars, min.iv)")))
+adjust <- function(x) {
+  eval(parse(text = paste(substitute(x), "<<- adjust.bins(x)")))
 }
 
-adjust.bins <- function(x, vars=NULL, min.iv=0) {
-  
-  if (is.null(vars)) vars <- names(x)
-  ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])
-  f <- (names(x) %in% vars) & (ivs >= min.iv)
-  idx <- seq_along(names(x))[f]
-  
+adjust.bins <- function(x) {
   out <- x
   i <- 1
-  while(i <= length(idx)) {
-    cat("\014")
-    print(out[[idx[i]]])
-    plot(out[[idx[i]]])
+  while(i <= length(x)) {
+    #cat("\014") # clear the console
+    print(out[[i]])
+    plot(out[[i]])
     cat ("\nEnter command (Q to quit):")
     command <- readLines(n = 1)
     if (command == "Q") {
@@ -27,6 +21,7 @@ adjust.bins <- function(x, vars=NULL, min.iv=0) {
  (n)ext
  (p)revious
  (g)oto
+ (m)ono
  (u)ndo
  (r)eset
  (d)rop
@@ -42,18 +37,18 @@ binnr bin operations
       v <- readLines(n = 1)
       # find the position of the variable
       while (v != "Q") {
-        pos <- which(vars[f] == v)[1]
+        pos <- which(names(x) == v)[1]
         if (is.na(pos)) {
           # find similar matches
-          sim <- agrep(v, vars[f], ignore.case = T, max.distance = 0.1)
+          sim <- agrep(v, names(x), ignore.case = T, max.distance = 0.1)
           if (length(sim) > 0){
             cat(sprintf("%s not found, similar matches:", v))
-            cat(sprintf("\n %2d: %s", seq_along(sim), vars[f][sim]))
+            cat(sprintf("\n %2d: %s", seq_along(sim), names(x)[sim]))
             cat("\nGoto variable:")
             inp <- readLines(n = 1)
             n <- suppressWarnings(as.integer(inp))
             if (!is.na(n) & n <= length(sim)) { # check if number entered
-              v <- vars[f][sim[n]]
+              v <- names(x)[sim[n]]
             } else {
               v <- inp
             }
@@ -70,8 +65,11 @@ binnr bin operations
         }
       }
     } else if (command == "d") {
-      out[[idx[i]]]$skip <- !out[[idx[i]]]$skip
-      #i <- i + 1
+      out[[i]]$skip <- !out[[i]]$skip
+    } else if (command == "m") {
+      cat("Enter Monotonicity:")
+      v <- readLines(n = 1)
+      out[[i]] <- mono(out[[i]], v)
     } else if (command == "n") {
       i <- i + 1
     } else if (command == "p") {
@@ -81,16 +79,16 @@ binnr bin operations
         cat("\nAt beginning of list")
       }
     } else if (command == "u") {
-      out[[idx[i]]] <- undo(out[[idx[i]]])
+      out[[i]] <- undo(out[[i]])
     } else if (command == "r") {
-      out[[idx[i]]] <- eval(parse(text=sprintf("reset(out[[idx[i]]])")))
+      out[[i]] <- eval(parse(text=sprintf("reset(out[[i]])")))
     } else {
       tryCatch({
-        out[[idx[i]]] <- eval(parse(text=paste("out[[idx[i]]]", command)))
+        out[[i]] <- eval(parse(text=paste("out[[i]]", command)))
       }, error = function(err) {
         cat("\nInvalid command entered")
       })
     }
   }
-  out
+  return(out)
 }
