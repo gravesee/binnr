@@ -1,13 +1,9 @@
 #' @export
 adjust <- function(x) {
-  eval(parse(text = paste(substitute(x), "<<- adjust.bins(x)")))
-}
-
-adjust.bins <- function(x) {
   out <- x
   i <- 1
   while(i <= length(x)) {
-    #cat("\014") # clear the console
+    cat("\014") # clear the console
     print(out[[i]])
     plot(out[[i]])
     cat ("\nEnter command (Q to quit):")
@@ -30,8 +26,9 @@ binnr bin operations
  + <#>  : Expand level
  - <#>  : Collapse level(s)
  <= <#> : Cap at # and rebin\n")
-      cat("Press [Enter] to continue")
-      scan(n=1)
+      cat("Press any key to continue")
+      readLines(n=1)
+      invisible()
     } else if (command == "g") {
       cat("Goto variable:")
       v <- readLines(n = 1)

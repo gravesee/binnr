@@ -4,6 +4,11 @@ bin.list <- function(bins){
 }
 
 #' @export
+`[.bin.list` <- function(x, i) {
+  binnr:::bin.list(unclass(x)[i])
+}
+
+#' @export
 is.bin.list <- function(x) {
   inherits(x, "bin.list")
 }
@@ -11,7 +16,7 @@ is.bin.list <- function(x) {
 #' @export
 bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   stopifnot(is.list(exceptions))
-  
+
   vars <- colnames(df)
   .mono <- rep(mono["ALL"], ncol(df))
   names(.mono) <- vars
@@ -19,9 +24,9 @@ bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...)
   .exceptions <- rep(list(exceptions[['ALL']]), length.out=ncol(df))
   names(.exceptions) <- vars
   .exceptions[names(exceptions)] <- exceptions
-  
+
   dashes <- c('\\','|','/','-')
-  
+
   drop.vars <- list()
   res <- list()
   for (i in seq_along(vars)) {
@@ -32,7 +37,7 @@ bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...)
     if (!is.null(b)) res[[nm]] <- b
   }
   cat("\n")
-  
+
   return(bin.list(res))
 }
 
@@ -40,13 +45,13 @@ bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...)
 predict.bin.list <- function(object, newdata) {
   if (is.null(names(object))) stop("bin.list object must have names attribute")
   if (is.null(colnames(newdata))) stop("newdata requires column names")
-  
+
   nms <- names(object)
   if (!is.null(nms)) nms <- nms[!(nms == "")]
   vars <- intersect(colnames(newdata), nms)
-  
+
   if (length(vars) == 0) stop("no vars in common between newdata and bin.list")
-  
+
   res <- list()
   for (i in seq_along(vars)) {
     nm <- vars[i]
@@ -69,10 +74,10 @@ print.bin.list <- function(x, n=NULL) {
   } else {
     n <- 1:min(length(x), n)
   }
-  
+
   # TODOD: make iv a part of the bin object?
   ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])
-  
+
   for (b in x[order(-ivs)]) {
     print(b)
   }
@@ -88,7 +93,7 @@ print.bin.list <- function(x, n=NULL) {
     nms <- nms[-which(nms %in% c("Missing", "Total"))]
     nms <- sapply(strsplit(nms, '^\\s*\\d+\\.'), '[[', 2)
     nms <- gsub('\\s*', '', nms)
-    
+
     d <- nms %in% e2
     if (any(d)) {
       out[[i]] <- e1[[i]] != which(d)
