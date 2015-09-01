@@ -1,4 +1,3 @@
-#' @export
 bin.factory.factor <- function(x, y, breaks, name, options) {
   counts <- list(
     var=cnts(x[!is.na(x)], y[!is.na(x)]),

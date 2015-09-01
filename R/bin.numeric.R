@@ -1,4 +1,3 @@
-#' @export
 bin.factory.numeric <- function(x, y, breaks, name, options) {
   exc <- (x %in% options$exceptions)
   f   <- !(is.na(x) | exc)

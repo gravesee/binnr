@@ -27,6 +27,7 @@ base.sas <- function(x) {
   text
 }
 
+#' @export
 sas.bin.numeric <- function(x) {
   text <- base.sas(x)
   
@@ -44,6 +45,7 @@ sas.bin.numeric <- function(x) {
   do.call(c, text)
 }
 
+#' @export
 sas.bin.factor <- function(x) {
   text <- base.sas(x)
   

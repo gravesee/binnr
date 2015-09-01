@@ -34,12 +34,10 @@ bin <- function(x, y, name, min.iv, min.cnt, max.bin, mono, exceptions){
   UseMethod("bin", x)
 }
 
-#' @export
 bin.factory <- function(x, ...) {
   UseMethod("bin.factory")
 }
 
-#' @export
 is.bin <- function(x) {
   inherits(x, "bin")
 }
@@ -108,6 +106,7 @@ print.bin <- function(x, ...) {
   #print(as.data.frame.bin(x))
 }
 
+#' @export
 `!=.bin` <- function(e1, e2) {
   # TODO: add bounds checking for NAs
   y <- e1$data$y
@@ -140,6 +139,7 @@ reset <- function(b) {
   do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
 }
 
+#' @export
 mono <- function(b, v) {
   v <- if(v %in% c(-1,0,1,2)) v else 0
   b$opts$mono <- v
