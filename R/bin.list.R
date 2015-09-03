@@ -112,7 +112,8 @@ summary.bin.list <- function(object, ...) {
       NVar  = sum(b$core$counts$var),
       NExc  = sum(b$core$counts$exc),
       NMiss = sum(b$core$counts$nas),
-      Mono = b$opts$mono
+      Mono = b$opts$mono,
+      stringsAsFactors = F
     )
     colnames(out[[i]]) <- c(
       "Name", "IV", "# Bins", "Tot N", "# Valid",

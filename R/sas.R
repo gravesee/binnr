@@ -49,7 +49,7 @@ sas.bin.numeric <- function(x) {
 sas.bin.factor <- function(x) {
   text <- base.sas(x)
   
-  b <- x$core$breaks
+  b <- unique(x$core$breaks)
   for (i in  seq_along(b)) {
     items <- gsub(',', "','", b[i])
     txt1 <- sprintf("    else if %s in ('%s')", x$name, items)
@@ -61,6 +61,7 @@ sas.bin.factor <- function(x) {
   do.call(c, text)
 }
 
+#' @export
 sas.bin.list <- function(x) {
   out <- list()
   for (i in seq_along(x)) {
@@ -68,3 +69,4 @@ sas.bin.list <- function(x) {
   }
   do.call(c, out)
 }
+
