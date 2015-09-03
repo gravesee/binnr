@@ -85,6 +85,7 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   # total row
   total <- apply(out, 2, sum)
   total["P(1)"] <- total["#1"] / total["N"]
+  total["WoE"] <- 0
   
   # output
   out <- as.data.frame(rbind(out, Total=total))

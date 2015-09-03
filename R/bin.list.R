@@ -68,19 +68,14 @@ predict.bin.list <- function(object, newdata) {
 }
 
 #' @export
-print.bin.list <- function(x, n=NULL) {
-  if (is.null(n)) {
-    n <- 1:length(x)
-  } else {
-    n <- 1:min(length(x), n)
-  }
-
-  # TODOD: make iv a part of the bin object?
-  ivs <- sapply(x, function(x) as.data.frame(x)['Total', 'IV'])
-
-  for (b in x[order(-ivs)]) {
-    print(b)
-  }
+print.bin.list <- function(x) {
+  lvls <- c("bin", "bin.factor", "bin.numeric")
+  cnts <- table(factor(sapply(x, class), levels=lvls))
+  names(cnts) <- c("# Bins", "# Discrete", "# Continuous")
+  cat("binnr bin.list object\n")
+  cat(sprintf("  |-- %3d Bins\n", cnts[1]))
+  cat(sprintf("  |-- %3d Discrete\n", cnts[2]))
+  cat(sprintf("  |-- %3d Continuous\n", cnts[3]))
 }
 
 #' @export
@@ -100,4 +95,30 @@ print.bin.list <- function(x, n=NULL) {
     }
   }
   eval(parse(text = paste(substitute(e1), "<<- out")))
+}
+
+#' @export
+summary.bin.list <- function(object, ...) {
+  # print table showing raw, coarse levels, NAs, # exception, mono, iv
+  out <- list()
+  for (i in seq_along(object)) {
+    b <- object[[i]]
+    df <- as.data.frame(b)
+    out[[i]] <- data.frame(
+      Name  = b$name,
+      IV    = max(df$IV),
+      NBins = nrow(b$core$counts$var),
+      totN  = sum(sapply(b$core$counts, sum)),
+      NVar  = sum(b$core$counts$var),
+      NExc  = sum(b$core$counts$exc),
+      NMiss = sum(b$core$counts$nas),
+      Mono = b$opts$mono
+    )
+    colnames(out[[i]]) <- c(
+      "Name", "IV", "# Bins", "Tot N", "# Valid",
+      "# Exception", "# Missing", "Monotonicty")
+  }
+  out <- as.data.frame(do.call(rbind, out))
+  rownames(out) <- NULL
+  out[order(-out$IV),]
 }

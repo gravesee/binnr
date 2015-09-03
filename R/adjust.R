@@ -23,8 +23,8 @@ adjust <- function(x) {
  (d)rop
 binnr bin operations
  != <#> : Neutralize level
- + <#>  : Expand level
- - <#>  : Collapse level(s)
+ +  <#> : Expand level
+ -  <#> : Collapse level(s)
  <= <#> : Cap at # and rebin\n")
       cat("Press any key to continue")
       readLines(n=1)

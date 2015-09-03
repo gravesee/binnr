@@ -1,11 +1,11 @@
 Package: binnr
 Type: Package
 Title: Create, manage, and explore variable binnings for model development
-Version: 1.0
+Version: 0.9
 Date: 2015-07-06
 Author: Eric E. Graves
 Maintainer: Eric E. Graves <gravcon5@gmail.com>
-Description: To be continued!
+Description: Binnr provides an environment for scorecard model development
 Imports:
     ggplot2,
     grid
