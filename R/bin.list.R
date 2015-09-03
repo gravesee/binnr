@@ -39,6 +39,7 @@ bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...)
   cat("\n")
 
   return(bin.list(res))
+  #return(res)
 }
 
 #' @export
