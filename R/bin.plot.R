@@ -1,6 +1,12 @@
 library(ggplot2)
 library(grid)
 
+# create "empty" themes for certain elements
+plt.theme <- theme(
+  axis.line=element_blank(),
+  axis.text.y=element_blank(),axis.ticks=element_blank(),
+  axis.title.y=element_blank(),legend.position="none")
+
 #' @export
 plot.bin <- function(x, y, ...) {
   # coerce bin into data.frame
@@ -13,12 +19,6 @@ plot.bin <- function(x, y, ...) {
   plt$Range <- factor(rng, levels=rev(unique(rng)))
   plt$WoE[is.nan(plt$WoE) | is.infinite(plt$WoE)] <- 0
   colnames(plt)[6] <- "Prob"
-  
-  # create "empty" themes for certain elements
-  plt.theme <- theme(
-    axis.line=element_blank(),
-    axis.text.y=element_blank(),axis.ticks=element_blank(),
-    axis.title.y=element_blank(),legend.position="none")
   
   g1 <- ggplot(plt, aes(x=Range, y=N)) +
     geom_bar(stat="identity", position="identity") + 
