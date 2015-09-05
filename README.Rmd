@@ -191,10 +191,13 @@ Creating a table of the WoE-substituted values with the original values
 illustrates what `binnr` is doing behind the scenes:
 
 ```{r, echo = TRUE}
-table(titanic$Pclass, round(binned[,'Pclass'], 3))
+bins$Embarked
+
+table(titanic$Embarked, round(binned[,'Embarked'], 3))
 ```
-We can verify that values of `male` are being coded correctly to the value found
-in the WoE table. The same holds true for `female`.
+
+The raw values of the Embarked attribtue are mapped to the WoE value found
+in the Embarked `bin` object.
 
 ### Logistic Regression
 

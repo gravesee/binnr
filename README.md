@@ -226,15 +226,27 @@ illustrates what `binnr` is doing behind the scenes:
 
 
 ```r
-table(titanic$Pclass, round(binned[,'Pclass'], 3))
+bins$Embarked
+
+IV: 0.12237 | Variable: Embarked
+       #0  #1   N    %0    %1  P(1)    WoE      IV
+ 1.     0   2   2 0.000 0.006 1.000  0.000 0.00000
+ 2. C  75  93 168 0.137 0.272 0.554  0.688 0.09315
+ 3. Q  47  30  77 0.086 0.088 0.390  0.024 0.00005
+ 4. S 427 217 644 0.778 0.635 0.337 -0.204 0.02917
+Total 549 342 891 1.000 1.000 0.384  0.000 0.12237
+
+table(titanic$Embarked, round(binned[,'Embarked'], 3))
    
-    -0.666 0.364 1.004
-  1      0     0   216
-  2      0   184     0
-  3    491     0     0
+    -0.204   0 0.024 0.688
+         0   2     0     0
+  C      0   0     0   168
+  Q      0   0    77     0
+  S    644   0     0     0
 ```
-We can verify that values of `male` are being coded correctly to the value found
-in the WoE table. The same holds true for `female`.
+
+The raw values of the Embarked attribtue are mapped to the WoE value found
+in the Embarked `bin` object.
 
 ### Logistic Regression
 

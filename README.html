@@ -61,8 +61,8 @@ img {
 
 
 
-<div id="what-is-binner" class="section level1">
-<h1>What is <code>binner</code>?</h1>
+<div id="what-is-binnr" class="section level1">
+<h1>What is <code>binnr</code>?</h1>
 <p><code>binnr</code> is a package that creates, manages, and applies simple binning transformations. It makes scorecard modeling easy and fast. Using <code>binnr</code>, a modeler can discretize continuous variables, expand &amp; collapse bins, and apply monotonicity constraints all from within an easy-to-use interface.</p>
 <p><code>binnr</code> not only discretizes variables and provides functions for manipulating them, but also performs weight-of-evidence substitution on a dataset, transforming all predictors to the same scale and making them continuous. This has a number of benefits:</p>
 <ol style="list-style-type: decimal">
@@ -103,7 +103,7 @@ img {
 </tr>
 </tbody>
 </table>
-<p>Of special note is the value of 2. The algorithm implements this by making the first split in <strong>any</strong> direction and then uses that direction for the rest of the splits. This often results in the best monotonic relationship without specifying the direction apriori.</p>
+<p>Of special note is the value of 2. The algorithm implements this by making the first split in <em>any</em> direction and then uses that direction for the rest of the splits. This often results in the best monotonic relationship without specifying the direction apriori.</p>
 </div>
 <div id="exception-values" class="section level4">
 <h4>Exception Values</h4>
@@ -255,13 +255,23 @@ print(s)
 5 -0.6664827 -0.9838327  0.5805232 -0.1660568 -0.1737481 -0.9238176 -0.20359896
 6 -0.6664827 -0.9838327  0.0000000 -0.1660568 -0.1737481 -0.9238176  0.02433748</code></pre>
 <p>Creating a table of the WoE-substituted values with the original values illustrates what <code>binnr</code> is doing behind the scenes:</p>
-<pre class="r"><code>table(titanic$Pclass, round(binned[,'Pclass'], 3))
+<pre class="r"><code>bins$Embarked
+
+IV: 0.12237 | Variable: Embarked
+       #0  #1   N    %0    %1  P(1)    WoE      IV
+ 1.     0   2   2 0.000 0.006 1.000  0.000 0.00000
+ 2. C  75  93 168 0.137 0.272 0.554  0.688 0.09315
+ 3. Q  47  30  77 0.086 0.088 0.390  0.024 0.00005
+ 4. S 427 217 644 0.778 0.635 0.337 -0.204 0.02917
+Total 549 342 891 1.000 1.000 0.384  0.000 0.12237
+table(titanic$Embarked, round(binned[,'Embarked'], 3))
    
-    -0.666 0.364 1.004
-  1      0     0   216
-  2      0   184     0
-  3    491     0     0</code></pre>
-<p>We can verify that values of <code>male</code> are being coded correctly to the value found in the WoE table. The same holds true for <code>female</code>.</p>
+    -0.204   0 0.024 0.688
+         0   2     0     0
+  C      0   0     0   168
+  Q      0   0    77     0
+  S    644   0     0     0</code></pre>
+<p>The raw values of the Embarked attribtue are mapped to the WoE value found in the Embarked <code>bin</code> object.</p>
 </div>
 <div id="logistic-regression" class="section level3">
 <h3>Logistic Regression</h3>
