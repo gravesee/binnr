@@ -78,7 +78,7 @@ a few basic steps:
 
 Each of these steps will be detailed further below with examples.
 
-### Bin the data
+## Bin the data
 
 A small dataset containig a variety of variable types is included with 
 the `binnr` package. It consists of 891 passengers on the Titanic, their 
@@ -124,6 +124,12 @@ reserved name, `ALL`, applies the exceptions to each variable.
 | `exceptions = list(ALL = -1, Age = c(-99, -100))` | Exclude -99 and -100 when binning Age, exclude -1 for the rest of the variables |
 | `mono = c(ALL=2)` | Bin all variables monotonically in any direction |
 
+### Calling the `bin` function.
+
+Calling the `bin` function on a `data.frame` requires a dataset of predictors
+and a target variable. Passing no other arguments will bin the data with 
+default settings.
+
 
 ```r
 bins <- bin(titanic[,-1], titanic$Survived)
@@ -147,6 +153,8 @@ binnr bin.list object
 There are 7 bins contained within the `bin.list` object - 3 discreted and 4
 continuous. The distinction between discrete and continuous bins will be
 demonstrated when using the `adjust` function.
+
+### Subset operations
 
 Because `bin.list` is a list underneath, individual bins can be accessed 
 in the normal list indexing manner. Printing a single bin produces a WoE
@@ -175,6 +183,8 @@ binnr bin.list object
   |--   2 Continuous
 ```
 
+### Bin summary report
+
 Calling the summary function on a `bin.list` returns a `data.frame`
 of high level information about each binned attribute:
 
@@ -198,7 +208,19 @@ most predictive attribuets at the top of the list. The summary
 modeled. For example, a discrete variable with 40 bins should be 
 collapsed before using.
 
-### Apply Weight-of-Evidence Substitutions
+### Plotting bins
+
+Bins can also be plotted producing three graphs. The top graph shows bin
+frequencies, the second weight-of-evidence, and the third probabilities.
+
+
+```r
+plot(bins$Sex)
+```
+
+<img src="plots/README-unnamed-chunk-8-1.png" title="plot of chunk unnamed-chunk-8" alt="plot of chunk unnamed-chunk-8" style="display: block; margin: auto;" />
+
+## Apply Weight-of-Evidence Substitutions
 
 `binnr` provides a `predict` function that is used to perform the WoE 
 substitution on a `data.frame`. The columns are matched by name and a
@@ -271,7 +293,7 @@ fit <- cv.glmnet(binned, titanic$Survived, alpha=1, family="binomial",
 plot(fit)
 ```
 
-![plot of chunk unnamed-chunk-12](plots/README-unnamed-chunk-12-1.png) 
+![plot of chunk unnamed-chunk-13](plots/README-unnamed-chunk-13-1.png) 
 
 The resulting plot shows the error on the y-axis and the penalty term on the
 x-axis. The penalty term controls the size of the coefficients and how many of
