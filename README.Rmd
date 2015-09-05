@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# ![alt text](figures/img.png) What is `binnr`?
+# What is `binnr`?
 `binnr` is a package that creates, manages, and applies simple binning
 transformations. It makes scorecard modeling easy and fast. Using `binnr`,
 a modeler can discretize continuous variables, expand & collapse bins,

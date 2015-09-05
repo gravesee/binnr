@@ -3,7 +3,7 @@
 
 
 
-## What is `binner`?
+# What is `binnr`?
 `binnr` is a package that creates, manages, and applies simple binning
 transformations. It makes scorecard modeling easy and fast. Using `binnr`,
 a modeler can discretize continuous variables, expand & collapse bins,
@@ -26,19 +26,19 @@ regression, a model can be quickly created and fine-tuned to completion
 in a fraction of the time of traditional modeling techniques. All
 of this with no loss (and often a gain) in predictive performance.
 
-## Binning Algorithm
+### Binning Algorithm
 
 The binning algorithm used by `binnr` is completely writtin in `C` and 
 is very fast. It uses a supervised disretization method based on 
 information value to make recursive splits of the data. The algorithm
 support monotonicity constraints, exception values, and missing values.
 
-### Monotonicity
+#### Monotonicity
 
 `binnr` supports 4 types of monotonicity within the `C` implementation.
 Each type of constratint is specified by a special integer value.
 
-| *Value* | *Meaning* |
+| **Value** | **Meaning** |
 |---------|-----------|
 | 0 | No montonicity |
 | -1 | Decreasing y as x increases |
@@ -46,11 +46,24 @@ Each type of constratint is specified by a special integer value.
 | 2 | Either increasing or decreasing y as x increases |
 
 Of special note is the value of 2. The algorithm implements this by 
-making the first split in **any** direction and then uses that 
+making the first split in *any* direction and then uses that 
 direction for the rest of the splits. This often results in the best
 monotonic relationship without specifying the direction apriori.
 
-## Overview
+#### Exception Values
+
+`binnr` also supports exception values for each variable. Exceptions
+only apply to continuous variables. The algorithm does not collapse exception
+values but *does* use them to calculate information value statistics.
+
+#### Missing Values
+
+Missing values are handled by excluding them entirely from the binning
+step. They do not inform the binning process at all. Missing values
+are substituted with zeros when performing weight-of-evidence
+substitution.
+
+## Modeling with `binnr` Overview
 
 The basic workflow of building a scorecard with `binnr` is comprised of
 a few basic steps:
@@ -65,7 +78,7 @@ a few basic steps:
 
 Each of these steps will be detailed further below with examples.
 
-## Bin the data
+### Bin the data
 
 A small dataset containig a variety of variable types is included with 
 the `binnr` package. It consists of 891 passengers on the Titanic, their 
@@ -86,6 +99,30 @@ head(titanic)
 ```
 
 Binning the data is as simple as calling the `bin` function on a `data.frame`.
+The `bin` function accepts several arguments that control the binning
+algorithm:
+
+| **Argument** | **Controls** | **Example**|
+|--------------|--------------|------------|
+| min.iv | Minimum IV increase to split data | `min.iv = .01` |
+| min.cnt | Mininmum # Obs in bins after splitting | `min.cnt = 100` |
+| max.bin | Maximum # Bins excluding exceptions and missing | `max.bin = 10` |
+| mono | Monotonicity relationship between x and y | `mono = c(Fare=1, Pclass=2)` |
+| exceptions | List of exception values for each x | `exceptions = list(ALL=-1)` |
+
+The `mono` argument accepts a named *vector* of values. The special name `ALL` 
+applies to all of the variables. Monotonicity is applied on where names match.
+Similarly, `exceptions` accepts a named *list* of values. Because variables can
+have multiple exception values, each entry can be a vector. Like, `mono`, the
+reserved name, `ALL`, applies the exceptions to each variable.
+
+#### Examples using `mono` and `exceptions`
+
+| **Example** | **Explanation** |
+|---|---|
+| `mono = c(ALL=1, Fare=2)` | Bin Fare in any monotonic direction; bin the rest with positive montonicity
+| `exceptions = list(ALL = -1, Age = c(-99, -100))` | Exclude -99 and -100 when binning Age, exclude -1 for the rest of the variables |
+| `mono = c(ALL=2)` | Bin all variables monotonically in any direction |
 
 
 ```r
@@ -161,7 +198,7 @@ most predictive attribuets at the top of the list. The summary
 modeled. For example, a discrete variable with 40 bins should be 
 collapsed before using.
 
-## Apply Weight-of-Evidence Substitutions
+### Apply Weight-of-Evidence Substitutions
 
 `binnr` provides a `predict` function that is used to perform the WoE 
 substitution on a `data.frame`. The columns are matched by name and a
@@ -183,7 +220,6 @@ head(binned)
 5 -0.6664827 -0.9838327  0.5805232 -0.1660568 -0.1737481 -0.9238176 -0.20359896
 6 -0.6664827 -0.9838327  0.0000000 -0.1660568 -0.1737481 -0.9238176  0.02433748
 ```
-
 
 Creating a table of the WoE-substituted values with the original values
 illustrates what `binnr` is doing behind the scenes:
