@@ -12,12 +12,12 @@ interface.
 
 `binnr` not only discretizes variables and provides functions for 
 manipulating them, but also performs weight-of-evidence substitution
-on an a dataset transforming all predictors to the same scale and 
+on a dataset, transforming all predictors to the same scale and 
 making them continuous. This has a number of benefits:
 
-1. Continuous features can be used in more training algorithms
-2. The WoE substitution replaces the input variable with its associated
-log-odds -- ideal for modeling with logistic regression
+1. Subsituting weight-of-evidence forces a linear relationship between
+the predictor and the binary target - Ideal for logistic regression
+2. Continuous features can be used in more training algorithms
 3. Missing values are also substituted creating a data set of complete
 cases
 
@@ -138,6 +138,29 @@ binnr bin.list object
   |--   2 Continuous
 ```
 
+Calling the summary function on a `bin.list` returns a `data.frame`
+of high level information about each binned attribute:
+
+
+```r
+s <- summary(bins)
+print(s)
+      Name         IV # Bins Tot N # Valid # Exception # Missing Monotonicty
+2      Sex 1.34168141      2   891     891           0         0           0
+6     Fare 0.87823669     10   891     891           0         0           0
+1   Pclass 0.50094974      3   891     891           0         0           0
+3      Age 0.21059108     10   891     714           0       177           0
+4    SibSp 0.18114137      4   891     891           0         0           0
+7 Embarked 0.12237459      4   891     891           0         0           0
+5    Parch 0.09745514      3   891     891           0         0           0
+```
+
+The summary is sorted by descending information value placing the 
+most predictive attribuets at the top of the list. The summary
+`data.frame` can be used to identify variables that should not be
+modeled. For example, a discrete variable with 40 bins should be 
+collapsed before using.
+
 ## Apply Weight-of-Evidence Substitutions
 
 `binnr` provides a `predict` function that is used to perform the WoE 
@@ -192,14 +215,6 @@ prevent any "flips" from occuring in our final model.
 
 And here is the raw variable crossed with the transformed variable:
 
-```
-Loading required package: Matrix
-Loading required package: foreach
-foreach: simple, scalable parallel programming from Revolution Analytics
-Use Revolution R for scalability, fault tolerance and more.
-http://www.revolutionanalytics.com
-Loaded glmnet 2.0-2
-```
 
 
 ```r
@@ -208,7 +223,7 @@ fit <- cv.glmnet(binned, titanic$Survived, alpha=1, family="binomial",
 plot(fit)
 ```
 
-![plot of chunk unnamed-chunk-11](plots/README-unnamed-chunk-11-1.png) 
+![plot of chunk unnamed-chunk-12](plots/README-unnamed-chunk-12-1.png) 
 
 The resulting plot shows the error on the y-axis and the penalty term on the
 x-axis. The penalty term controls the size of the coefficients and how many of
