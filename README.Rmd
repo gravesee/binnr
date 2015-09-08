@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## What is `binner`?
+# What is `binnr`?
 `binnr` is a package that creates, manages, and applies simple binning
 transformations. It makes scorecard modeling easy and fast. Using `binnr`,
 a modeler can discretize continuous variables, expand & collapse bins,
@@ -23,12 +23,12 @@ interface.
 
 `binnr` not only discretizes variables and provides functions for 
 manipulating them, but also performs weight-of-evidence substitution
-on an a dataset transforming all predictors to the same scale and 
+on a dataset, transforming all predictors to the same scale and 
 making them continuous. This has a number of benefits:
 
-1. Continuous features can be used in more training algorithms
-2. The WoE substitution replaces the input variable with its associated
-log-odds -- ideal for modeling with logistic regression
+1. Subsituting weight-of-evidence forces a linear relationship between
+the predictor and the binary target - Ideal for logistic regression
+2. Continuous features can be used in more training algorithms
 3. Missing values are also substituted creating a data set of complete
 cases
 
@@ -37,19 +37,19 @@ regression, a model can be quickly created and fine-tuned to completion
 in a fraction of the time of traditional modeling techniques. All
 of this with no loss (and often a gain) in predictive performance.
 
-## Binning Algorithm
+### Binning Algorithm
 
 The binning algorithm used by `binnr` is completely writtin in `C` and 
 is very fast. It uses a supervised disretization method based on 
 information value to make recursive splits of the data. The algorithm
 support monotonicity constraints, exception values, and missing values.
 
-### Monotonicity
+#### Monotonicity
 
 `binnr` supports 4 types of monotonicity within the `C` implementation.
 Each type of constratint is specified by a special integer value.
 
-| *Value* | *Meaning* |
+| **Value** | **Meaning** |
 |---------|-----------|
 | 0 | No montonicity |
 | -1 | Decreasing y as x increases |
@@ -57,11 +57,24 @@ Each type of constratint is specified by a special integer value.
 | 2 | Either increasing or decreasing y as x increases |
 
 Of special note is the value of 2. The algorithm implements this by 
-making the first split in **any** direction and then uses that 
+making the first split in *any* direction and then uses that 
 direction for the rest of the splits. This often results in the best
 monotonic relationship without specifying the direction apriori.
 
-## Overview
+#### Exception Values
+
+`binnr` also supports exception values for each variable. Exceptions
+only apply to continuous variables. The algorithm does not collapse exception
+values but *does* use them to calculate information value statistics.
+
+#### Missing Values
+
+Missing values are handled by excluding them entirely from the binning
+step. They do not inform the binning process at all. Missing values
+are substituted with zeros when performing weight-of-evidence
+substitution.
+
+## Modeling with `binnr` Overview
 
 The basic workflow of building a scorecard with `binnr` is comprised of
 a few basic steps:
@@ -89,6 +102,36 @@ head(titanic)
 ```
 
 Binning the data is as simple as calling the `bin` function on a `data.frame`.
+The `bin` function accepts several arguments that control the binning
+algorithm:
+
+| **Argument** | **Controls** | **Example**|
+|--------------|--------------|------------|
+| min.iv | Minimum IV increase to split data | `min.iv = .01` |
+| min.cnt | Mininmum # Obs in bins after splitting | `min.cnt = 100` |
+| max.bin | Maximum # Bins excluding exceptions and missing | `max.bin = 10` |
+| mono | Monotonicity relationship between x and y | `mono = c(Fare=1, Pclass=2)` |
+| exceptions | List of exception values for each x | `exceptions = list(ALL=-1)` |
+
+The `mono` argument accepts a named *vector* of values. The special name `ALL` 
+applies to all of the variables. Monotonicity is applied on where names match.
+Similarly, `exceptions` accepts a named *list* of values. Because variables can
+have multiple exception values, each entry can be a vector. Like, `mono`, the
+reserved name, `ALL`, applies the exceptions to each variable.
+
+#### Examples using `mono` and `exceptions`
+
+| **Example** | **Explanation** |
+|---|---|
+| `mono = c(ALL=1, Fare=2)` | Bin Fare in any monotonic direction; bin the rest with positive montonicity
+| `exceptions = list(ALL = -1, Age = c(-99, -100))` | Exclude -99 and -100 when binning Age, exclude -1 for the rest of the variables |
+| `mono = c(ALL=2)` | Bin all variables monotonically in any direction |
+
+### Calling the `bin` function.
+
+Calling the `bin` function on a `data.frame` requires a dataset of predictors
+and a target variable. Passing no other arguments will bin the data with 
+default settings.
 
 ```{r, echo = TRUE, eval=TRUE, results='hide'}
 bins <- bin(titanic[,-1], titanic$Survived)
@@ -108,6 +151,8 @@ There are 7 bins contained within the `bin.list` object - 3 discreted and 4
 continuous. The distinction between discrete and continuous bins will be
 demonstrated when using the `adjust` function.
 
+### Subset operations
+
 Because `bin.list` is a list underneath, individual bins can be accessed 
 in the normal list indexing manner. Printing a single bin produces a WoE
 table with detailed statistics about the binned and target variables
@@ -120,6 +165,31 @@ Furthermore, a `bin.list` may also be subset just like a base R list:
 
 ```{r, echo = TRUE, eval=TRUE}
 bins[1:4]
+```
+
+### Bin summary report
+
+Calling the summary function on a `bin.list` returns a `data.frame`
+of high level information about each binned attribute:
+
+```{r, echo = TRUE, eval=TRUE}
+s <- summary(bins)
+print(s)
+```
+
+The summary is sorted by descending information value placing the 
+most predictive attribuets at the top of the list. The summary
+`data.frame` can be used to identify variables that should not be
+modeled. For example, a discrete variable with 40 bins should be 
+collapsed before using.
+
+### Plotting bins
+
+Bins can also be plotted producing three graphs. The top graph shows bin
+frequencies, the second weight-of-evidence, and the third probabilities.
+
+```{r, echo = TRUE, eval=TRUE, fig.width=4, fig.align='center'}
+plot(bins$Sex)
 ```
 
 ## Apply Weight-of-Evidence Substitutions
@@ -136,15 +206,17 @@ binned <- predict(bins, titanic)
 head(binned)
 ```
 
-
 Creating a table of the WoE-substituted values with the original values
 illustrates what `binnr` is doing behind the scenes:
 
 ```{r, echo = TRUE}
-table(titanic$Pclass, round(binned[,'Pclass'], 3))
+bins$Embarked
+
+table(titanic$Embarked, round(binned[,'Embarked'], 3))
 ```
-We can verify that values of `male` are being coded correctly to the value found
-in the WoE table. The same holds true for `female`.
+
+The raw values of the Embarked attribtue are mapped to the WoE value found
+in the Embarked `bin` object.
 
 ### Logistic Regression
 
