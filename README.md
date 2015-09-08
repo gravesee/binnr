@@ -3,6 +3,7 @@
 
 
 
+![alt text](graphics/logo.png "Binnr Logo")
 # What is `binnr`?
 `binnr` is a package that creates, manages, and applies simple binning
 transformations. It makes scorecard modeling easy and fast. Using `binnr`,
@@ -285,6 +286,15 @@ prevent any "flips" from occuring in our final model.
 
 And here is the raw variable crossed with the transformed variable:
 
+```
+Warning: package 'glmnet' was built under R version 3.2.1
+Loading required package: Matrix
+Loading required package: foreach
+foreach: simple, scalable parallel programming from Revolution Analytics
+Use Revolution R for scalability, fault tolerance and more.
+http://www.revolutionanalytics.com
+Loaded glmnet 2.0-2
+```
 
 
 ```r
@@ -307,14 +317,14 @@ to find the optimal coefficients:
 coef(fit, s="lambda.min")
 8 x 1 sparse Matrix of class "dgCMatrix"
                      1
-(Intercept) -0.4699424
-Pclass       0.8618862
-Sex          0.9899909
-Age          1.1595609
-SibSp        0.4288312
+(Intercept) -0.4703762
+Pclass       0.8662438
+Sex          0.9935157
+Age          1.1690248
+SibSp        0.4344393
 Parch        .        
-Fare         0.2607622
-Embarked     0.5080654
+Fare         0.2618560
+Embarked     0.5152022
 ```
 
 
