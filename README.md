@@ -37,7 +37,7 @@ support monotonicity constraints, exception values, and missing values.
 #### Monotonicity
 
 `binnr` supports 4 types of monotonicity within the `C` implementation.
-Each type of constratint is specified by a special integer value.
+Each type of constraint is specified by a special integer value.
 
 | **Value** | **Meaning** |
 |---------|-----------|
@@ -271,20 +271,22 @@ table(titanic$Embarked, round(binned[,'Embarked'], 3))
 The raw values of the Embarked attribtue are mapped to the WoE value found
 in the Embarked `bin` object.
 
-### Logistic Regression
+### Fit a LASSO Regression Model
 
-Once the variable transoformations have been applied, a logistic regression
-model may be fit. We will be applying a new logistic regression algorithm called
-`LASSO`. It fits the model and performs variable selection at the same time.
-More about LASSO regression can be found [here](http://statweb.stanford.edu/~tibs/lasso.html).
+Once the variable transformations have been applied, a logistic regression
+model may be fit. Both variable reduction and parameter fitting may be done
+*at the same time* using [LASSO regression](http://statweb.stanford.edu/~tibs/lasso.html).
+LASSO regression is very similar to logistic regression with one modification.
+When finding the model coefficients, it adds a penalty term to the error function
+that is being minimized. This penalty is the sum of the absolute value of the 
+model parameters. This penalty has the very attractive effect of producing a
+sparse solution (many coefficents are zero).
 
-LASSO regression requires that we specify a penalty argument to constrain the 
-coefficients. We will be using cross-validation to determine this parameter
-automatically. Furthermore, since our variables are already transformed the way
-we like, we will also force the parameters to be greater than zero. This will
-prevent any "flips" from occuring in our final model.
+LASSO regression also supports coefficient constraints. Using these constraints
+it can be mandated that the final model coefficients are all positive. Using
+this constraint prevents any flips from occuring in the final model fitting step.
+All of the relationships observed on margin are preserved.
 
-And here is the raw variable crossed with the transformed variable:
 
 ```
 Warning: package 'glmnet' was built under R version 3.2.1
