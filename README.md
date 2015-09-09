@@ -211,12 +211,14 @@ collapsed before using.
 
 ### Plotting bins
 
-Bins can also be plotted producing three graphs. The top graph shows bin
-frequencies, the second weight-of-evidence, and the third probabilities.
+Bins can also be plotted. Calling `plot` on a bin object produces a
+weight-of-evidence graph. The bar height represent the weight of evidence while
+the color corresponds to the frequency within each bin. A number guide of
+integers is also provided for easy identification of bins to collapse or expand.
 
 
 ```r
-plot(bins$Sex)
+plot(bins$Age)
 ```
 
 <img src="plots/README-unnamed-chunk-8-1.png" title="plot of chunk unnamed-chunk-8" alt="plot of chunk unnamed-chunk-8" style="display: block; margin: auto;" />

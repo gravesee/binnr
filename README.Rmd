@@ -9,7 +9,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "",
   fig.path = "plots/README-",
-  cache=TRUE,
+  cache=FALSE,
   width=12
 )
 ```
@@ -186,11 +186,13 @@ collapsed before using.
 
 ### Plotting bins
 
-Bins can also be plotted producing three graphs. The top graph shows bin
-frequencies, the second weight-of-evidence, and the third probabilities.
+Bins can also be plotted. Calling `plot` on a bin object produces a
+weight-of-evidence graph. The bar height represent the weight of evidence while
+the color corresponds to the frequency within each bin. A number guide of
+integers is also provided for easy identification of bins to collapse or expand.
 
-```{r, echo = TRUE, eval=TRUE, fig.width=4, fig.align='center'}
-plot(bins$Sex)
+```{r, echo = TRUE, eval=TRUE, fig.align='center', fig.height=5}
+plot(bins$Age)
 ```
 
 ## Apply Weight-of-Evidence Substitutions
