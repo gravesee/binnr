@@ -27,12 +27,13 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
 }
 
 #' @export
-bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=numeric(0)) {
+bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res = 0, max.bin=10, mono=0, exceptions=numeric(0)) {
   if(is.null(min.cnt)) min.cnt <- sqrt(length(x))
   
   options <- list(
     min.iv    = min.iv,
     min.cnt   = min.cnt,
+    min.res   = min.res,
     max.bin   = max.bin,
     mono      = mono,
     exceptions= exceptions)
