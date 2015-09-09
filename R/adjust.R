@@ -21,6 +21,7 @@ adjust <- function(x) {
  (u)ndo
  (r)eset
  (d)rop
+ (a)ssign adverse action code
 binnr bin operations
  != <#> : Neutralize level
  +  <#> : Expand level
@@ -29,6 +30,17 @@ binnr bin operations
       cat("Press any key to continue")
       readLines(n=1)
       invisible()
+    } else if (command == "a") {
+      cat("Enter position and AA Code (0 for all)")
+      inp <- readLines(n=1)
+      invisible()
+      ck <- grep("\\d+\\s+\\S+", inp) # check for matching input
+      if (length(ck) > 0) {
+        inp <- strsplit(inp, "\\s+")
+        pos <- as.integer(inp[[1]][1])
+        aac <- (inp[[1]][2])
+        out[[i]] <- '[<-'(out[[i]], pos, aac)
+      }
     } else if (command == "g") {
       cat("Goto variable:")
       v <- readLines(n = 1)
