@@ -1,11 +1,11 @@
-library(ggplot2)
-library(grid)
+cold.day.palette <- rev(c(
+  "#131F2C",
+  "#263F5D",
+  "#2B688E",
+  "#6EA9C3",
+  "#B8D2DD"))
 
-# create "empty" themes for certain elements
-plt.theme <- theme(
-  axis.line=element_blank(),
-  axis.text.y=element_blank(),axis.ticks=element_blank(),
-  axis.title.y=element_blank(),legend.position="none")
+cold.day.breaks <- c(-Inf, 100, 500, 1000, 5000, Inf)
 
 #' @export
 plot.bin <- function(x, y, ...) {
@@ -14,32 +14,32 @@ plot.bin <- function(x, y, ...) {
   f <- !(rownames(full) %in% "Missing") & rownames(full) != "Total"
   plt <- full[f,]
   
+  # get max number of chars for left margin spacing
+  maxN <- 0.5 + max(sapply(rownames(plt), nchar)) / 3
+  
   # add columns for plotting
-  rng <- rownames(full[f,])
-  plt$Range <- factor(rng, levels=rev(unique(rng)))
-  plt$WoE[is.nan(plt$WoE) | is.infinite(plt$WoE)] <- 0
-  colnames(plt)[6] <- "Prob"
+  rng <- strsplit(rownames(full[f,]), '\\. ')
+  rng <- sapply(rng, function(x) { if (length(x) > 1) x[[2]] else "''"})
+  WoE <- plt$WoE
+  names(WoE) <- rng
+  colors <- cold.day.palette[cut(rev(plt$N), cold.day.breaks, labels = F)]
   
-  g1 <- ggplot(plt, aes(x=Range, y=N)) +
-    geom_bar(stat="identity", position="identity") + 
-    coord_flip()
+  # lots of margin magic
+  # http://dr-k-lo.blogspot.com/2014/03/the-simplest-way-to-plot-legend-outside.html
+  par(oma = c(2, 1, 1, 1))
+  lims <- c(min(WoE) - 0.5, max(WoE) + 0.5)
+  par(mar=c(5, maxN, 1, 1))
+  bp <- barplot(rev(WoE), horiz=T, las=1, xlim = lims, cex.names = 0.8,
+                xlab = "Weight-of-Evidence", col = colors, cex.axis = 0.8)
   
-  g2 <- ggplot(plt, aes(x=Range, y=WoE, fill=WoE)) +
-    geom_bar(stat="identity", position="identity") +
-    scale_fill_gradient(low="blue", high="red") + coord_flip() +
-    theme(legend.position="none")
+  # add guide
+  text(x=min(WoE), y=bp, length(WoE):1, font=2, cex=0.8, pos=2, col="#131F2C")
   
-  g3 <- ggplot(plt, aes(x=Range, y=Prob)) +
-    geom_bar(stat="identity", position="identity") +
-    geom_hline(yintercept=full["Total","P(1)"], col="red", size=1) +
-    coord_flip()
-  
-  grid.newpage()
-  pushViewport(viewport(layout = grid.layout(4, 1, heights = unit(c(1, 8, 8, 8), "null"))))
-  grid.text(x$name, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
-  print(g1, vp = viewport(layout.pos.row = 2, layout.pos.col = 1))
-  print(g2, vp = viewport(layout.pos.row = 3, layout.pos.col = 1))
-  print(g3, vp = viewport(layout.pos.row = 4, layout.pos.col = 1))
+  # overlay legend across entire plot and add to bottom
+  title(x$name)
+  par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0.2, 0, 0, 0), new = T)
+  plot(0,0, type="n", bty="n", xaxt="n", yaxt="n")
+  legend("bottom", c("<100", "<500", "<1000", "<5000", "5000+"), 
+         fill = cold.day.palette, horiz=T, inset = c(0,0), xpd=T, cex = 0.75,
+         pt.cex = 0.8)
 }
-
-

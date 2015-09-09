@@ -16,6 +16,9 @@ is.bin.list <- function(x) {
 #' @export
 bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
   stopifnot(is.list(exceptions))
+  if (any(is.na(y))) {
+    stop("y response cannot have missing values")
+  }
 
   vars <- colnames(df)
   .mono <- rep(mono["ALL"], ncol(df))

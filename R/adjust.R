@@ -33,7 +33,7 @@ binnr bin operations
       cat("Goto variable:")
       v <- readLines(n = 1)
       # find the position of the variable
-      while (v != "Q") {
+      while (!(v %in% c("","Q"))) {
         pos <- which(names(x) == v)[1]
         if (is.na(pos)) {
           # find similar matches

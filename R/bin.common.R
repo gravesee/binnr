@@ -144,7 +144,9 @@ reset <- function(b) {
 mono <- function(b, v) {
   v <- if(v %in% c(-1,0,1,2)) v else 0
   b$opts$mono <- v
-  do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
+  out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
+  out$history <- b
+  out
 }
 
 #' @export
