@@ -13,6 +13,7 @@
 #' predictor
 #' @param min.cnt minimum number of observations to split a continuous
 #' predictor. Defaults to the square root of the number of observations.
+#' @param min.res minimum number of responses required to split
 #' @param max.bin maximum number of levels in resulting discretized, continuous
 #' predictor.
 #' @param mono monotonicity constraint for binning algorith. \code{binnr} uses 
@@ -30,7 +31,7 @@
 #' @return a \code{bin} or \code{bin.list} object
 #' 
 #' @export
-bin <- function(x, y, name, min.iv, min.cnt, max.bin, mono, exceptions){
+bin <- function(x, y, name, min.iv, min.cnt, min.res, max.bin, mono, exceptions){
   UseMethod("bin", x)
 }
 

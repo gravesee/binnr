@@ -3,12 +3,12 @@
 #include "variable.h"
 #include "queue.h"
 #include "xtab.h"
-#include "bin.h"
+#include "bin.h" 
  
 #define RETURN_R
 
 // called from R and handles passing of data to and from
-SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono, SEXP except) {
+SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP minres, SEXP maxbin, SEXP mono, SEXP except) {
   
   struct variable* v = variable_factory(REAL(x), LENGTH(x));
   //print_variable(v);
@@ -25,7 +25,7 @@ SEXP bin(SEXP x, SEXP y, SEXP miniv, SEXP mincnt, SEXP maxbin, SEXP mono, SEXP e
   int num_bins = 1;
   
   // fille options structure
-  struct opts o = {*REAL(miniv), *INTEGER(mincnt), *INTEGER(maxbin), *INTEGER(mono), except};
+  struct opts o = {*REAL(miniv), *INTEGER(mincnt), *INTEGER(minres), *INTEGER(maxbin), *INTEGER(mono), except};
 
   // bin the variable until it's done
   while(!is_empty(q)) {
@@ -126,7 +126,9 @@ size_t find_best_split(int start, int stop, struct xtab* xtab, double* grand_tot
       valid = -1;
     } else if (isinf(iv.iv)) { // infinite iv
       valid = -1;
-    } else if (o->mono == 1 | o->mono == -1) {
+    } else if ((asc[1] < o->min_res) | (dsc[1] < o->min_res))  {
+      valid = -1;
+    } else if ((o->mono == 1) | (o->mono == -1)) {
       if (woe_sign != o->mono) {
         valid = -1;
       }
