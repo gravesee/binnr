@@ -92,10 +92,7 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   out <- as.data.frame(rbind(out, Total=total))
   
   # check for RCS
-  if (!is.null(x$rcs)) {
-    out$RC <- c(unlist(x$rcs$aa), '')
-    out$`Pts Lost` <- c(unlist(x$rcs$pts), 0)
-  }
+  if (!is.null(x$rcs)) out$RC <- c(unlist(x$rcs), '')
   out
 }
 
@@ -103,7 +100,7 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
 print.bin <- function(x, ...) {
   out <- as.data.frame(x)
   iv <- out['Total', 'IV']
-  fmts <- c(rep("%d",3), rep("%1.3f", 4), "%0.5f", "%s", "%1.3f")
+  fmts <- c(rep("%d",3), rep("%1.3f", 4), "%0.5f", "%s", "%1.3f", "%s")
   
   for (i in seq_along(out)) { out[,i] <- sprintf(fmts[i], out[,i]) }
   

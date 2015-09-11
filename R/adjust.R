@@ -21,7 +21,7 @@ adjust <- function(x) {
  (u)ndo
  (r)eset
  (d)rop
- (a)ssign adverse action code
+ (a)ssign reason code
 binnr bin operations
  != <#> : Neutralize level
  +  <#> : Expand level
@@ -31,15 +31,19 @@ binnr bin operations
       readLines(n=1)
       invisible()
     } else if (command == "a") {
-      cat("Enter position and AA Code (0 for all)")
+      cat("Enter position(optional) and reason code")
       inp <- readLines(n=1)
       invisible()
-      ck <- grep("\\d+\\s+\\S+", inp) # check for matching input
-      if (length(ck) > 0) {
+      type1 <- grep("\\d+\\s+\\S+", inp) # check for matching input
+      type2 <- grep("^\\s*\\S+\\s*$", inp) # check for matching input
+      if (length(type1) > 0) {
         inp <- strsplit(inp, "\\s+")
         pos <- as.integer(inp[[1]][1])
         aac <- (inp[[1]][2])
-        out[[i]] <- '[<-'(out[[i]], pos, aac)
+        rcs(out[[i]])[pos] <- aac
+      } else if (length(type2) > 0) {
+        aac <- gsub("\\s", "", inp)
+        rcs(out[[i]]) <- aac
       }
     } else if (command == "g") {
       cat("Goto variable:")

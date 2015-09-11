@@ -46,7 +46,7 @@ bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...)
 }
 
 #' @export
-predict.bin.list <- function(object, newdata) {
+predict.bin.list <- function(object, newdata, type="woe") {
   if (is.null(names(object))) stop("bin.list object must have names attribute")
   if (is.null(colnames(newdata))) stop("newdata requires column names")
 
@@ -62,10 +62,13 @@ predict.bin.list <- function(object, newdata) {
     cat(sprintf("\rProgress: %%%3d", as.integer(100*i/length(vars))))
     flush.console()
     if (!object[[nm]]$skip) {
-      res[[vars[i]]] <- predict(object[[nm]], newdata[,nm])
+      res[[vars[i]]] <- predict(object[[nm]], newdata[,nm], type)
     }
   }
   cat("\n")
+  if (type == "bins") {
+    
+  } else {}
   res <- do.call(cbind, res)
   rownames(res) <- rownames(newdata)
   return(res)

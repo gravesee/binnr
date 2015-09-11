@@ -88,20 +88,3 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   b$data$x <- e1$data$x
   b
 }
-
-#' @export
-predict.bin.numeric <- function(object, x, ...) {
-  breaks <- object$core$breaks
-  values <- object$core$values
-  res <- values$var[cut(x, breaks, labels = FALSE)]
-  
-  exceptions <- names(values$exc)
-  if (length(values$exc) != 0) { # exception values
-    for (i in seq_along(exceptions)) {
-      res[x == exceptions[i]] <- object$core$values$exc[i]
-    }
-  }
-  
-  res[is.na(res)] <- 0
-  res
-}
