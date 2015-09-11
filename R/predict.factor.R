@@ -1,9 +1,9 @@
 #' @export
-predict.bin.factor <- function(object, x, type="woe", ...) {
+predict.bin.factor <- function(object, x, type="woe", coef=1) {
   if (type == "bins") {
     out <- predict.bin.factor.bins(object, x)
   } else if (type == "dist") {
-    out <- predict.bin.factor.dist(object, x)
+    out <- predict.bin.factor.dist(object, x, coef)
   } else if (type == "rcs") {
     out <- predict.bin.factor.rcs(object, x)
   } else { # "woe"
@@ -29,8 +29,8 @@ predict.bin.factor.bins <- function(object, x, ...) {
   factor(res, lvls)
 }
 
-predict.bin.factor.dist <- function(object, x, ...) {
-  res <- predict.bin.factor.woe(object, x)
+predict.bin.factor.dist <- function(object, x, coef) {
+  res <- coef * predict.bin.factor.woe(object, x)
   min(res) - res
 }
 

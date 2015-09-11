@@ -11,6 +11,7 @@
   x
 }
 
+#' @export
 rcs <- function(x) {
   UseMethod("rcs", x)
 }
@@ -19,10 +20,12 @@ rcs.bin <- function(x) {
   unlist(x$rcs)
 }
 
+#' @export
 `rcs<-` <- function(x, value) {
   UseMethod("rcs<-", x)
 }
 
+#' @export
 `rcs<-.bin.list` <- function(x, value) {
   stopifnot(is.list(value))
   

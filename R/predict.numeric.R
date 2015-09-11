@@ -1,9 +1,9 @@
 #' @export
-predict.bin.numeric <- function(object, x, type="woe", ...) {
+predict.bin.numeric <- function(object, x, type="woe", coef=1) {
   if (type == "bins") {
     out <- predict.bin.numeric.bins(object, x)
   } else if (type == "dist") {
-    out <- predict.bin.numeric.dist(object, x)
+    out <- predict.bin.numeric.dist(object, x, coef)
   } else if (type == "rcs") {
     out <- predict.bin.numeric.rcs(object, x)
   } else { # "woe"
@@ -30,7 +30,7 @@ predict.bin.numeric.woe <- function(object, x, type=NULL, ...) {
 }
 
 predict.bin.numeric.bins <- function(object, x, ...) {
-  lvls <- do.call(c, sapply(object$core$counts, rownames))
+  lvls <- do.call(c, lapply(object$core$counts, rownames))
   
   res <- lvls[cut(x, object$core$breaks, labels = FALSE)]
   res <- factor(res, levels=c(lvls, 'Missing'))
@@ -45,8 +45,8 @@ predict.bin.numeric.bins <- function(object, x, ...) {
   res
 }
 
-predict.bin.numeric.dist <- function(object, x, ...) {
-  res <- predict.bin.numeric.woe(object, x)
+predict.bin.numeric.dist <- function(object, x, coef) {
+  res <- coef * predict.bin.numeric.woe(object, x)
   min(res) - res
 }
 

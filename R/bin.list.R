@@ -46,23 +46,30 @@ bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...)
 }
 
 #' @export
-predict.bin.list <- function(object, newdata, type="woe") {
+predict.bin.list <- function(object, newdata, type="woe", coefs=NULL) {
   if (is.null(names(object))) stop("bin.list object must have names attribute")
   if (is.null(colnames(newdata))) stop("newdata requires column names")
-
+  
+  # check variable name overlap
   nms <- names(object)
   if (!is.null(nms)) nms <- nms[!(nms == "")]
   vars <- intersect(colnames(newdata), nms)
 
+  # coefs are all ones if not passsed in
+  if (is.null(coefs)) {
+    coefs <- rep(1, length(vars))
+    names(coefs) <- vars
+  }
+  
   if (length(vars) == 0) stop("no vars in common between newdata and bin.list")
-
+  
   res <- list()
   for (i in seq_along(vars)) {
     nm <- vars[i]
     cat(sprintf("\rProgress: %%%3d", as.integer(100*i/length(vars))))
     flush.console()
     if (!object[[nm]]$skip) {
-      res[[vars[i]]] <- predict(object[[nm]], newdata[,nm], type)
+      res[[vars[i]]] <- predict(object[[nm]], newdata[,nm], type, coefs[nm])
     }
   }
   cat("\n")
