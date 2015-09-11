@@ -22,6 +22,7 @@ adjust <- function(x) {
  (r)eset
  (d)rop
  (a)ssign reason code
+ (c)omment
 binnr bin operations
  != <#> : Neutralize level
  +  <#> : Expand level
@@ -30,6 +31,15 @@ binnr bin operations
       cat("Press any key to continue")
       readLines(n=1)
       invisible()
+    } else if (command == "c") {
+      cat("Enter a comment")
+      inp <- readLines(n=1)
+      invisible()
+      if (inp == "DELETE") {
+        out[[i]]$notes <- NULL
+      } else if (length(grep("\\S+", inp)) > 0) {
+        out[[i]]$notes <- paste(out[[i]]$notes, inp, sep="\n -")
+      }
     } else if (command == "a") {
       cat("Enter position(optional) and reason code")
       inp <- readLines(n=1)

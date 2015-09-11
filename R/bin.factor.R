@@ -21,7 +21,8 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
       breaks=breaks,
       counts=counts,
       values=values),
-    skip=FALSE),
+    skip=FALSE,
+    notes=NULL),
     class=c("bin.factor", "bin"))
   
 }

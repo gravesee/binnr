@@ -107,7 +107,10 @@ print.bin <- function(x, ...) {
   status <- ifelse(x$skip, " *** DROPPED ***", "")
   cat(sprintf("\nIV: %0.5f | Variable: %s%s\n", iv, x$name, status))
   print(out)
-  
+  if (!is.null(x$notes)) {
+    
+    cat("Notes:\n", x$notes)
+  }
   #print(as.data.frame.bin(x))
 }
 
