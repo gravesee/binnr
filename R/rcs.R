@@ -16,6 +16,7 @@ rcs <- function(x) {
   UseMethod("rcs", x)
 }
 
+#' @export
 rcs.bin <- function(x) {
   unlist(x$rcs)
 }
