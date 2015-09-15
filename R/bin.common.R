@@ -163,13 +163,13 @@ undo <- function(x) {
 }
 
 #' @export
-bin.logical <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=numeric(0)) {
+bin.logical <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
   warning(sprintf("Not binned: %s -- All missing", name), call. = F)
   NULL
 }
 
 #' @export
-bin.character <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=numeric(0)) {
+bin.character <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
   warning(sprintf("Not binned: %s -- Character, hint: cast to factor", name), call. = F)
   NULL
 }
