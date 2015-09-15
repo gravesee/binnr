@@ -73,12 +73,3 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res
   b$history <- e1
   b
 }
-
-#' @export
-predict.bin.factor <- function(object, x, ...) {
-  vals <- object$core$values$var
-  res <- numeric(length(x))
-  res[!is.na(x)] <- vals[unlist(object$core$breaks[x[!is.na(x)]])]
-  res[is.na(res)] <- 0
-  res
-}

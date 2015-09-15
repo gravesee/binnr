@@ -14,9 +14,9 @@ predict.bin.factor <- function(object, x, type="woe", coef=1) {
 }
 
 predict.bin.factor.woe <- function(object, x, ...) {
-  vals <- object$core$values$var
   res <- numeric(length(x))
-  res[!is.na(x)] <- vals[unlist(object$core$breaks[x[!is.na(x)]])]
+  ids <- match(x[!is.na(x)], object$core$breaks)
+  res[!is.na(x)] <- object$core$values$var[ids]
   res[is.na(res)] <- 0
   res
 }
