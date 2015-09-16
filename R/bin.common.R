@@ -127,7 +127,7 @@ print.bin <- function(x, ...) {
   values <- e1$core$values
   values$var <- log((counts$var[,2]/tots[,2])/(counts$var[,1]/tots[,1]))
   values$exc <- log((counts$exc[,2]/tots[,2])/(counts$exc[,1]/tots[,1]))
-  values <- lapply(values, function(x) {x[is.nan(x)] <- 0; x})
+  values <- lapply(values, function(x) {x[is.nan(x) | is.infinite((x))] <- 0; x})
   b <- e1
   b$core$counts <- counts
   b$core$values <- values
