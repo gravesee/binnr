@@ -36,6 +36,7 @@ bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...)
     nm <- vars[i]
     cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(vars))))
     flush.console()
+    if (all(is.na(df[,nm]))) {df[,nm] <- as.logical(df[,nm])}
     b <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
     if (!is.null(b)) res[[nm]] <- b
   }
