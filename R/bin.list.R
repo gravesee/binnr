@@ -75,9 +75,10 @@ predict.bin.list <- function(object, newdata, type="woe", coefs=NULL) {
   }
   cat("\n")
   if (type == "bins") {
-    
-  } else {}
-  res <- do.call(cbind, res)
+    res <- as.data.frame(res)
+  } else {
+    res <- do.call(cbind, res)
+  }
   rownames(res) <- rownames(newdata)
   return(res)
 }
