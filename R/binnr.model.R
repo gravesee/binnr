@@ -53,15 +53,21 @@ calc.contributions <- function(newdata, coefs, y) {
 
 #' @export
 predict.binnr.model <- function(object, newdata, y=NULL, type='score') {
+  v <- names(object$coef[-1])
+  missing <- v[!(v %in% names(object$bins))]
+  if (length(missing) > 0) {
+    stop(sprintf("Vars not found in data: %s", paste0(missing, collapse = ',')))
+  }
+  
   types <- c("score","contribution","woe","dist","bins","rcs")
   stopifnot(type %in% types)
   if (type == 'score') {
-    binned <- predict(object$bins[names(object$coef[-1])], newdata)
+    binned <- predict(object$bins[v], newdata)
     calc.score(binned, object$coef)
   } else if (type == 'contribution') {
     if (is.null(y)) stop("Must provide y if calculating score contributions")
     stopifnot(nrow(newdata) == length(y))
-    binned <- predict(object$bins[names(object$coef[-1])], newdata)
+    binned <- predict(object$bins[v], newdata)
     calc.contributions(binned, object$coef, y)
   } else{
     predict(object$bins, newdata, type, object$coef)
