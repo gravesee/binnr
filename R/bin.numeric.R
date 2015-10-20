@@ -25,7 +25,12 @@ bin.factory.numeric <- function(x, y, breaks, name, options) {
       breaks=breaks,
       counts=counts,
       values=values),
-    skip=FALSE,
+    meta=list(
+      skip=FALSE,
+      type="AUTO",
+      visited=FALSE,
+      modified=date()
+    ),
     notes=NULL),
     class=c("bin.numeric", "bin"))
   
@@ -61,6 +66,9 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   new_breaks = e1$core$breaks[-(e2)]
   b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
   b
 }
 
@@ -78,6 +86,10 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   new_breaks <- sort(c(b[-z], q))
   b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
 }
 
@@ -87,5 +99,8 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
                      e1$opts))
   b$history <- e1
   b$data$x <- e1$data$x
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
 }

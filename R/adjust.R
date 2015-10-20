@@ -6,6 +6,7 @@ adjust <- function(x) {
     cat("\014") # clear the console
     print(out[[i]])
     plot(out[[i]])
+    out[[i]]$meta$visited <- TRUE
     cat ("\nEnter command (Q to quit):")
     command <- readLines(n = 1)
     if (command == "Q") {
@@ -88,7 +89,7 @@ binnr bin operations
         }
       }
     } else if (command == "d") {
-      out[[i]]$skip <- !out[[i]]$skip
+      out[[i]]$meta$skip <- !out[[i]]$meta$skip
     } else if (command == "m") {
       cat("Enter Monotonicity:")
       v <- readLines(n = 1)
@@ -104,7 +105,7 @@ binnr bin operations
     } else if (command == "u") {
       out[[i]] <- undo(out[[i]])
     } else if (command == "r") {
-      out[[i]] <- eval(parse(text=sprintf("reset(out[[i]])")))
+      out[[i]] <- reset(out[[i]])
     } else {
       tryCatch({
         out[[i]] <- eval(parse(text=paste("out[[i]]", command)))

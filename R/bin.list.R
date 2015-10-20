@@ -69,7 +69,7 @@ predict.bin.list <- function(object, newdata, type="woe", coefs=NULL) {
     nm <- vars[i]
     cat(sprintf("\rProgress: %%%3d", as.integer(100*i/length(vars))))
     flush.console()
-    if (!object[[nm]]$skip) {
+    if (!object[[nm]]$meta$skip) {
       res[[vars[i]]] <- predict(object[[nm]], newdata[,nm], type, coefs[nm])
     }
   }
@@ -119,21 +119,25 @@ summary.bin.list <- function(object, ...) {
   out <- list()
   for (i in seq_along(object)) {
     b <- object[[i]]
+    f <- !(is.na(b$data$x) | (b$data$x %in% b$opts$exceptions))
+    n.uniq <- length(unique(b$data$x[f]))
+    
     df <- as.data.frame(b)
     out[[i]] <- data.frame(
-      Name  = b$name,
-      IV    = max(df$IV),
-      NBins = nrow(b$core$counts$var),
-      totN  = sum(sapply(b$core$counts, sum)),
-      NVar  = sum(b$core$counts$var),
-      NExc  = sum(b$core$counts$exc),
-      NMiss = sum(b$core$counts$nas),
-      Mono = b$opts$mono,
-      stringsAsFactors = F
+      "Name"  = b$name,
+      "IV"    = max(df$IV),
+      "# Bins"  = nrow(b$core$counts$var),
+      "# Unique"= n.uniq,
+      "Tot N"   = sum(sapply(b$core$counts, sum)),
+      "# Valid" = sum(b$core$counts$var),
+      "# Exception"  = sum(b$core$counts$exc),
+      "# Missing"    = sum(b$core$counts$nas),
+      "Monotonicity" = b$opts$mono,
+      "Visited"  = b$meta$visited,
+      "Modified" = b$meta$modified,
+      stringsAsFactors = F,
+      check.names = F
     )
-    colnames(out[[i]]) <- c(
-      "Name", "IV", "# Bins", "Tot N", "# Valid",
-      "# Exception", "# Missing", "Monotonicty")
   }
   out <- as.data.frame(do.call(rbind, out))
   rownames(out) <- NULL

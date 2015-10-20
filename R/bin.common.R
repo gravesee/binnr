@@ -104,14 +104,14 @@ print.bin <- function(x, ...) {
   
   for (i in seq_along(out)) { out[,i] <- sprintf(fmts[i], out[,i]) }
   
-  status <- ifelse(x$skip, " *** DROPPED ***", "")
+  status <- ifelse(x$meta$skip, " *** DROPPED ***", "")
   cat(sprintf("\nIV: %0.5f | Variable: %s%s\n", iv, x$name, status))
   print(out)
+  cat(sprintf("\nModified: %s | Visited: %d | Bin: %s",
+      x$meta$modified, x$meta$visited, x$meta$type))
   if (!is.null(x$notes)) {
-    
-    cat("Notes:\n", x$notes)
+    cat("\nNotes:\n", x$notes)
   }
-  #print(as.data.frame.bin(x))
 }
 
 #' @export
@@ -132,6 +132,10 @@ print.bin <- function(x, ...) {
   b$core$counts <- counts
   b$core$values <- values
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
 }
 
@@ -150,9 +154,16 @@ reset <- function(b) {
 #' @export
 mono <- function(b, v) {
   v <- if(v %in% c(-1,0,1,2)) v else 0
-  b$opts$mono <- v
-  out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
+  opts <- b$opts
+  opts$mono <- v
+  out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), opts))
+  out$opts <- b$opts
   out$history <- b
+  
+  out$meta$visited <- TRUE
+  out$meta$type <- "MANUAL"
+  out$meta$modified <- date()
+  
   out
 }
 

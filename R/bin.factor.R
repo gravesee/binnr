@@ -21,7 +21,12 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
       breaks=breaks,
       counts=counts,
       values=values),
-    skip=FALSE,
+    meta=list(
+      skip=FALSE,
+      type="AUTO",
+      visited=FALSE,
+      modified=date()
+    ),
     notes=NULL),
     class=c("bin.factor", "bin"))
   
@@ -57,6 +62,10 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res
   b$core$breaks <- map
   b$data$x <- e1$data$x
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
 }
 
@@ -71,5 +80,9 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res
   b$core$breaks <- map
   b$data$x <- e1$data$x
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
 }
