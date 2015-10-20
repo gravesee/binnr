@@ -15,8 +15,8 @@ adjust <- function(x) {
       cat(
 "binnr interactive commands:
  (Q)uit
- (n)ext
- (p)revious
+ (n)ext, (N)ext unvisited
+ (p)revious, (P)revious unvisited
  (g)oto
  (m)ono
  (u)ndo
@@ -96,12 +96,20 @@ binnr bin operations
       out[[i]] <- mono(out[[i]], v)
     } else if (command == "n") {
       i <- i + 1
+    } else if (command == "N") {
+      nv <- !visited(out)
+      nvi <- which(nv) # index of the not-visited
+      if (any(nv) & any(nvi > i)) i <- nvi[nvi > i][1]
     } else if (command == "p") {
       if (i > 1) {
         i <- i - 1 
       } else {
         cat("\nAt beginning of list")
       }
+    } else if (command == "P") {
+      nv <- !visited(out)
+      nvi <- rev(which(nv)) # index of the not-visited
+      if (any(nv) & any(nvi < i)) i <- nvi[nvi < i][1]
     } else if (command == "u") {
       out[[i]] <- undo(out[[i]])
     } else if (command == "r") {
