@@ -22,6 +22,11 @@ rcs.bin <- function(x) {
 }
 
 #' @export
+rcs.bin.list <- function(x) {
+  unique(unlist(lapply(x, function(y) unlist(y$rcs))))
+}
+
+#' @export
 `rcs<-` <- function(x, value) {
   UseMethod("rcs<-", x)
 }

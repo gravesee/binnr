@@ -6,7 +6,7 @@ bin.factory.numeric <- function(x, y, breaks, name, options) {
   counts <- list(
     var=cnts(xb, y[f]),
     exc=cnts(x[exc], y[exc]),
-    nas=cnts(x[is.na(x)], y[is.na(x)])
+    nas=cnts(x[is.na(x)], y[is.na(x)], NA)
   )
   
   values <- list(

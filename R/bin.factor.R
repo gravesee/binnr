@@ -2,7 +2,7 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
   counts <- list(
     var=cnts(x[!is.na(x)], y[!is.na(x)]),
     exc=matrix(nrow=0,ncol=2),
-    nas=cnts(factor(x[is.na(x)], levels=NA), y[is.na(x)])
+    nas=cnts(factor(x[is.na(x)], levels=NA), y[is.na(x)], NA)
   )
   
   values <- list(

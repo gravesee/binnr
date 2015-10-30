@@ -53,9 +53,15 @@ woe <- function(cnts, y) {
   woe
 }
 
-cnts <- function(x, y) {
+cnts <- function(x, y, nms=NULL) {
   tbl <- table(x, factor(y, levels=c(0,1)), useNA='ifany')
-  if (sum(tbl) == 0) return(matrix(nrow = 0, ncol=2))
+  if (sum(tbl) == 0) {
+    if (!is.null(nms)) {
+      return(matrix(0, nrow=1, ncol=2, dimnames = list(nms)))
+    } else {
+      return(matrix(nrow=0, ncol=2))
+    }
+  }
   out <- matrix(tbl, ncol=2)
   rownames(out) <- rownames(tbl)
   out
@@ -174,14 +180,17 @@ undo <- function(x) {
 }
 
 #' @export
-bin.logical <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
+bin.logical <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL,
+                        min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
   warning(sprintf("Not binned: %s -- All missing", name), call. = F)
   NULL
 }
 
 #' @export
-bin.character <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
-  warning(sprintf("Not binned: %s -- Character, hint: cast to factor", name), call. = F)
+bin.character <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL,
+                          min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
+  warning(sprintf("Not binned: %s -- Character, hint: cast to factor", name),
+          call. = F)
   NULL
 }
  
