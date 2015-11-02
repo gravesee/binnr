@@ -3,17 +3,6 @@ sas <- function(x, pfx, coef=NULL) {
   UseMethod("sas", x)
 }
 
-sas.sort.logic <- sprintf("
-do i = 1 to (dim(CDS)-1);
-    do j = i to dim(CDS);
-      if PTS[j] < PTS[i] then do;
-      tmp_pts = PTS[i]; tmp_cd = CDS[i];
-      PTS[i] = PTS[j]; CDS[i] = CDS[j];
-      PTS[j] = tmp_pts; CDS[j] = tmp_cd;
-    end;
-  end;
-end;")
-
 sas.bin.numeric <- function(b, pfx='') {
   conds <- c(
     sprintf("if missing(%s) then", b$name),
@@ -37,7 +26,7 @@ sas.bin.factor <- function(b, pfx='') {
     sprintf("else"))
   
   vals  <- c(unlist(rev(b$core$values)), 0) # adding a zero to handle unseen lvls
-  dists <- min(vals) - vals
+  dists <- min(vals) - vals # TODO: put code in here for choosing max/min/etc...
   rcs   <- c(unlist(rev(b$rcs)), b$rcs$nas)
   
   output.sas(conds, vals, dists, rcs, pfx, b)
@@ -57,41 +46,69 @@ output.sas <- function(conds, vals, dists, rcs, pfx, b) {
 
 #' @export
 sas.bin.list <- function(bins, pfx="") {
-  for(b in bins) {
-    cat(sprintf("\n\n*# %s;\n", b$name))
-    cat(sas(b, pfx))
+  out <- list()
+  for(i in seq_along(bins)) {
+    b <- bins[[i]]
+    out[[i]] <- c(sprintf("\n\n*** Variable: %s ***;\n", b$name), sas(b, pfx))
   }
+  unlist(out)
+}
+
+
+### Put these pieces into helper functions
+.sas.sort.logic <- function(pfx) {
+sprintf("\n\n*** Reason code sorting logic ***;
+drop i, j, tmp_pts, tmp_cd;
+do i = 1 to (dim(CDS)-1);
+  do j = i to dim(CDS);
+    if %1$s_PTS[j] < %1$s_PTS[i] then do;
+      tmp_pts = %1$s_PTS[i]; tmp_cd = %1$s_CDS[i];
+      %1$s_PTS[i] = %1$s_PTS[j]; %1$s_CDS[i] = %1$s_CDS[j];
+      %1$s_PTS[j] = tmp_pts; %1$s_CDS[j] = tmp_cd;
+    end;
+  end;
+end;", pfx)
+}
+
+.sas.mod.equation <- function(coef, pfx) {
+  c(sprintf("\n\n%s_final_score = %s", pfx, coef[1]),
+    sprintf("\n    + %s_%s_w * %s", pfx, names(coef[-1]), coef[-1]),
+    "\n  ;")
+}
+
+.sas.rc.arrays <- function(rcs, pfx) {
+  n  <- length(rcs)
+  nc <- max(sapply(rcs, nchar))
+  
+  pts <- paste(strwrap(
+    paste0(pfx, "_RC_", rcs, collapse = " "), width=80), collapse="\n")
+  
+  cds <- paste(strwrap(paste(rcs, collapse="' '"), width=80), collapse="\n")
+  
+  c(sprintf("\narray %s_PTS {%d} \n%s\n(0);\n", pfx, n, pts),
+    sprintf("\narray %s_CDS {%d} $%d _TEMPORARY_ ('%s');\n", pfx, n, nc, cds))
 }
 
 #' @export
 sas.binnr.model <- function(mod, pfx="") {
-  # print the reason code sorting logic
-  rcs <- rcs(mod$bins[names(mod$coef[-1])])
   
-  if (!is.null(rcs)) {
-    n <- length(rcs)
-    nc <- max(sapply(rcs, nchar))
-    rcs2 <- paste(strwrap(paste0(pfx, "_RC_", rcs, collapse = " "), width=80),
-                  collapse="\n")
-    cat(sprintf("\narray PTS {%d} \n%s\n(%d*0);\n", n, rcs2, n))
-    
-    # set up the reason code arrays
-    rcs1 <- paste(strwrap(paste(rcs, collapse="' '"), width=80), collapse="\n")
-    cat(sprintf("\narray CDS {%d} $%d _TEMPORARY_ ('%s');\n", n, nc, rcs1))
-  }
+  out  <- list()
+  vars <- names(mod$coef[-1])
+  rcs  <- rcs(mod$bins[vars])
   
-  sas(mod$bins[names(mod$coef[-1])], pfx)
+  # set up the reason code arrays
+  if (!is.null(rcs)) out[[length(out)+1]] <- .sas.rc.arrays(rcs, pfx)
+  
+  # print the variable transforms
+  out[[length(out)+1]] <- sas(mod$bins[vars], pfx)
   
   # print the final model equation
-  cat(sprintf("\n\n%s_final_score = %s", pfx, mod$coef[1]))
-  cat(sprintf("\n    + %s_%s_w * %s", pfx, names(mod$coef[-1]), mod$coef[-1]))
-  cat("\n  ;")
+  out[[length(out)+1]] <- .sas.mod.equation(mod$coef, pfx)
   
-  if (!is.null(rcs)) {
-    # set up the points array
-    cat(sas.sort.logic)
-  }
-  # print the bins
+  # sort the reason code arrays
+  if (!is.null(rcs)) out[[length(out)+1]] <- .sas.sort.logic(pfx)
+  
+  unlist(out)
   
 }
 
