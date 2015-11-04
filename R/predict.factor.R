@@ -13,10 +13,12 @@ predict.bin.factor <- function(object, x, type="woe", coef=1) {
   out
 }
 
+# todo: Clean this cluster up...
 predict.bin.factor.woe <- function(object, x, ...) {
   res <- numeric(length(x))
   ids <- match(x[!is.na(x)], names(object$core$breaks))
   ids <- unlist(object$core$breaks)[ids]
+  ids <- match(ids, names(object$core$values$var))
   res[!is.na(x)] <- object$core$values$var[ids]
   res[is.na(x)] <- 0
   res
