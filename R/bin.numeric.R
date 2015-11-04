@@ -63,6 +63,8 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   stopifnot(all(diff(e2)==1))
   
   e2 <- tail(e2, -1)
+  d <- which(e2 > length(e1$core$breaks) - 1)
+  e2 <- e2[-d]
   new_breaks = e1$core$breaks[-(e2)]
   b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
   b$history <- e1
