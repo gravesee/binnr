@@ -14,14 +14,23 @@ binnr.model <- function(bins, coefficients) {
 
   # filter out 0 coefs
   coefficients <- coefficients[coefficients != 0]
+  nms <- names(coefficients)[-1]
   
   # put intercept in first position
   i <- which(names(coefficients) == '(Intercept)')
   coefficients <- c(coefficients[i], coefficients[-i])
   
   # check names of all pieces
-  if(!all(names(coefficients[-1]) %in% names(bins))) {
+  if(!all(nms %in% names(bins))) {
     stop("Not all coefficient names found in bins")
+  }
+  
+  # warn of large coefficients
+  if (any(abs(coefficients[-1]) > 3)) {
+    for (i in which(abs(coefficients[-1]) > 3)) {
+      warning(sprintf("Coefficient > 3: %s %0.3f", nms[i],
+                      coefficients[-1][i]), call. = F)
+    }
   }
   
   structure(list(
