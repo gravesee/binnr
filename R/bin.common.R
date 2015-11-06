@@ -39,6 +39,7 @@ bin.factory <- function(x, ...) {
   UseMethod("bin.factory")
 }
 
+#' @export
 is.bin <- function(x) {
   inherits(x, "bin")
 }
@@ -113,8 +114,8 @@ print.bin <- function(x, ...) {
   status <- ifelse(x$meta$skip, " *** DROPPED ***", "")
   cat(sprintf("\nIV: %0.5f | Variable: %s%s\n", iv, x$name, status))
   print(out)
-  cat(sprintf("\nModified: %s | Visited: %d | Bin: %s",
-      x$meta$modified, x$meta$visited, x$meta$type))
+  cat(sprintf("\nModified: %s | In Model: %d | Bin: %s",
+      x$meta$modified, x$meta$inmodel, x$meta$type))
   if (!is.null(x$notes)) {
     cat("\nNotes:\n", x$notes)
   }

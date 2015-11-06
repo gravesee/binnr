@@ -1,3 +1,4 @@
+#' @export
 adjust <- function(x, ...) {
   UseMethod("adjust")
 }
@@ -10,7 +11,7 @@ adjust.bin.list <- function(x) {
     cat("\014") # clear the console
     print(out[[i]])
     plot(out[[i]])
-    out[[i]]$meta$visited <- TRUE
+    # out[[i]]$meta$visited <- TRUE
     cat ("\nEnter command (Q to quit):")
     command <- readLines(n = 1)
     if (command == "Q") {
@@ -19,8 +20,8 @@ adjust.bin.list <- function(x) {
       cat(
 "binnr interactive commands:
  (Q)uit
- (n)ext, (N)ext unvisited
- (p)revious, (P)revious unvisited
+ (n)ext, (N)ext in model
+ (p)revious, (P)revious in model
  (g)oto
  (m)ono
  (u)ndo
@@ -101,7 +102,7 @@ binnr bin operations
     } else if (command == "n") {
       i <- i + 1
     } else if (command == "N") {
-      nv <- !visited(out)
+      nv <- inmodel(out)
       nvi <- which(nv) # index of the not-visited
       if (any(nv) & any(nvi > i)) i <- nvi[nvi > i][1]
     } else if (command == "p") {
@@ -111,7 +112,7 @@ binnr bin operations
         cat("\nAt beginning of list")
       }
     } else if (command == "P") {
-      nv <- !visited(out)
+      nv <- inmodel(out)
       nvi <- rev(which(nv)) # index of the not-visited
       if (any(nv) & any(nvi < i)) i <- nvi[nvi < i][1]
     } else if (command == "u") {
@@ -129,6 +130,7 @@ binnr bin operations
   return(out)
 }
 
+#' @export
 adjust.binnr.model <- function(mod) {
   start <- strptime(date(), "%a %b  %d %T %Y")
   mod$bins <- adjust(mod$bins)

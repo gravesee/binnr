@@ -24,7 +24,7 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
     meta=list(
       skip=FALSE,
       type="AUTO",
-      visited=FALSE,
+      inmodel=FALSE,
       modified=date()
     ),
     notes=NULL),

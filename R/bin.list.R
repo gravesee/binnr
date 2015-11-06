@@ -1,3 +1,4 @@
+#' @export
 bin.list <- function(bins){
   stopifnot(all(sapply(bins, is.bin)))
   structure(bins, class='bin.list')
