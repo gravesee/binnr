@@ -82,3 +82,22 @@ predict.binnr.model <- function(object, newdata, y=NULL, type='score') {
     predict(object$bins, newdata, type, object$coef)
   }
 }
+
+fit <- function(x, ...) {
+  UseMethod("fit")
+}
+
+fit.binnr.model <- function(mod, data, y, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1) {
+  # todo: various checks
+  argg <- as.list(environment())
+  do.call(fit.bin.list, c(list(bins=mod$bins, argg[[-1]])))
+}
+
+fit.bin.list <- function(bins, data, y, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1) {
+  x <- predict(bins, data)
+  fit <- cv.glmnet(x, y, nfolds=nfolds, lower.limits=lower.limits,
+                   upper.limits=upper.limits, family=family, alpha=alpha)
+  
+  betas <- coef(fit, s="lambda.min")
+  binnr.model(bins, betas[,1])
+}ß

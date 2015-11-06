@@ -1,5 +1,9 @@
+adjust <- function(x, ...) {
+  UseMethod("adjust")
+}
+
 #' @export
-adjust <- function(x) {
+adjust.bin.list <- function(x) {
   out <- x
   i <- 1
   while(i <= length(x)) {
@@ -123,4 +127,20 @@ binnr bin operations
     }
   }
   return(out)
+}
+
+adjust.binnr.model <- function(mod) {
+  start <- strptime(date(), "%a %b  %d %T %Y")
+  mod$bins <- adjust(mod$bins)
+  
+  # updated bins that are in the coefficients?
+  changed <- sapply(mod$bins, function(x) {
+    strptime(x$meta$modified, "%a %b  %d %T %Y") > start
+  })
+  
+  # if bins are adjusted only return a bin.list
+  if (any(names(which(changed)) %in% names(mod$coef[-1]))) {
+    warning("Coefficient variable modified, must re-fit the model", call. = F)
+  }
+  mod
 }
