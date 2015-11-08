@@ -15,7 +15,14 @@ is.bin.list <- function(x) {
 }
 
 #' @export
-bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
+bin.data.frame <- function(df, y, seg=NULL, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
+  if(!is.null(seg)) {
+    xs <- split(df, seg)
+    ys <- split(y, seg)
+    return(mapply(bin, xs, ys,
+                  MoreArgs = c(list(mono=mono, exceptions=exceptions), list(...)), SIMPLIFY = F))
+  }
+  
   stopifnot(is.list(exceptions))
   if (any(is.na(y))) {
     stop("y response cannot have missing values")

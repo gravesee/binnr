@@ -101,7 +101,7 @@ fit.binnr.model <- function(mod, data, y, nfolds=3, lower.limits=0, upper.limits
 }
 
 #' @export
-fit.bin.list <- function(bins, data, y, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
+fit.bin.list <- function(bins, data, y, seg=NULL, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
   x <- predict(bins, data)
   fit <- cv.glmnet(x, y, nfolds=nfolds, lower.limits=lower.limits,
                    upper.limits=upper.limits, family=family, alpha=alpha)
@@ -124,5 +124,9 @@ fit.bin.list <- function(bins, data, y, nfolds=3, lower.limits=0, upper.limits=3
   mod
 }
 
-
+fit.list <- function(bins, data, y, seg, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
+  xs <- split(data, seg)
+  ys <- split(y, seg)
+  return(mapply(fit, bins, xs, ys, MoreArgs = as.list(match.call()[-(1:4)]), SIMPLIFY = F))  
+}
 
