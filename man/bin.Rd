@@ -4,7 +4,8 @@
 \alias{bin}
 \title{Bin variables for credit modeling}
 \usage{
-bin(x, y, name, min.iv, min.cnt, min.res, max.bin, mono, exceptions)
+bin(x, y, seg = NULL, name, min.iv, min.cnt, min.res, max.bin, mono,
+  exceptions)
 }
 \arguments{
 \item{x}{a \code{factor} or \code{numeric} variable. Can also be a

@@ -124,9 +124,11 @@ fit.bin.list <- function(bins, data, y, seg=NULL, nfolds=3, lower.limits=0, uppe
   mod
 }
 
+#' @export
 fit.list <- function(bins, data, y, seg, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
-  xs <- split(data, seg)
-  ys <- split(y, seg)
+  # todo: add error checks!
+  xs <- split(data, seg, drop=T)
+  ys <- split(y, seg, drop=T)
   return(mapply(fit, bins, xs, ys, MoreArgs = as.list(match.call()[-(1:4)]), SIMPLIFY = F))  
 }
 

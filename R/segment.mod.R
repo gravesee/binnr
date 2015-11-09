@@ -1,17 +1,17 @@
-
-seg.bins <- function(x, y, seg, ...) {
-  xs <- split(x, seg)
-  ys <- split(y, seg)
-  
-  mapply(bin, xs, ys, MoreArgs = list(...), SIMPLIFY = F)
-}
-
-seg.fit <- function(bins, x, y, seg, ...) {
-  xs <- split(x, seg)
-  ys <- split(y, seg)
-  
-  mapply(fit, bins, xs, ys, MoreArgs = list(...), SIMPLIFY = F)
-}
+# 
+# seg.bins <- function(x, y, seg, ...) {
+#   xs <- split(x, seg)
+#   ys <- split(y, seg)
+#   
+#   mapply(bin, xs, ys, MoreArgs = list(...), SIMPLIFY = F)
+# }
+# 
+# seg.fit <- function(bins, x, y, seg, ...) {
+#   xs <- split(x, seg)
+#   ys <- split(y, seg)
+#   
+#   mapply(fit, bins, xs, ys, MoreArgs = list(...), SIMPLIFY = F)
+# }
 
 # data(titanic)
 # bins <- bin(titanic[,-1], titanic$Survived, seg=titanic$Pclass, mono=c(ALL=2), min.res=10)

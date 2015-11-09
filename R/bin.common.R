@@ -165,12 +165,10 @@ mono <- function(b, v) {
   opts$mono <- v
   out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), opts))
   out$opts <- b$opts
+  out$meta <- b$meta
   out$history <- b
-  
-  out$meta$visited <- TRUE
   out$meta$type <- "MANUAL"
   out$meta$modified <- date()
-  
   out
 }
 
