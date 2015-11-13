@@ -19,12 +19,11 @@ bins.to.csv <- function(bins, file=NULL) {
   }
 }
 
-#' Visited
+#' In Model
 #' 
-#' Function that returns T/F vector for whether a bin has been visited with
-#' \code{adjust}
+#' Function that returns T/F vector for whether a bin is in a model
 #' 
-#' @param bins The \code{bin.object} to check for visitation
+#' @param bins The \code{bin.object} to check for model membership
 #' @return logical vector the same length as bins. TRUE if the bins has been 
 #' visited with the \code{adjust} function, FALSE otherwise.
 #' @export
@@ -103,4 +102,57 @@ dropped.binnr.model <- function(mod) {
 `keep<-.binnr.model` <- function(mod, value) {
   keep(mod$bins) <- value
   mod
+}
+
+calc.score <- function(newdata, coefs) {
+  newdata %*% coefs[-1] + coefs[1]
+}
+
+calc.lr2 <- function(f, y) {
+  f <- plogis(f)
+  sum((y == 1)*log(f) + (y == 0)*log(1 - f))
+}
+
+calc.contributions <- function(newdata, coefs, y) {
+  base <- calc.lr2(0, y)
+  lr2 <- sapply(1:length(coefs), function(i) {
+    if (i > 1) {
+      coefs[i] <- 0
+    }
+    1 - (calc.lr2(calc.score(newdata, coefs), y)/base)
+  })
+  names(lr2) <- c("Base", names(coefs)[-1])
+  lr2[1] - lr2[-1]
+}
+
+woe <- function(cnts, y) {
+  if (length(cnts) == 0) return(matrix(nrow=0, ncol=2))
+  ytot <- table(factor(y, levels=c(0,1)))
+  pct0 <- cnts[,1]/ytot[1]
+  pct1 <- cnts[,2]/ytot[2]
+  woe <- log(pct1/pct0)
+  woe[is.infinite(woe) | is.na(woe)] <- 0
+  woe
+}
+
+cnts <- function(x, y, nms=NULL) {
+  tbl <- table(x, factor(y, levels=c(0,1)), useNA='ifany')
+  if (sum(tbl) == 0) {
+    if (!is.null(nms)) {
+      return(matrix(0, nrow=1, ncol=2, dimnames = list(nms)))
+    } else {
+      return(matrix(nrow=0, ncol=2))
+    }
+  }
+  out <- matrix(tbl, ncol=2)
+  rownames(out) <- rownames(tbl)
+  out
+}
+
+unlist.matrix <- function(b, i, e2) {
+  stopifnot(is.bin(b))
+  skeleton <- lapply(b$core$counts, function(x) x[,i])
+  flesh <- unlist(skeleton)
+  flesh[e2] <- 0
+  relist(flesh, skeleton)
 }

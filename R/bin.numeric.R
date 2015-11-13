@@ -61,10 +61,11 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   # need to handle when 1 is included in the range
   # error check that the range is continuous
   stopifnot(all(diff(e2)==1))
+  if (length(e2) <= 1) return(e1)
   
-  e2 <- tail(e2, -1)
-  d <- which(e2 > length(e1$core$breaks) - 1)
-  if(length(d) > 0) e2 <- e2[-d]
+  # handle out of range values...
+  e2 <- unique(pmax(pmin(tail(e2, -1), length(e1$core$breaks) - 1), 2))
+  
   new_breaks = e1$core$breaks[-(e2)]
   b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
   b$history <- e1

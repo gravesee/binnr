@@ -5,8 +5,6 @@ is.binnr.model <- function(x) {
   inherits(x, "binnr.model")
 }
 
-# coefficients must be named and include (Intercept)
-#' @export
 binnr.model <- function(bins, coefficients) {
   stopifnot(is.bin.list(bins))
   stopifnot(!is.null(coefficients))
@@ -44,31 +42,11 @@ binnr.model <- function(bins, coefficients) {
   ), class="binnr.model")
 }
 
-calc.score <- function(newdata, coefs) {
-  newdata %*% coefs[-1] + coefs[1]
-}
-
-calc.lr2 <- function(f, y) {
-  f <- plogis(f)
-  sum((y == 1)*log(f) + (y == 0)*log(1 - f))
-}
-
-calc.contributions <- function(newdata, coefs, y) {
-  base <- calc.lr2(0, y)
-  lr2 <- sapply(1:length(coefs), function(i) {
-    if (i > 1) {
-      coefs[i] <- 0
-    }
-    1 - (calc.lr2(calc.score(newdata, coefs), y)/base)
-  })
-  names(lr2) <- c("Base", names(coefs)[-1])
-  lr2[1] - lr2[-1]
-}
-
 #' @export
-predict.binnr.model <- function(object, newdata, y=NULL, type='score') {
-  v <- names(object$coef[-1])
-  missing <- v[!(v %in% names(object$bins))]
+predict.binnr.model <- function(obj, data, y=NULL, type='score') {
+  v <- names(obj$coef[-1])
+  missing <- v[!(v %in% names(obj$bins))]
+
   if (length(missing) > 0) {
     stop(sprintf("Vars not found in data: %s", paste0(missing, collapse = ',')))
   }
@@ -76,59 +54,30 @@ predict.binnr.model <- function(object, newdata, y=NULL, type='score') {
   types <- c("score","contribution","woe","dist","bins","rcs")
   stopifnot(type %in% types)
   if (type == 'score') {
-    binned <- predict(object$bins[v], newdata)
-    calc.score(binned, object$coef)
+    binned <- predict(obj$bins[v], data)
+    calc.score(binned, obj$coef)
   } else if (type == 'contribution') {
     if (is.null(y)) stop("Must provide y if calculating score contributions")
-    stopifnot(nrow(newdata) == length(y))
-    binned <- predict(object$bins[v], newdata)
-    calc.contributions(binned, object$coef, y)
+    stopifnot(nrow(data) == length(y))
+    binned <- predict(obj$bins[v], data)
+    calc.contributions(binned, obj$coef, y)
   } else{
-    predict(object$bins, newdata, type, object$coef)
+    predict(obj$bins, data, type, obj$coef)
   }
 }
 
 #' @export
-fit <- function(x, ...) {
-  UseMethod("fit")
-}
-
-#' @export
-fit.binnr.model <- function(mod, data, y, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
-  # todo: various checks
-  argg <- as.list(environment())
-  do.call(fit.bin.list, c(list(bins=mod$bins), argg[-1]))
-}
-
-#' @export
-fit.bin.list <- function(bins, data, y, seg=NULL, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
-  x <- predict(bins, data)
-  fit <- cv.glmnet(x, y, nfolds=nfolds, lower.limits=lower.limits,
-                   upper.limits=upper.limits, family=family, alpha=alpha)
+print.binnr.model <- function(mod) {
+  print(mod$bins)
+  out <- merge(mod$coef[-1], mod$contribution, by=0, all=T)
+  rownames(out) <- out$Row.names
+  out$Row.names <- NULL
+  out <- with(out, out[order(-out[,2]),])
   
-  betas <- coef(fit, s="lambda.min")[,1]
-  betas <- betas[betas != 0]
-  
-  # drop vars that aren't in the model and reorder to have the kept ones first
-  k <- which(names(bins) %in% names(betas))
-  bins <- notinmodel(bins) # reset which bins are in the model
-  inmodel(bins) <- k
-  
-  if (drop) {
-    drop(bins) <- seq_along(bins)[-k]
-  }
-  
-  bins.reorder <- bin.list(c(bins[k], bins[-k]))
-  mod <- binnr.model(bins.reorder, betas)
-  mod$contribution <- sort(predict(mod, data, y, type="contribution"), decreasing = T)
-  mod
+  cnt <- out[,2]/max(out[,2]) * 10
+  out[,3] <- sapply(cnt, function(i) paste(rep("*", i), collapse=""))
+  out[,3] <- format(out[,3], justify = "left")
+  colnames(out) <- c("Coefficient", "Contribution", "Importance")
+  cat("\n")
+  print(out) 
 }
-
-#' @export
-fit.list <- function(bins, data, y, seg, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
-  # todo: add error checks!
-  xs <- split(data, seg, drop=T)
-  ys <- split(y, seg, drop=T)
-  return(mapply(fit, bins, xs, ys, MoreArgs = as.list(match.call()[-(1:4)]), SIMPLIFY = F))  
-}
-

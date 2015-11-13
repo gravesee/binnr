@@ -1,37 +1,11 @@
-# 
-# seg.bins <- function(x, y, seg, ...) {
-#   xs <- split(x, seg)
-#   ys <- split(y, seg)
-#   
-#   mapply(bin, xs, ys, MoreArgs = list(...), SIMPLIFY = F)
-# }
-# 
-# seg.fit <- function(bins, x, y, seg, ...) {
-#   xs <- split(x, seg)
-#   ys <- split(y, seg)
-#   
-#   mapply(fit, bins, xs, ys, MoreArgs = list(...), SIMPLIFY = F)
-# }
+#' @export
+is.segmented <- function(x) {
+  inherits(x, "segmented")
+}
 
-# data(titanic)
-# bins <- bin(titanic[,-1], titanic$Survived, seg=titanic$Pclass, mono=c(ALL=2), min.res=10)
-# mods <- fit(bins, titanic[,-1], titanic$Survived, seg=titanic$Pclass)
-# 
-# phat <- lapply(mods, predict, titanic)
-# 
-# x <- sample(letters[1:4], 100, replace = T)
-# 
-# y <- list(
-#   "a"=rnorm(100),
-#   "b"=rnorm(100),
-#   "c"=rnorm(100))
-# 
-# i <- match(x, names(y))
-# m <- sapply(i, function(i) {out <- rep(0,3); out[i] <- 1; out})
-# 
-# final <- apply(t(m) * do.call(cbind, y), 1, sum)
-# 
-# final2 <- sapply(seq_along(x), function(i) if(is.null(y[[x[i]]][i])) NA else y[[x[i]]][i])
-# 
-# 
-# 
+#' @export
+predict.segmented <- function(obj, data, seg=NULL, type='score') {
+  phat <- lapply(obj, predict, data, type)
+  if (is.null(seg)) return(phat)
+  do.call(cbind, phat)[cbind(1:nrow(data), match(seg, names(phat)))]
+}

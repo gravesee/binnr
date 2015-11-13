@@ -103,7 +103,7 @@ binnr bin operations
       i <- i + 1
     } else if (command == "N") {
       nv <- inmodel(out)
-      nvi <- which(nv) # index of the not-visited
+      nvi <- which(nv) # index of the in-model
       if (any(nv) & any(nvi > i)) i <- nvi[nvi > i][1]
     } else if (command == "p") {
       if (i > 1) {
@@ -113,7 +113,7 @@ binnr bin operations
       }
     } else if (command == "P") {
       nv <- inmodel(out)
-      nvi <- rev(which(nv)) # index of the not-visited
+      nvi <- rev(which(nv)) # index of the last in model
       if (any(nv) & any(nvi < i)) i <- nvi[nvi < i][1]
     } else if (command == "u") {
       out[[i]] <- undo(out[[i]])
@@ -145,4 +145,14 @@ adjust.binnr.model <- function(mod) {
     warning("Coefficient variable modified, must re-fit the model", call. = F)
   }
   mod
+}
+
+adjust.segmented <- function(obj) {
+  # choose which segment?
+  cat("\014") # clear the console
+  cat ("\nChoose Segment:\n")
+  cat(paste(seq_along(obj), names(obj)), sep="\n")
+  i <- as.integer(readLines(n = 1))
+  obj[[i]] <- adjust(obj[[i]])
+  obj
 }

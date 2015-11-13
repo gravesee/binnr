@@ -44,28 +44,47 @@ is.bin <- function(x) {
   inherits(x, "bin")
 }
 
-woe <- function(cnts, y) {
-  if (length(cnts) == 0) return(matrix(nrow=0, ncol=2))
-  ytot <- table(factor(y, levels=c(0,1)))
-  pct0 <- cnts[,1]/ytot[1]
-  pct1 <- cnts[,2]/ytot[2]
-  woe <- log(pct1/pct0)
-  woe[is.infinite(woe) | is.na(woe)] <- 0
-  woe
-}
 
-cnts <- function(x, y, nms=NULL) {
-  tbl <- table(x, factor(y, levels=c(0,1)), useNA='ifany')
-  if (sum(tbl) == 0) {
-    if (!is.null(nms)) {
-      return(matrix(0, nrow=1, ncol=2, dimnames = list(nms)))
-    } else {
-      return(matrix(nrow=0, ncol=2))
-    }
+#' @export
+bin.data.frame <- function(df, y, seg=NULL, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
+  if(!is.null(seg)) {
+    xs <- split(df, seg, drop=T)
+    ys <- split(y, seg, drop=T)
+    out <- mapply(
+      bin, xs, ys, MoreArgs = c(list(mono=mono, exceptions=exceptions), list(...)),
+      SIMPLIFY = F)
+    
+    return(structure(out, class=c("segmented")))
   }
-  out <- matrix(tbl, ncol=2)
-  rownames(out) <- rownames(tbl)
-  out
+  
+  stopifnot(is.list(exceptions))
+  if (any(is.na(y))) {
+    stop("y response cannot have missing values")
+  }
+  
+  vars <- colnames(df)
+  .mono <- rep(mono["ALL"], ncol(df))
+  names(.mono) <- vars
+  .mono[names(mono)] <- mono
+  .exceptions <- rep(list(exceptions[['ALL']]), length.out=ncol(df))
+  names(.exceptions) <- vars
+  .exceptions[names(exceptions)] <- exceptions
+  
+  dashes <- c('\\','|','/','-')
+  
+  drop.vars <- list()
+  res <- list()
+  for (i in seq_along(vars)) {
+    nm <- vars[i]
+    cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(vars))))
+    flush.console()
+    if (all(is.na(df[,nm]))) {df[,nm] <- as.logical(df[,nm])}
+    b <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
+    if (!is.null(b)) res[[nm]] <- b
+  }
+  cat("\n")
+  
+  return(bin.list(res))
 }
 
 #' @export
@@ -144,13 +163,6 @@ print.bin <- function(x, ...) {
   b$meta$modified <- date()
   
   b
-}
-
-unlist.matrix <- function(b, i, e2) {
-  skeleton <- lapply(b$core$counts, function(x) x[,i])
-  flesh <- unlist(skeleton)
-  flesh[e2] <- 0
-  relist(flesh, skeleton)
 }
 
 #' @export

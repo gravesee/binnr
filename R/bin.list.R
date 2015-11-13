@@ -15,46 +15,6 @@ is.bin.list <- function(x) {
 }
 
 #' @export
-bin.data.frame <- function(df, y, seg=NULL, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
-  if(!is.null(seg)) {
-    xs <- split(df, seg, drop=T)
-    ys <- split(y, seg, drop=T)
-    return(mapply(bin, xs, ys,
-                  MoreArgs = c(list(mono=mono, exceptions=exceptions), list(...)), SIMPLIFY = F))
-  }
-  
-  stopifnot(is.list(exceptions))
-  if (any(is.na(y))) {
-    stop("y response cannot have missing values")
-  }
-
-  vars <- colnames(df)
-  .mono <- rep(mono["ALL"], ncol(df))
-  names(.mono) <- vars
-  .mono[names(mono)] <- mono
-  .exceptions <- rep(list(exceptions[['ALL']]), length.out=ncol(df))
-  names(.exceptions) <- vars
-  .exceptions[names(exceptions)] <- exceptions
-
-  dashes <- c('\\','|','/','-')
-
-  drop.vars <- list()
-  res <- list()
-  for (i in seq_along(vars)) {
-    nm <- vars[i]
-    cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(vars))))
-    flush.console()
-    if (all(is.na(df[,nm]))) {df[,nm] <- as.logical(df[,nm])}
-    b <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
-    if (!is.null(b)) res[[nm]] <- b
-  }
-  cat("\n")
-
-  return(bin.list(res))
-  #return(res)
-}
-
-#' @export
 predict.bin.list <- function(object, newdata, type="woe", coefs=NULL) {
   if (is.null(names(object))) stop("bin.list object must have names attribute")
   if (is.null(colnames(newdata))) stop("newdata requires column names")

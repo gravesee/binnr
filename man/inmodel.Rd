@@ -2,19 +2,18 @@
 % Please edit documentation in R/util.R
 \name{inmodel}
 \alias{inmodel}
-\title{Visited}
+\title{In Model}
 \usage{
 inmodel(bins)
 }
 \arguments{
-\item{bins}{The \code{bin.object} to check for visitation}
+\item{bins}{The \code{bin.object} to check for model membership}
 }
 \value{
 logical vector the same length as bins. TRUE if the bins has been
 visited with the \code{adjust} function, FALSE otherwise.
 }
 \description{
-Function that returns T/F vector for whether a bin has been visited with
-\code{adjust}
+Function that returns T/F vector for whether a bin is in a model
 }
 
