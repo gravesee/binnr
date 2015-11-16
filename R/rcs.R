@@ -39,11 +39,27 @@ rcs.bin.list <- function(x) {
   if (!is.null(nms)) nms <- nms[!(nms == "")]
   vars <- intersect(names(x), nms)
 
-  if (length(vars) == 0) stop("no vars in common between bins and rc list",
-                              call. = F)
+  if (length(vars) == 0) {
+    stop("no vars in common between bins and rc list", call. = F)
+  }
 
   for (v in vars) {
     rcs(x[[v]]) <- value[v]
   }
+  x
+}
+
+#' @export
+`rcs<-.segmented` <- function(x, value) {
+  stopifnot(is.list(value))
+  for (i in seq_along(x)) {
+    rcs(x[[i]]) <- value
+  }
+  x
+}
+
+#' @export
+`rcs<-.binnr.model` <- function(x, value) {
+  rcs(x$bins) <- value
   x
 }
