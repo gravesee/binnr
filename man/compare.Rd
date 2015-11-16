@@ -17,7 +17,7 @@ and sorted by the last, passed model in descending order
 Compare binnr models
 }
 \details{
-\code{compare} can be used ot assess the effects of dropping variables
+\code{compare} can be used to assess the effects of dropping variables
 from a \code{binnr.model} and refitting. Dropped variables will show up as 'NA'
 in the re-fit model. Newly added variables will show up as 'NA' in the previous
 model

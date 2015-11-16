@@ -147,12 +147,30 @@ adjust.binnr.model <- function(mod) {
   mod
 }
 
+#' @export
 adjust.segmented <- function(obj) {
   # choose which segment?
   cat("\014") # clear the console
-  cat ("\nChoose Segment:\n")
+  cat ("\nChoose Segment (Q to quit):\n")
   cat(paste(seq_along(obj), names(obj)), sep="\n")
-  i <- as.integer(readLines(n = 1))
-  obj[[i]] <- adjust(obj[[i]])
+  inp <- readLines(n = 1)
+  while (inp != "Q") {
+    if (inp == "Q") {
+      break
+    } else {
+      i <- as.integer(inp)
+      tryCatch(
+        obj[[i]] <- adjust(obj[[i]])
+      , error = function(err){
+        cat("\nInvalid entry, choose again:")
+      })
+      cat("\014") # clear the console
+      cat ("\nChoose Segment (Q to quit):\n")
+      cat(paste(seq_along(obj), names(obj)), sep="\n")
+      inp <- readLines(n = 1)
+    }
+  }
   obj
 }
+
+

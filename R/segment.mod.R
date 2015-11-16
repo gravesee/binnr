@@ -9,3 +9,5 @@ predict.segmented <- function(obj, data, seg=NULL, type='score') {
   if (is.null(seg)) return(phat)
   do.call(cbind, phat)[cbind(1:nrow(data), match(seg, names(phat)))]
 }
+
+# TODO: print.segmented
