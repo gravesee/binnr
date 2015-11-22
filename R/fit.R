@@ -11,8 +11,10 @@ fit.binnr.model <- function(mod, data, y, nfolds=3, lower.limits=0, upper.limits
 }
 
 #' @export
-fit.bin.list <- function(bins, data, y, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
+fit.bin.list <- function(bins, data=NULL, y=NULL, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
+  if (is.null(y)) y <- bins[[1]]$data$y # grab the first y from a bin
   x <- predict(bins, data)
+  
   fit <- cv.glmnet(x, y, nfolds=nfolds, lower.limits=lower.limits,
                    upper.limits=upper.limits, family=family, alpha=alpha)
   
@@ -28,16 +30,24 @@ fit.bin.list <- function(bins, data, y, nfolds=3, lower.limits=0, upper.limits=3
     drop(bins) <- seq_along(bins)[-k]
   }
   
-  bins.reorder <- bin.list(c(bins[k], bins[-k]))
-  mod <- binnr.model(bins.reorder, betas)
+  # bins.reorder <- bin.list(c(bins$bins[k], bins$bins[-k]))
+  mod <- binnr.model(bins, betas)
   mod$contribution <- sort(predict(mod, data, y, type="contribution"), decreasing = T)
   mod
 }
 
 #' @export
-fit.segmented <- function(obj, data, y, seg, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
+fit.segmented <- function(obj, data=NULL, y=NULL, seg, nfolds=3, lower.limits=0, upper.limits=3, family="binomial", alpha=1, drop=F) {
   argg <- as.list(environment())[-(1:5)]
-  xs <- split(data, seg, drop=T)
-  ys <- split(y, seg, drop=T)
-  structure(mapply(fit, obj, xs, ys, MoreArgs = argg, SIMPLIFY = F), class = c("segmented"))
+  
+  # use data stored with objects if none is passed in
+  if (is.null(data) & is.null(y)) {
+    structure(lapply(obj, function(x) {do.call(fit, c(list(x), argg))}),
+              class = c("segmented"))
+  } else {
+    # else use the passed in data
+    xs <- split(data, seg, drop=T)
+    ys <- split(y, seg, drop=T)
+    structure(mapply(fit, obj, xs, ys, MoreArgs = argg, SIMPLIFY = F), class = c("segmented"))
+  }
 }

@@ -1,13 +1,15 @@
 #' @export
-predict.bin.factor <- function(object, x, type="woe", coef=1) {
+predict.bin.factor <- function(bin, x=NULL, type="woe", coef=NULL) {
+  if (is.null(x)) x <- bin$data$x
+  if (is.null(coef)) coef <- 1
   if (type == "bins") {
-    out <- predict.bin.factor.bins(object, x)
+    out <- predict.bin.factor.bins(bin, x)
   } else if (type == "dist") {
-    out <- predict.bin.factor.dist(object, x, coef)
+    out <- predict.bin.factor.dist(bin, x, coef)
   } else if (type == "rcs") {
-    out <- predict.bin.factor.rcs(object, x)
+    out <- predict.bin.factor.rcs(bin, x)
   } else { # "woe"
-    out <- predict.bin.factor.woe(object, x)
+    out <- predict.bin.factor.woe(bin, x)
   }
   names(out) <- NULL
   out
