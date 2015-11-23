@@ -31,7 +31,7 @@
 #' @return a \code{bin} or \code{bin.list} object
 #' 
 #' @export
-bin <- function(x, y, name, min.iv, min.cnt, min.res, max.bin, mono, exceptions){
+bin <- function(x, y, seg=NULL, name, min.iv, min.cnt, min.res, max.bin, mono, exceptions){
   UseMethod("bin", x)
 }
 
@@ -39,26 +39,52 @@ bin.factory <- function(x, ...) {
   UseMethod("bin.factory")
 }
 
+#' @export
 is.bin <- function(x) {
   inherits(x, "bin")
 }
 
-woe <- function(cnts, y) {
-  if (length(cnts) == 0) return(matrix(nrow=0, ncol=2))
-  ytot <- table(factor(y, levels=c(0,1)))
-  pct0 <- cnts[,1]/ytot[1]
-  pct1 <- cnts[,2]/ytot[2]
-  woe <- log(pct1/pct0)
-  woe[is.infinite(woe) | is.na(woe)] <- 0
-  woe
-}
 
-cnts <- function(x, y) {
-  tbl <- table(x, factor(y, levels=c(0,1)), useNA='ifany')
-  if (sum(tbl) == 0) return(matrix(nrow = 0, ncol=2))
-  out <- matrix(tbl, ncol=2)
-  rownames(out) <- rownames(tbl)
-  out
+#' @export
+bin.data.frame <- function(df, y, seg=NULL, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
+  if(!is.null(seg)) {
+    xs <- split(df, seg, drop=T)
+    ys <- split(y, seg, drop=T)
+    out <- mapply(
+      bin, xs, ys, MoreArgs = c(list(mono=mono, exceptions=exceptions), list(...)),
+      SIMPLIFY = F)
+    
+    return(structure(out, class=c("segmented")))
+  }
+  
+  stopifnot(is.list(exceptions))
+  if (any(is.na(y))) {
+    stop("y response cannot have missing values")
+  }
+  
+  vars <- colnames(df)
+  .mono <- rep(mono["ALL"], ncol(df))
+  names(.mono) <- vars
+  .mono[names(mono)] <- mono
+  .exceptions <- rep(list(exceptions[['ALL']]), length.out=ncol(df))
+  names(.exceptions) <- vars
+  .exceptions[names(exceptions)] <- exceptions
+  
+  dashes <- c('\\','|','/','-')
+  
+  drop.vars <- list()
+  res <- list()
+  for (i in seq_along(vars)) {
+    nm <- vars[i]
+    cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(vars))))
+    flush.console()
+    if (all(is.na(df[,nm]))) {df[,nm] <- as.logical(df[,nm])}
+    b <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
+    if (!is.null(b)) res[[nm]] <- b
+  }
+  cat("\n")
+  
+  return(bin.list(res))
 }
 
 #' @export
@@ -90,6 +116,9 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   
   # output
   out <- as.data.frame(rbind(out, Total=total))
+  
+  # check for RCS
+  if (!is.null(x$rcs)) out$RC <- c(unlist(x$rcs), '')
   out
 }
 
@@ -97,15 +126,18 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
 print.bin <- function(x, ...) {
   out <- as.data.frame(x)
   iv <- out['Total', 'IV']
-  fmts <- c(rep("%d",3), rep("%1.3f", 4), "%0.5f")
+  fmts <- c(rep("%d",3), rep("%1.3f", 4), "%0.5f", "%s", "%1.3f", "%s")
   
   for (i in seq_along(out)) { out[,i] <- sprintf(fmts[i], out[,i]) }
   
-  status <- ifelse(x$skip, " *** DROPPED ***", "")
+  status <- ifelse(x$meta$skip, " *** DROPPED ***", "")
   cat(sprintf("\nIV: %0.5f | Variable: %s%s\n", iv, x$name, status))
   print(out)
-  
-  #print(as.data.frame.bin(x))
+  cat(sprintf("\nModified: %s | In Model: %d | Bin: %s",
+      x$meta$modified, x$meta$inmodel, x$meta$type))
+  if (!is.null(x$notes)) {
+    cat("\nNotes:\n", x$notes)
+  }
 }
 
 #' @export
@@ -121,19 +153,16 @@ print.bin <- function(x, ...) {
   values <- e1$core$values
   values$var <- log((counts$var[,2]/tots[,2])/(counts$var[,1]/tots[,1]))
   values$exc <- log((counts$exc[,2]/tots[,2])/(counts$exc[,1]/tots[,1]))
-  values <- lapply(values, function(x) {x[is.nan(x)] <- 0; x})
+  values <- lapply(values, function(x) {x[is.nan(x) | is.infinite((x))] <- 0; x})
   b <- e1
   b$core$counts <- counts
   b$core$values <- values
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
-}
-
-unlist.matrix <- function(b, i, e2) {
-  skeleton <- lapply(b$core$counts, function(x) x[,i])
-  flesh <- unlist(skeleton)
-  flesh[e2] <- 0
-  relist(flesh, skeleton)
 }
 
 #' @export
@@ -144,9 +173,14 @@ reset <- function(b) {
 #' @export
 mono <- function(b, v) {
   v <- if(v %in% c(-1,0,1,2)) v else 0
-  b$opts$mono <- v
-  out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
+  opts <- b$opts
+  opts$mono <- v
+  out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), opts))
+  out$opts <- b$opts
+  out$meta <- b$meta
   out$history <- b
+  out$meta$type <- "MANUAL"
+  out$meta$modified <- date()
   out
 }
 
@@ -157,14 +191,17 @@ undo <- function(x) {
 }
 
 #' @export
-bin.logical <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=numeric(0)) {
+bin.logical <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL,
+                        min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
   warning(sprintf("Not binned: %s -- All missing", name), call. = F)
   NULL
 }
 
 #' @export
-bin.character <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, max.bin=10, mono=0, exceptions=numeric(0)) {
-  warning(sprintf("Not binned: %s -- Character, hint: cast to factor", name), call. = F)
+bin.character <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL,
+                          min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
+  warning(sprintf("Not binned: %s -- Character, hint: cast to factor", name),
+          call. = F)
   NULL
 }
  

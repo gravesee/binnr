@@ -2,7 +2,7 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
   counts <- list(
     var=cnts(x[!is.na(x)], y[!is.na(x)]),
     exc=matrix(nrow=0,ncol=2),
-    nas=cnts(factor(x[is.na(x)], levels=NA), y[is.na(x)])
+    nas=cnts(factor(x[is.na(x)], levels=NA), y[is.na(x)], NA)
   )
   
   values <- list(
@@ -21,7 +21,13 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
       breaks=breaks,
       counts=counts,
       values=values),
-    skip=FALSE),
+    meta=list(
+      skip=FALSE,
+      type="AUTO",
+      inmodel=FALSE,
+      modified=date()
+    ),
+    notes=NULL),
     class=c("bin.factor", "bin"))
   
 }
@@ -56,6 +62,10 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res
   b$core$breaks <- map
   b$data$x <- e1$data$x
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
 }
 
@@ -70,14 +80,9 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res
   b$core$breaks <- map
   b$data$x <- e1$data$x
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
-}
-
-#' @export
-predict.bin.factor <- function(object, x, ...) {
-  vals <- object$core$values$var
-  res <- numeric(length(x))
-  res[!is.na(x)] <- vals[unlist(object$core$breaks[x[!is.na(x)]])]
-  res[is.na(res)] <- 0
-  res
 }

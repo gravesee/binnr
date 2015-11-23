@@ -9,6 +9,7 @@ cold.day.breaks <- c(-Inf, 100, 500, 1000, 5000, Inf)
 
 #' @export
 plot.bin <- function(x, y, ...) {
+  old.par <- par(oma=c(0,0,0,0),mar=c(0,0,0,0))
   # coerce bin into data.frame
   full <- as.data.frame(x)
   f <- !(rownames(full) %in% "Missing") & rownames(full) != "Total"
@@ -42,4 +43,5 @@ plot.bin <- function(x, y, ...) {
   legend("bottom", c("<100", "<500", "<1000", "<5000", "5000+"), 
          fill = cold.day.palette, horiz=T, inset = c(0,0), xpd=T, cex = 0.75,
          pt.cex = 0.8)
+  par(old.par)
 }

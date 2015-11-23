@@ -6,7 +6,7 @@ bin.factory.numeric <- function(x, y, breaks, name, options) {
   counts <- list(
     var=cnts(xb, y[f]),
     exc=cnts(x[exc], y[exc]),
-    nas=cnts(x[is.na(x)], y[is.na(x)])
+    nas=cnts(x[is.na(x)], y[is.na(x)], NA)
   )
   
   values <- list(
@@ -25,7 +25,13 @@ bin.factory.numeric <- function(x, y, breaks, name, options) {
       breaks=breaks,
       counts=counts,
       values=values),
-    skip=FALSE),
+    meta=list(
+      skip=FALSE,
+      type="AUTO",
+      inmodel=FALSE,
+      modified=date()
+    ),
+    notes=NULL),
     class=c("bin.numeric", "bin"))
   
 }
@@ -55,11 +61,17 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   # need to handle when 1 is included in the range
   # error check that the range is continuous
   stopifnot(all(diff(e2)==1))
+  if (length(e2) <= 1) return(e1)
   
-  e2 <- tail(e2, -1)
+  # handle out of range values...
+  e2 <- unique(pmax(pmin(tail(e2, -1), length(e1$core$breaks) - 1), 2))
+  
   new_breaks = e1$core$breaks[-(e2)]
   b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
   b
 }
 
@@ -77,6 +89,10 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   new_breaks <- sort(c(b[-z], q))
   b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
   b$history <- e1
+  
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
 }
 
@@ -86,22 +102,8 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
                      e1$opts))
   b$history <- e1
   b$data$x <- e1$data$x
+  b$meta$type <- "MANUAL"
+  b$meta$modified <- date()
+  
   b
-}
-
-#' @export
-predict.bin.numeric <- function(object, x, ...) {
-  breaks <- object$core$breaks
-  values <- object$core$values
-  res <- values$var[cut(x, breaks, labels = FALSE)]
-  
-  exceptions <- names(values$exc)
-  if (length(values$exc) != 0) { # exception values
-    for (i in seq_along(exceptions)) {
-      res[x == exceptions[i]] <- object$core$values$exc[i]
-    }
-  }
-  
-  res[is.na(res)] <- 0
-  res
 }

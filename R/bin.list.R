@@ -1,3 +1,4 @@
+#' @export
 bin.list <- function(bins){
   stopifnot(all(sapply(bins, is.bin)))
   structure(bins, class='bin.list')
@@ -14,60 +15,30 @@ is.bin.list <- function(x) {
 }
 
 #' @export
-bin.data.frame <- function(df, y, mono=c(ALL=0), exceptions=list(ALL=NULL), ...) {
-  stopifnot(is.list(exceptions))
-  if (any(is.na(y))) {
-    stop("y response cannot have missing values")
+predict.bin.list <- function(bins, data=NULL, type="woe", coefs=NULL) {
+  if (!is.null(data)) {
+    vars <- intersect(colnames(data), names(bins))
+    if (length(vars) == 0) stop("no vars in common between newdata and bin.list")
+  } else {
+    vars <- names(bins)
   }
-
-  vars <- colnames(df)
-  .mono <- rep(mono["ALL"], ncol(df))
-  names(.mono) <- vars
-  .mono[names(mono)] <- mono
-  .exceptions <- rep(list(exceptions[['ALL']]), length.out=ncol(df))
-  names(.exceptions) <- vars
-  .exceptions[names(exceptions)] <- exceptions
-
-  dashes <- c('\\','|','/','-')
-
-  drop.vars <- list()
-  res <- list()
-  for (i in seq_along(vars)) {
-    nm <- vars[i]
-    cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(vars))))
-    flush.console()
-    b <- bin(df[,nm], y, name = nm, mono=.mono[nm], exceptions=.exceptions[[nm]], ...)
-    if (!is.null(b)) res[[nm]] <- b
-  }
-  cat("\n")
-
-  return(bin.list(res))
-  #return(res)
-}
-
-#' @export
-predict.bin.list <- function(object, newdata) {
-  if (is.null(names(object))) stop("bin.list object must have names attribute")
-  if (is.null(colnames(newdata))) stop("newdata requires column names")
-
-  nms <- names(object)
-  if (!is.null(nms)) nms <- nms[!(nms == "")]
-  vars <- intersect(colnames(newdata), nms)
-
-  if (length(vars) == 0) stop("no vars in common between newdata and bin.list")
-
+  
   res <- list()
   for (i in seq_along(vars)) {
     nm <- vars[i]
     cat(sprintf("\rProgress: %%%3d", as.integer(100*i/length(vars))))
     flush.console()
-    if (!object[[nm]]$skip) {
-      res[[vars[i]]] <- predict(object[[nm]], newdata[,nm])
+    if (!bins[[nm]]$meta$skip) {
+      res[[vars[i]]] <- predict(bins[[nm]], data[,nm], type, coefs[nm])
     }
   }
   cat("\n")
-  res <- do.call(cbind, res)
-  rownames(res) <- rownames(newdata)
+  if (type == "bins") {
+    res <- as.data.frame(res)
+  } else {
+    res <- do.call(cbind, res)
+  }
+  rownames(res) <- rownames(data)
   return(res)
 }
 
@@ -107,21 +78,25 @@ summary.bin.list <- function(object, ...) {
   out <- list()
   for (i in seq_along(object)) {
     b <- object[[i]]
+    f <- !(is.na(b$data$x) | (b$data$x %in% b$opts$exceptions))
+    n.uniq <- length(unique(b$data$x[f]))
+    
     df <- as.data.frame(b)
     out[[i]] <- data.frame(
-      Name  = b$name,
-      IV    = max(df$IV),
-      NBins = nrow(b$core$counts$var),
-      totN  = sum(sapply(b$core$counts, sum)),
-      NVar  = sum(b$core$counts$var),
-      NExc  = sum(b$core$counts$exc),
-      NMiss = sum(b$core$counts$nas),
-      Mono = b$opts$mono,
-      stringsAsFactors = F
+      "Name"  = b$name,
+      "IV"    = max(df$IV),
+      "# Bins"  = nrow(b$core$counts$var),
+      "# Unique"= n.uniq,
+      "Tot N"   = sum(sapply(b$core$counts, sum)),
+      "# Valid" = sum(b$core$counts$var),
+      "# Exception"  = sum(b$core$counts$exc),
+      "# Missing"    = sum(b$core$counts$nas),
+      "Monotonicity" = b$opts$mono,
+      "In Model"  = b$meta$inmodel,
+      "Modified" = b$meta$modified,
+      stringsAsFactors = F,
+      check.names = F
     )
-    colnames(out[[i]]) <- c(
-      "Name", "IV", "# Bins", "Tot N", "# Valid",
-      "# Exception", "# Missing", "Monotonicty")
   }
   out <- as.data.frame(do.call(rbind, out))
   rownames(out) <- NULL

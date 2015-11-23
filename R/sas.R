@@ -1,72 +1,115 @@
-#' Create character vector of SAS code for printing
-#' 
-#' @param x a \code{bin} or \code{bin.list} object
-#' @return a character vector of SAS statements. Use \code{cat} to export
-
 #' @export
-sas <- function(x) {
+sas <- function(x, pfx, coef=NULL) {
   UseMethod("sas", x)
 }
 
-# pieces common to both factor and numeric translation
-base.sas <- function(x) {
-  v <- x$name
-  text <- list(sprintf("  * Variable: %s ;\n", v))
-  # missing text
-  txt1 <- sprintf("    if missing(%s)", v)
-  txt2 <- sprintf("\n        then %s_w = %02.8f;\n", v, 0)
-  text[[length(text)+1]] <- sprintf("%-50s%s" , txt1, txt2)
+sas.bin.numeric <- function(b, pfx='') {
+  conds <- c(
+    sprintf("if missing(%s) then", b$name),
+    sprintf("else if %s = %s then", b$name, names(b$core$values$exc)),
+    sprintf("else if %s <= %s then", b$name, tail(head(b$core$breaks, -1), -1)),
+    sprintf("else"))
   
-  # exceptions text
-  e <- x$core$values$exc
-  for (i in seq_along(e)) {
-    txt1 <- sprintf("    else if %s = %s", v, names(e)[i])
-    txt2 <- sprintf("\n        then %s_w = %02.8f;\n", v, e[i])
-    text[[length(text)+1]] <- sprintf("%-50s%s" , txt1, txt2)
-  }
-  text
+  vals  <- unlist(rev(b$core$values))
+  dists <- min(vals) - vals
+  rcs   <- unlist(rev(b$rcs))
+  
+  output.sas(conds, vals, dists, rcs, pfx, b)
 }
 
-#' @export
-sas.bin.numeric <- function(x) {
-  text <- base.sas(x)
+sas.bin.factor <- function(b, pfx='') {
   
-  b <- x$core$breaks[-1]
-  for (i in  seq_along(b)) {
-    if (i == length(b)) break
-    txt1 <- sprintf("    else if %s <= %s", x$name, b[i])
-    txt2 <-
-      sprintf("\n        then %s_w = %02.8f;\n", x$name, x$core$values$var[i])
-    text[[length(text)+1]] <- sprintf("%-50s%s" , txt1, txt2)
-    
-  }
-  text[[length(text)+1]] <-
-    sprintf("    else %s_w = %02.8f;\n", x$name, x$core$values$var[i])
-  do.call(c, text)
+  v <- gsub(",","','", names(b$core$values$var))
+  conds <- c(
+    sprintf("if missing(%s) then", b$name),
+    sprintf("else if %s in ('%s') then", b$name, v),
+    sprintf("else"))
+  
+  vals  <- c(unlist(rev(b$core$values)), 0) # adding a zero to handle unseen lvls
+  dists <- min(vals) - vals # TODO: put code in here for choosing max/min/etc...
+  rcs   <- c(unlist(rev(b$rcs)), b$rcs$nas)
+  
+  output.sas(conds, vals, dists, rcs, pfx, b)
 }
 
-#' @export
-sas.bin.factor <- function(x) {
-  text <- base.sas(x)
-  
-  b <- unique(x$core$breaks)
-  for (i in  seq_along(b)) {
-    items <- gsub(',', "','", b[i])
-    txt1 <- sprintf("    else if %s in ('%s')", x$name, items)
-    txt2 <-
-      sprintf("\n        then %s_w = %02.8f;\n", x$name, x$core$values$var[i])
-    text[[length(text)+1]] <- sprintf("%-50s%s" , txt1, txt2)
+output.sas <- function(conds, vals, dists, rcs, pfx, b) {
+  # print them all together
+  if (!is.null(rcs)) {
+    sprintf("%s do;\n  %s_%s_w = %s;\n  %s_RC_%s + %s;\nend;",
+            conds, pfx, b$name, vals, pfx, rcs, dists)
+  } else {
+    sprintf("%s do;\n  %s_%s_w = %s;\nend;",
+            conds, pfx, b$name, vals)
   }
-  text[[length(text)+1]] <- sprintf("    else %s_w = %02.8f;\n", x$name, 0)
-  do.call(c, text)
 }
 
+
 #' @export
-sas.bin.list <- function(x) {
+sas.bin.list <- function(bins, pfx="") {
   out <- list()
-  for (i in seq_along(x)) {
-    out[[i]] <- c('\n', sas(x[[i]]))
+  for(i in seq_along(bins)) {
+    b <- bins[[i]]
+    out[[i]] <- c(sprintf("\n\n*** Variable: %s ***;\n", b$name), sas(b, pfx))
   }
-  do.call(c, out)
+  unlist(out)
 }
+
+
+### Put these pieces into helper functions
+.sas.sort.logic <- function(pfx) {
+sprintf("\n\n*** Reason code sorting logic ***;
+drop i, j, tmp_pts, tmp_cd;
+do i = 1 to (dim(CDS)-1);
+  do j = i to dim(CDS);
+    if %1$s_PTS[j] < %1$s_PTS[i] then do;
+      tmp_pts = %1$s_PTS[i]; tmp_cd = %1$s_CDS[i];
+      %1$s_PTS[i] = %1$s_PTS[j]; %1$s_CDS[i] = %1$s_CDS[j];
+      %1$s_PTS[j] = tmp_pts; %1$s_CDS[j] = tmp_cd;
+    end;
+  end;
+end;", pfx)
+}
+
+.sas.mod.equation <- function(coef, pfx) {
+  c(sprintf("\n\n%s_final_score = %s", pfx, coef[1]),
+    sprintf("\n    + %s_%s_w * %s", pfx, names(coef[-1]), coef[-1]),
+    "\n  ;")
+}
+
+.sas.rc.arrays <- function(rcs, pfx) {
+  n  <- length(rcs)
+  nc <- max(sapply(rcs, nchar))
+  
+  pts <- paste(strwrap(
+    paste0(pfx, "_RC_", rcs, collapse = " "), width=80), collapse="\n")
+  
+  cds <- paste(strwrap(paste(rcs, collapse="' '"), width=80), collapse="\n")
+  
+  c(sprintf("\narray %s_PTS {%d} \n%s\n(0);\n", pfx, n, pts),
+    sprintf("\narray %s_CDS {%d} $%d _TEMPORARY_ ('%s');\n", pfx, n, nc, cds))
+}
+
+#' @export
+sas.binnr.model <- function(mod, pfx="") {
+  
+  out  <- list()
+  vars <- names(mod$coef[-1])
+  rcs  <- rcs(mod$bins[vars])
+  
+  # set up the reason code arrays
+  if (!is.null(rcs)) out[[length(out)+1]] <- .sas.rc.arrays(rcs, pfx)
+  
+  # print the variable transforms
+  out[[length(out)+1]] <- sas(mod$bins[vars], pfx)
+  
+  # print the final model equation
+  out[[length(out)+1]] <- .sas.mod.equation(mod$coef, pfx)
+  
+  # sort the reason code arrays
+  if (!is.null(rcs)) out[[length(out)+1]] <- .sas.sort.logic(pfx)
+  
+  unlist(out)
+  
+}
+
 
