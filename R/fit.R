@@ -22,15 +22,13 @@ fit.bin.list <- function(bins, data=NULL, y=NULL, nfolds=3, lower.limits=0, uppe
   betas <- betas[betas != 0]
   
   # drop vars that aren't in the model and reorder to have the kept ones first
+  
   k <- which(names(bins) %in% names(betas))
   bins <- notinmodel(bins) # reset which bins are in the model
   inmodel(bins) <- k
   
-  if (drop) {
-    drop(bins) <- seq_along(bins)[-k]
-  }
+  if (drop) drop(bins) <- seq_along(bins)[-k]
   
-  # bins.reorder <- bin.list(c(bins$bins[k], bins$bins[-k]))
   mod <- binnr.model(bins, betas)
   mod$contribution <- sort(predict(mod, data, y, type="contribution"), decreasing = T)
   mod
