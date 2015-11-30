@@ -6,7 +6,8 @@ table.merge <- function(a, b) {
   as.table(o)
 }
 
-rc.report <- function(mod, data) {
+# function that assigns and sorts RCs for every record
+get.all.rcs <- function(mod, data) {
     d <- predict(mod, data, type="dist")
     r  <- predict(mod, data, type="rcs")
     
@@ -19,7 +20,8 @@ rc.report <- function(mod, data) {
       out
     }))  
     # return
-    as.data.frame.matrix(out, stringsAsFactors = F)
+    rcs <- as.data.frame.matrix(out, stringsAsFactors = F)
+    rcs
 }
 
 #' Reason Code Table
@@ -45,22 +47,58 @@ rc.table <- function(x, data, nret, seg) {
   UseMethod("rc.table")
 }
 
-#' @export
-rc.table.binnr.model <- function(mod, data, nret = 4) {
-  rcs <- rc.report(mod, data)
-  tbls <- lapply(rcs, table)
+# return a table of the rc rates for each position
+get.colpctN <- function(tbls, nret) {
+  # first N return percentages
+  pcts <- lapply(tbls[1:nret], prop.table)
+  colpctN <- Reduce(function(a, b) {
+    out <- merge(a,b, by='Var1', all=T)
+    out[is.na(out)] <- 0
+    rownames(out) <- out$Var1
+    out
+  }, pcts)
+  colpctN$Var1 <- NULL
+  colnames(colpctN) <- paste0("RC", 1:nret)
+  colpctN[order(-colpctN[,1]),]
+}
+
+rc.report <- function(rcs, nret) {
   
+  tbls <- lapply(rcs, table)
   nret <- min(nret, length(tbls))
   
+  
+  # RC rates for each of the returned RCs position
+  colpctN <- get.colpctN(tbls, nret)
+  
+  # return rates for reason codes
   ret <- Reduce(table.merge, tbls[1:nret])
+  
+  # trigger rates for reason codes
   hit <- Reduce(table.merge, tbls)
   out <- merge(ret, hit, by='Var1', all=T)
-  colnames(out) <- c("RC", "N Returned", "N Triggered")
-  out$`% Returned` <- out[[2]]/sum(nrow(rcs))
-  out$`% Triggered` <- out[[3]]/sum(nrow(rcs))
+  rownames(out) <- out$Var1
+  out$Var1 <- NULL
+  colnames(out) <- c("N Returned", "N Triggered")
+
+  out$`% Returned` <- out[[1]]/sum(nrow(rcs))
+  out$`% Triggered` <- out[[2]]/sum(nrow(rcs))
   out[is.na(out)] <- 0
-  out <- subset(out, subset = RC != "")
-  out[order(-out[,2]),]
+  
+  # merge the col pcts
+  out <- merge(colpctN, out, by=0, all=T)
+  colnames(out)[1] <- "RC"
+  #out <- subset(out, subset = RC != "")
+  out[order(-out$RC1),]
+  
+}
+
+#' @export
+rc.table.binnr.model <- function(mod, data, nret = 4) {
+  
+  out <- get.all.rcs(mod, data)
+  
+  rc.report(out, nret)
 }
 
 #' @export
@@ -68,10 +106,20 @@ rc.table.segmented <- function(mod, data, nret = 4, seg=NULL) {
   stopifnot(!is.null(seg))
   stopifnot(is.segmented(mod)) # if seg passed make sure segmented mod
   seg <- factor(seg, levels = names(mod))
+  
   if (any(is.na(seg))) {
     stop("Segment variable levels are not found in names(mod)", call. = F)
   }
-  mapply(rc.table, mod, split(data, seg, drop=T), SIMPLIFY = F)
+  
+  # combine all of the segmented RC sets together
+  rcs <- mapply(get.all.rcs, mod, split(data, seg, drop=T), SIMPLIFY = F)
+  
+  # need to RBIND them all and fill the columns that don't exist in others
+  
+  rownames(rcs) <- NULL
+  rc.report(rcs, nret)
+  
+  # now create the report
 }
 
 
