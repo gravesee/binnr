@@ -62,7 +62,7 @@ predict.binnr.model <- function(obj, data, y=NULL, type='score') {
     binned <- predict(obj$bins[v], data)
     calc.contributions(binned, obj$coef, y)
   } else{
-    predict(obj$bins, data, type, obj$coef)
+    predict(obj$bins[v], data, type, obj$coef)
   }
 }
 
