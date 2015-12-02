@@ -63,10 +63,8 @@ get.colpctN <- function(tbls, nret) {
 }
 
 rc.report <- function(rcs, nret) {
-  
   tbls <- lapply(rcs, table)
   nret <- min(nret, length(tbls))
-  
   
   # RC rates for each of the returned RCs position
   colpctN <- get.colpctN(tbls, nret)
@@ -88,38 +86,31 @@ rc.report <- function(rcs, nret) {
   # merge the col pcts
   out <- merge(colpctN, out, by=0, all=T)
   colnames(out)[1] <- "RC"
-  #out <- subset(out, subset = RC != "")
+  out <- subset(out, subset = RC != "")
   out[order(-out$RC1),]
-  
 }
 
 #' @export
 rc.table.binnr.model <- function(mod, data, nret = 4) {
-  
   out <- get.all.rcs(mod, data)
-  
   rc.report(out, nret)
 }
 
 #' @export
-rc.table.segmented <- function(mod, data, nret = 4, seg=NULL) {
+rc.table.segmented <- function (mod, data, nret = 4, seg = NULL) {
   stopifnot(!is.null(seg))
-  stopifnot(is.segmented(mod)) # if seg passed make sure segmented mod
-  seg <- factor(seg, levels = names(mod))
+  stopifnot(is.segmented(mod))
   
-  if (any(is.na(seg))) {
-    stop("Segment variable levels are not found in names(mod)", call. = F)
-  }
+  rcs <- mapply(get.all.rcs, mod, split(data, seg, drop = T), SIMPLIFY = F)
   
-  # combine all of the segmented RC sets together
-  rcs <- mapply(get.all.rcs, mod, split(data, seg, drop=T), SIMPLIFY = F)
-  
-  # need to RBIND them all and fill the columns that don't exist in others
-  
-  rownames(rcs) <- NULL
-  rc.report(rcs, nret)
-  
-  # now create the report
+  Ncols <- max(sapply(rcs, ncol))
+  padded <- lapply(rcs, function(x) {
+    if (ncol(x) < Ncols) {
+      x[,(ncol(x) + 1):Ncols] <- ""
+    }
+    x
+  })
+  rc.report(do.call(rbind, padded), nret)
 }
 
 
