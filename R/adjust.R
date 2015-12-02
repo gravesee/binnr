@@ -24,6 +24,7 @@ adjust.bin.list <- function(x) {
  (p)revious, (P)revious in model
  (g)oto
  (m)ono
+ (e)xceptions
  (u)ndo
  (r)eset
  (d)rop
@@ -99,6 +100,11 @@ binnr bin operations
       cat("Enter Monotonicity:")
       v <- readLines(n = 1)
       out[[i]] <- mono(out[[i]], v)
+    } else if (command == "e") {
+      cat("Enter Exceptions:")
+      v <- readLines(n = 1)
+      e <- eval(parse(text=v))
+      if (is.numeric(e) | is.null(e)) out[[i]] <- exception(out[[i]], e)
     } else if (command == "n") {
       i <- i + 1
     } else if (command == "N") {

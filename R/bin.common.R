@@ -185,6 +185,21 @@ mono <- function(b, v) {
 }
 
 #' @export
+exception <- function(b, v) {
+  # stopifnot(is.vector(v))
+  # v <- if(v %in% c(-1,0,1,2)) v else 0
+  opts <- b$opts
+  opts$exceptions <- v
+  out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), opts))
+  out$opts <- b$opts
+  out$meta <- b$meta
+  out$history <- b
+  out$meta$type <- "MANUAL"
+  out$meta$modified <- date()
+  out
+}
+
+#' @export
 undo <- function(x) {
   if (is.null(x$history)) return(x)
   return(x$history)
