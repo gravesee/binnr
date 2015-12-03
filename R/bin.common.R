@@ -191,7 +191,7 @@ exception <- function(b, v) {
   opts <- b$opts
   opts$exceptions <- v
   out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), opts))
-  out$opts <- b$opts
+  out$opts <- opts
   out$meta <- b$meta
   out$history <- b
   out$meta$type <- "MANUAL"
