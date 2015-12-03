@@ -186,8 +186,6 @@ mono <- function(b, v) {
 
 #' @export
 exception <- function(b, v) {
-  # stopifnot(is.vector(v))
-  # v <- if(v %in% c(-1,0,1,2)) v else 0
   opts <- b$opts
   opts$exceptions <- v
   out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), opts))
@@ -196,6 +194,22 @@ exception <- function(b, v) {
   out$history <- b
   out$meta$type <- "MANUAL"
   out$meta$modified <- date()
+  out
+}
+
+#' @export
+set.equal <- function(b, v1, v2) {
+  out <- b
+  skeleton <- b$core$values
+  flesh <- unlist(skeleton)
+  
+  # check that requested levels are valid, else return bin untouched
+  l <- length(flesh)
+  if (v1 > l | v2 > l | v1 < 1 | v2 < 1) return(b)
+  
+  flesh[v1] <- flesh[v2]
+  out$core$values <- relist(flesh, skeleton)
+  out$history <- b
   out
 }
 

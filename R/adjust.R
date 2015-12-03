@@ -25,6 +25,7 @@ adjust.bin.list <- function(x) {
  (g)oto
  (m)ono
  (e)xceptions
+ (s)et equal
  (u)ndo
  (r)eset
  (d)rop
@@ -105,6 +106,12 @@ binnr bin operations
       v <- readLines(n = 1)
       e <- eval(parse(text=v))
       if (is.numeric(e) | is.null(e)) out[[i]] <- exception(out[[i]], e)
+    } else if (command == "s") {
+      cat("Enter Level to Change:")
+      v1 <- as.integer(readLines(n = 1))
+      cat("Change WoE to which level?:")
+      v2 <- as.integer(readLines(n = 1))
+      out[[i]] <- set.equal(out[[i]], v1, v2)
     } else if (command == "n") {
       i <- i + 1
     } else if (command == "N") {
