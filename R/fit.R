@@ -38,12 +38,21 @@ fit <- function(x, data=NULL, y=NULL, nfolds=3, lower.limits=0, upper.limits=3,
 fit.binnr.model <- function(mod, data=NULL, y=NULL, nfolds=3, lower.limits=0,
                             upper.limits=3, family="binomial", alpha=1, drop=F) {
   argg <- as.list(environment())
-  do.call(fit.bin.list, c(list(bins=mod$bins), argg[-1]))
+  
+  old <- names(which(get.meta.attr(mod$bins, "inmodel")))
+  out <- do.call(fit.bin.list, c(list(bins=mod$bins), argg[-1]))
+  out$bins <- set.meta.attr(out$bins, "new", names(out$bins), FALSE)
+  
+  new <- names(which(get.meta.attr(out$bins, "inmodel")))
+  out$bins <- set.meta.attr(out$bins, "new", setdiff(new, old), TRUE)
+  
+  out
 }
 
 #' @export
 fit.bin.list <- function(bins, data=NULL, y=NULL, nfolds=3, lower.limits=0,
                          upper.limits=3, family="binomial", alpha=1, drop=F) {
+  
   if (is.null(y)) y <- bins[[1]]$data$y # grab the first y from a bin
   x <- predict(bins, data)
   
@@ -54,17 +63,23 @@ fit.bin.list <- function(bins, data=NULL, y=NULL, nfolds=3, lower.limits=0,
   betas <- betas[betas != 0]
   
   # drop vars that aren't in the model and reorder to have the kept ones first
-  
   k <- which(names(bins) %in% names(betas))
-  bins <- notinmodel(bins) # reset which bins are in the model
-  inmodel(bins) <- k
   
-  if (drop) drop(bins) <- seq_along(bins)[-k]
+  # reset which bins are in the model
+  bins <- set.meta.attr(bins, 'inmodel', names(bins), FALSE)
+  bins <- set.meta.attr(bins, 'inmodel', names(bins)[k], TRUE)
+  
+  if (drop) {
+    bins <- set.meta.attr(bins, "skip", names(bins)[-k], TRUE) 
+  }
   
   bins.reorder <- bin.list(c(bins[k], bins[-k])) # put the mod vars first
   mod <- binnr.model(bins.reorder, betas)
   mod$contribution <- sort(predict(mod, data, y, type="contribution"),
                            decreasing = T)
+  
+  in.model <- names(which(get.meta.attr(mod$bins, 'inmodel')))
+  mod$bins <- set.meta.attr(mod$bins, 'new', in.model, TRUE)
   mod
 }
 

@@ -133,8 +133,8 @@ print.bin <- function(x, ...) {
   status <- ifelse(x$meta$skip, " *** DROPPED ***", "")
   cat(sprintf("\nIV: %0.5f | Variable: %s%s\n", iv, x$name, status))
   print(out)
-  cat(sprintf("\nModified: %s | In Model: %d | Bin: %s",
-      x$meta$modified, x$meta$inmodel, x$meta$type))
+  cat(sprintf("\nModified: %s | In Model: %d | New: %s | Bin: %s",
+      x$meta$modified, x$meta$inmodel, x$meta$new, x$meta$type))
   if (!is.null(x$notes)) {
     cat("\nNotes:\n", x$notes)
   }
@@ -233,4 +233,3 @@ bin.character <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL,
           call. = F)
   NULL
 }
- 

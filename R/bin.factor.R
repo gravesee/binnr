@@ -25,6 +25,7 @@ bin.factory.factor <- function(x, y, breaks, name, options) {
       skip=FALSE,
       type="AUTO",
       inmodel=FALSE,
+      new=FALSE,
       modified=date()
     ),
     notes=NULL),

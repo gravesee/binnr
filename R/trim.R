@@ -18,13 +18,10 @@ trim <- function(x, contribution=0) {
 #' @export
 trim.binnr.model <- function(mod, contribution) {
   d <- names(mod$contribution[mod$contribution < contribution])
-  drop(mod) <- d
-  mod
+  set.meta.attr(mod, "skip", d, TRUE)
 }
 
 #' @export
 trim.segmented <- function(mods, contribution) {
-  structure(
-    lapply(mods, trim, contribution),
-  class="segmented")
+  structure( lapply(mods, trim, contribution), class="segmented")
 }

@@ -115,7 +115,7 @@ binnr bin operations
     } else if (command == "n") {
       i <- i + 1
     } else if (command == "N") {
-      nv <- inmodel(out)
+      nv <- get.meta.attr(out, "new")
       nvi <- which(nv) # index of the in-model
       if (any(nv) & any(nvi > i)) i <- nvi[nvi > i][1]
     } else if (command == "p") {
@@ -125,7 +125,7 @@ binnr bin operations
         cat("\nAt beginning of list")
       }
     } else if (command == "P") {
-      nv <- inmodel(out)
+      nv <- get.meta.attr(out, "new")
       nvi <- rev(which(nv)) # index of the last in model
       if (any(nv) & any(nvi < i)) i <- nvi[nvi < i][1]
     } else if (command == "u") {
@@ -185,5 +185,3 @@ adjust.segmented <- function(obj) {
   }
   obj
 }
-
-

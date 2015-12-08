@@ -19,89 +19,43 @@ bins.to.csv <- function(bins, file=NULL) {
   }
 }
 
-#' In Model
-#' 
-#' Function that returns T/F vector for whether a bin is in a model
-#' 
-#' @param bins The \code{bin.object} to check for model membership
-#' @return logical vector the same length as bins. TRUE if the bins has been 
-#' visited with the \code{adjust} function, FALSE otherwise.
 #' @export
-inmodel <- function(bins) {
+get.meta.attr <- function(bins, attr) {
   stopifnot(is.bin.list(bins))
-  sapply(bins, function(x) x$meta$inmodel)
+  sapply(bins, function(x) x$meta[[attr]])
 }
 
 #' @export
-notinmodel <- function(bins) {
-  for (v in seq_along(bins)) {
-    bins[[v]]$meta$inmodel <- FALSE
+set.meta.attr <- function(bins, attr, vars, value) {
+  if (!is.character(vars)) vars <- names(bins)[vars]
+  UseMethod("set.meta.attr")
+}
+
+#' @export
+set.meta.attr.bin.list <- function(bins, attr, vars, value) {
+  stopifnot(is.bin.list(bins))
+  for (v in vars) {
+    bins[[v]]$meta[[attr]] <- value
   }
   bins
 }
 
 #' @export
-`inmodel<-` <- function(bins, value) {
-  stopifnot(is.bin.list(bins))
-  for (v in value) {
-    bins[[v]]$meta$inmodel <- TRUE
+set.meta.attr.binnr.model <- function(mod, attr, vars, value) {
+  stopifnot(is.binnr.model(mod))
+  for (v in vars) {
+    mod$bins[[v]]$meta[[attr]] <- value
   }
-  bins
-}
-
-#' @export
-dropped <- function(x) {
-  UseMethod("dropped")
-}
-
-#' @export
-`drop<-` <- function(x, value) {
-  UseMethod("drop<-")
-}
-
-#' @export
-`keep<-` <- function(x, value) {
-  UseMethod("keep<-")
-}
-
-#' @export
-dropped.bin.list <- function(bins) {
-  stopifnot(is.bin.list(bins))
-  sapply(bins, function(x) x$meta$skip)
-}
-
-#' @export
-dropped.binnr.model <- function(mod) {
-  #stopifnot(is.bin.list(bins))
-  sapply(mod$bins, function(x) x$meta$skip)
-}
-
-#' @export
-`drop<-.bin.list` <- function(bins, value) {
-  for (v in value) {
-    bins[[v]]$meta$skip <- TRUE
-  }
-  bins
-}
-
-#' @export
-`drop<-.binnr.model` <- function(mod, value) {
-  drop(mod$bins) <- value
   mod
 }
 
-#' @export
-`keep<-.bin.list` <- function(bins, value) {
-  for (v in value) {
-    bins[[v]]$meta$skip <- FALSE
+#' @export 
+set.meta.attr.segmented <- function(segs, attr, vars, value) {
+  stopifnot(is.segmented(segs))
+  for (i in seq_along(segs)) {
+    segs[[i]] <- set.meta.attr(segs[[i]], attr, vars, value)
   }
-  bins
-}
-
-#' @export
-`keep<-.binnr.model` <- function(mod, value) {
-  keep(mod$bins) <- value
-  mod
+  segs
 }
 
 calc.score <- function(newdata, coefs) {
