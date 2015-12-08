@@ -56,10 +56,11 @@ fit.bin.list <- function(bins, data=NULL, y=NULL, nfolds=3, lower.limits=0,
   if (is.null(y)) y <- bins[[1]]$data$y # grab the first y from a bin
   x <- predict(bins, data)
   
-  fit <- cv.glmnet(x, y, nfolds=nfolds, lower.limits=lower.limits,
-                   upper.limits=upper.limits, family=family, alpha=alpha)
+  fit <- glmnet::cv.glmnet(x, y, nfolds=nfolds, lower.limits=lower.limits, 
+                           upper.limits=upper.limits, family=family,
+                           alpha=alpha)
   
-  betas <- coef(fit, s="lambda.min")[,1]
+  betas <- glmnet::coef.cv.glmnet(fit, s="lambda.min")[,1]
   betas <- betas[betas != 0]
   
   # drop vars that aren't in the model and reorder to have the kept ones first
