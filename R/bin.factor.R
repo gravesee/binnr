@@ -64,6 +64,7 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res
   b$data$x <- e1$data$x
   b$history <- e1
   
+  b$meta <- e1$meta
   b$meta$type <- "MANUAL"
   b$meta$modified <- date()
   
@@ -82,6 +83,7 @@ bin.factor <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.res
   b$data$x <- e1$data$x
   b$history <- e1
   
+  b$meta <- e1$meta
   b$meta$type <- "MANUAL"
   b$meta$modified <- date()
   

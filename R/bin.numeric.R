@@ -71,6 +71,7 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
   b$history <- e1
   
+  b$meta <- e1$meta
   b$meta$type <- "MANUAL"
   b$meta$modified <- date()
   b
@@ -91,6 +92,7 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
   b <- bin.factory(e1$data$x, e1$data$y, new_breaks, e1$name, e1$opts)
   b$history <- e1
   
+  b$meta <- e1$meta
   b$meta$type <- "MANUAL"
   b$meta$modified <- date()
   
@@ -103,6 +105,8 @@ bin.numeric <- function(x, y=NULL, name=NULL, min.iv=.01, min.cnt = NULL, min.re
                      e1$opts))
   b$history <- e1
   b$data$x <- e1$data$x
+  
+  b$meta <- e1$meta
   b$meta$type <- "MANUAL"
   b$meta$modified <- date()
   
