@@ -6,7 +6,7 @@
   if (is.null(idx)) idx <- seq_along(flesh)
 
   rcs <- if(is.null(x$rcs)) rep("", (length(flesh))) else unlist(x$rcs)
-  rcs[idx] <- value
+  rcs[idx] <- unlist(value)
   x$rcs <- relist(rcs, skeleton)
   x
 }
