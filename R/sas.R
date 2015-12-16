@@ -3,7 +3,9 @@ sas <- function(x, pfx, coef=NULL) {
   UseMethod("sas", x)
 }
 
-sas.bin.numeric <- function(b, pfx='') {
+sas.bin.numeric <- function(b, coef=NULL, pfx='') {
+  if (is.null(coef)) coef <- 1
+  
   conds <- c(
     sprintf("if missing(%s) then", b$name),
     sprintf("else if %s = %s then", b$name, names(b$core$values$exc)),
@@ -11,13 +13,14 @@ sas.bin.numeric <- function(b, pfx='') {
     sprintf("else"))
   
   vals  <- unlist(rev(b$core$values))
-  dists <- min(vals) - vals
+  dists <- (min(vals) - vals) * coef
   rcs   <- unlist(rev(b$rcs))
   
   output.sas(conds, vals, dists, rcs, pfx, b)
 }
 
-sas.bin.factor <- function(b, pfx='') {
+sas.bin.factor <- function(b, coef=NULL, pfx='') {
+  if (is.null(coef)) coef <- 1
   
   v <- gsub(",","','", names(b$core$values$var))
   conds <- c(
@@ -26,7 +29,7 @@ sas.bin.factor <- function(b, pfx='') {
     sprintf("else"))
   
   vals  <- c(unlist(rev(b$core$values)), 0) # adding a zero to handle unseen lvls
-  dists <- min(vals) - vals # TODO: put code in here for choosing max/min/etc...
+  dists <- (min(vals) - vals) * coef
   rcs   <- c(unlist(rev(b$rcs)), b$rcs$nas)
   
   output.sas(conds, vals, dists, rcs, pfx, b)
@@ -45,11 +48,12 @@ output.sas <- function(conds, vals, dists, rcs, pfx, b) {
 
 
 #' @export
-sas.bin.list <- function(bins, pfx="") {
+sas.bin.list <- function(bins, coef=NULL, pfx="") {
   out <- list()
   for(i in seq_along(bins)) {
     b <- bins[[i]]
-    out[[i]] <- c(sprintf("\n\n*** Variable: %s ***;\n", b$name), sas(b, pfx))
+    c <- coef[b$name]
+    out[[i]] <- c(sprintf("\n\n*** Variable: %s ***;\n", b$name), sas(b, c, pfx))
   }
   unlist(out)
 }
@@ -100,7 +104,7 @@ sas.binnr.model <- function(mod, pfx="") {
   if (!is.null(rcs)) out[[length(out)+1]] <- .sas.rc.arrays(rcs, pfx)
   
   # print the variable transforms
-  out[[length(out)+1]] <- sas(mod$bins[vars], pfx)
+  out[[length(out)+1]] <- sas(mod$bins[vars], mod$coef, pfx)
   
   # print the final model equation
   out[[length(out)+1]] <- .sas.mod.equation(mod$coef, pfx)
