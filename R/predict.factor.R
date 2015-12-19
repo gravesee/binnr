@@ -1,11 +1,11 @@
 #' @export
-predict.bin.factor <- function(bin, x=NULL, type="woe", coef=NULL) {
+predict.bin.factor <- function(bin, x=NULL, type="woe", coef=NULL, mode="max") {
   if (is.null(x)) x <- bin$data$x
   if (is.null(coef)) coef <- 1
   if (type == "bins") {
     out <- predict.bin.factor.bins(bin, x)
   } else if (type == "dist") {
-    out <- predict.bin.factor.dist(bin, x, coef)
+    out <- predict.bin.factor.dist(bin, x, coef, mode)
   } else if (type == "rcs") {
     out <- predict.bin.factor.rcs(bin, x)
   } else { # "woe"
@@ -34,9 +34,13 @@ predict.bin.factor.bins <- function(object, x, ...) {
   factor(res, lvls)
 }
 
-predict.bin.factor.dist <- function(object, x, coef) {
+predict.bin.factor.dist <- function(object, x, coef, mode="max") {
   res <- coef * predict.bin.factor.woe(object, x)
-  min(res) - res
+  if(mode == "max") {
+    min(res) - res
+  } else if (mode == "neutral"){
+    ifelse(min(res) == res, Inf, (0 - res))
+  }
 }
 
 predict.bin.factor.rcs <- function(object, x, ...) {

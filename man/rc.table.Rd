@@ -4,7 +4,7 @@
 \alias{rc.table}
 \title{Reason Code Table}
 \usage{
-rc.table(x, data, nret, seg)
+rc.table(x, data, nret, seg, mode)
 }
 \arguments{
 \item{x}{a \code{segmented} or \code{binnr.model} object}

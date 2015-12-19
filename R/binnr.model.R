@@ -43,7 +43,7 @@ binnr.model <- function(bins, coefficients) {
 }
 
 #' @export
-predict.binnr.model <- function(obj, data, y=NULL, type='score') {
+predict.binnr.model <- function(obj, data, y=NULL, type='score', mode="max") {
   v <- names(obj$coef[-1])
   missing <- v[!(v %in% names(obj$bins))]
 
@@ -61,7 +61,9 @@ predict.binnr.model <- function(obj, data, y=NULL, type='score') {
     stopifnot(nrow(data) == length(y))
     binned <- predict(obj$bins[v], data)
     calc.contributions(binned, obj$coef, y)
-  } else{
+  } else if (type == "dist") {
+    predict(obj$bins[v], data, type, obj$coef, mode)
+  } else {
     predict(obj$bins[v], data, type, obj$coef)
   }
 }

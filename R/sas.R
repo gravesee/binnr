@@ -1,59 +1,82 @@
 #' @export
-sas <- function(x, pfx, coef=NULL) {
+sas <- function(x, pfx='', coef, d) {
   UseMethod("sas", x)
 }
 
-sas.bin.numeric <- function(b, coef=NULL, pfx='') {
-  if (is.null(coef)) coef <- 1
-  
-  conds <- c(
-    sprintf("if missing(%s) then", b$name),
-    sprintf("else if %s = %s then", b$name, names(b$core$values$exc)),
-    sprintf("else if %s <= %s then", b$name, tail(head(b$core$breaks, -1), -1)),
-    sprintf("else"))
-  
-  vals  <- unlist(rev(b$core$values))
-  dists <- (min(vals) - vals) * coef
-  rcs   <- unlist(rev(b$rcs))
-  
-  output.sas(conds, vals, dists, rcs, pfx, b)
+#' @export
+conditions <- function(x, pfx='', coef=NULL) {
+  UseMethod("conditions", x)
 }
 
-sas.bin.factor <- function(b, coef=NULL, pfx='') {
+conditions.bin.numeric <- function(b, coef, pfx='') {
+  name       <- b$name
+  exclusions <- names(b$core$values$exc)
+  breaks     <- tail(head(b$core$breaks, -1), -1)
+  
+  c(sprintf("if missing(%s)\n  then"  , name),
+    sprintf("else if %s = %s\n  then" , name, exclusions),
+    sprintf("else if %s <= %s\n  then", name, breaks),
+    sprintf("else"))
+}
+
+sas.bin.numeric <- function(b, coef=1, pfx='', d=1) {
+  conds <- conditions(b)
+  vals  <- unlist(rev(b$core$values))
+  
+  if (is.null(rcs(b))) rcs(b) <- "BL"
+  rcs <- rcs(b)
+
+  output.sas(conds, vals, coef, rcs, pfx, b, d)
+}
+
+conditions.bin.factor <- function(b, coef, pfx='') {
+  name   <- b$name
+  values <- gsub(",","','", names(b$core$values$var))
+  
+  c(sprintf("if missing(%s)\n  then", name),
+    sprintf("else if %s in ('%s')\n  then", name, values),
+    sprintf("else"))
+}
+
+sas.bin.factor <- function(b, coef=1, pfx='', d=1) {
   if (is.null(coef)) coef <- 1
   
-  v <- gsub(",","','", names(b$core$values$var))
-  conds <- c(
-    sprintf("if missing(%s) then", b$name),
-    sprintf("else if %s in ('%s') then", b$name, v),
-    sprintf("else"))
-  
+  conds <- conditions(b)
   vals  <- c(unlist(rev(b$core$values)), 0) # adding a zero to handle unseen lvls
-  dists <- (min(vals) - vals) * coef
+  
+  if (is.null(rcs(b))) rcs(b) <- "BL"
+  
   rcs   <- c(unlist(rev(b$rcs)), b$rcs$nas)
   
-  output.sas(conds, vals, dists, rcs, pfx, b)
+  output.sas(conds, vals, coef, rcs, pfx, b, d)
 }
 
-output.sas <- function(conds, vals, dists, rcs, pfx, b) {
-  # print them all together
-  if (!is.null(rcs)) {
-    sprintf("%s do;\n  %s_%s_w = %s;\n  %s_RC_%s + %s;\nend;",
-            conds, pfx, b$name, vals, pfx, rcs, dists)
-  } else {
-    sprintf("%s do;\n  %s_%s_w = %s;\nend;",
-            conds, pfx, b$name, vals)
-  }
-}
+output.sas <- function(conds, vals, coef, rcs, pfx, b, d) {
+  name <- sprintf("%s_%s_w", pfx, b$name)
+  
+  # print the woe sub
+  out <- sprintf("%s %s = %0.5f;\n", conds, name, vals)
+  
+  # AA dist calculation
+  out <- c(out, sprintf("\n*** points logic ***\n"))
+  out <- c(out, sprintf("  %s_AA_dist_%d = (%0.5f - %s) * %0.5f;\n",
+                        pfx, d, min(vals), name, coef))
+  
+  # RC Assignment
+  out <- c(out, sprintf("\n*** RC logic ***\n"))
+  out <- c(out, sprintf("%s %s_AA_code_%d = '%s';\n", conds, pfx, d, rcs))
 
+  out
+}
 
 #' @export
-sas.bin.list <- function(bins, coef=NULL, pfx="") {
+sas.bin.list <- function(bins, coef=NULL, pfx="", d=1) {
   out <- list()
   for(i in seq_along(bins)) {
     b <- bins[[i]]
     c <- coef[b$name]
-    out[[i]] <- c(sprintf("\n\n*** Variable: %s ***;\n", b$name), sas(b, c, pfx))
+    out[[i]] <- c(sprintf("\n\n*** Variable: %s ***;\n", b$name),
+                sas(b, c, pfx, d[i]))
   }
   unlist(out)
 }
@@ -95,16 +118,12 @@ end;", pfx)
 
 #' @export
 sas.binnr.model <- function(mod, pfx="") {
-  
   out  <- list()
-  vars <- names(mod$coef[-1])
-  rcs  <- rcs(mod$bins[vars])
-  
-  # set up the reason code arrays
-  if (!is.null(rcs)) out[[length(out)+1]] <- .sas.rc.arrays(rcs, pfx)
+  v <- names(mod$coef[-1])
+  rcs  <- rcs(mod$bins[v])
   
   # print the variable transforms
-  out[[length(out)+1]] <- sas(mod$bins[vars], mod$coef, pfx)
+  out[[length(out)+1]] <- sas(mod$bins[v], mod$coef, pfx, seq_along(v))
   
   # print the final model equation
   out[[length(out)+1]] <- .sas.mod.equation(mod$coef, pfx)

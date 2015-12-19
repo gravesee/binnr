@@ -7,8 +7,8 @@ table.merge <- function(a, b) {
 }
 
 # function that assigns and sorts RCs for every record
-get.all.rcs <- function(mod, data) {
-    d <- predict(mod, data, type="dist")
+get.all.rcs <- function(mod, data, mode="max") {
+    d <- predict(mod, data, type="dist", mode=mode)
     r  <- predict(mod, data, type="rcs")
     
     # aggregate them
@@ -16,7 +16,11 @@ get.all.rcs <- function(mod, data) {
       agg <- tapply(d[i,], r[i,], sum, na.rm=T)
       ord <- order(agg)
       out <- names(agg)[ord]
-      out[agg[ord] == 0] <- ""
+      if (mode == "max") {
+        out[agg[ord] == 0] <- ""
+      } else if (mode == "neutral") {
+        out[is.infinite(agg[ord])] <- "" # need to account for neutral mode here
+      }
       out
     }))  
     # return
@@ -43,7 +47,7 @@ get.all.rcs <- function(mod, data) {
 #' found of the segment variable found in the data.
 #' 
 #' @export
-rc.table <- function(x, data, nret, seg) {
+rc.table <- function(x, data, nret, seg, mode) {
   UseMethod("rc.table")
 }
 
@@ -86,22 +90,23 @@ rc.report <- function(rcs, nret) {
   # merge the col pcts
   out <- merge(colpctN, out, by=0, all=T)
   colnames(out)[1] <- "RC"
-  out <- subset(out, subset = RC != "")
+  # out <- subset(out, subset = RC != "")
   out[order(-out$RC1),]
 }
 
 #' @export
-rc.table.binnr.model <- function(mod, data, nret = 4) {
-  out <- get.all.rcs(mod, data)
+rc.table.binnr.model <- function(mod, data, nret = 4, mode="max") {
+  out <- get.all.rcs(mod, data, mode)
   rc.report(out, nret)
 }
 
 #' @export
-rc.table.segmented <- function (mod, data, nret = 4, seg = NULL) {
+rc.table.segmented <- function (mod, data, nret = 4, seg = NULL, mode="max") {
   stopifnot(!is.null(seg))
   stopifnot(is.segmented(mod))
   
-  rcs <- mapply(get.all.rcs, mod, split(data, seg, drop = T), SIMPLIFY = F)
+  rcs <- mapply(get.all.rcs, mod, split(data, seg, drop = T),
+                MoreArgs = list(mode=mode), SIMPLIFY = F)
   
   Ncols <- max(sapply(rcs, ncol))
   padded <- lapply(rcs, function(x) {
@@ -112,6 +117,4 @@ rc.table.segmented <- function (mod, data, nret = 4, seg = NULL) {
   })
   rc.report(do.call(rbind, padded), nret)
 }
-
-
 

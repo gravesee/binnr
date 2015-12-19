@@ -15,7 +15,7 @@ is.bin.list <- function(x) {
 }
 
 #' @export
-predict.bin.list <- function(bins, data=NULL, type="woe", coefs=NULL) {
+predict.bin.list <- function(bins, data=NULL, type="woe", coefs=NULL, mode="max") {
   if (!is.null(data)) {
     vars <- intersect(colnames(data), names(bins))
     if (length(vars) == 0) stop("no vars in common between newdata and bin.list")
@@ -29,7 +29,7 @@ predict.bin.list <- function(bins, data=NULL, type="woe", coefs=NULL) {
     cat(sprintf("\rProgress: %%%3d", as.integer(100*i/length(vars))))
     flush.console()
     if (!bins[[nm]]$meta$skip) {
-      res[[vars[i]]] <- predict(bins[[nm]], data[,nm], type, coefs[nm])
+      res[[vars[i]]] <- predict(bins[[nm]], data[,nm], type, coefs[nm], mode)
     }
   }
   cat("\n")
