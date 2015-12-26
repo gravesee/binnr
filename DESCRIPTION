@@ -7,7 +7,7 @@ Author: Eric E. Graves
 Maintainer: Eric E. Graves <gravcon5@gmail.com>
 Description: Binnr provides an environment for scorecard model development
 Imports:
-  glmnet
+    glmnet
 License: Free as in beer
 Collate:
     'adjust.R'
@@ -29,3 +29,4 @@ Collate:
     'segment.mod.R'
     'trim.R'
     'util.R'
+RoxygenNote: 5.0.1
