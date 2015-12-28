@@ -11,10 +11,7 @@ Imports:
 License: Free as in beer
 Collate:
     'adjust.R'
-    'bin.common.R'
-    'bin.factor.R'
     'bin.list.R'
-    'bin.numeric.R'
     'bin.plot.R'
     'binnr.model.R'
     'compare.R'
@@ -22,7 +19,6 @@ Collate:
     'imports.R'
     'predict.factor.R'
     'predict.numeric.R'
-    'print.binnr.model.R'
     'rc.report.R'
     'rcs.R'
     'sas.R'

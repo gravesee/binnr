@@ -31,7 +31,7 @@
 #' @return a \code{bin} or \code{bin.list} object
 #' 
 #' @export
-bin <- function(x, y, name=NULL, bc=NULL, ...) {
+bin <- function(x, y, name=NULL, bc=NULL, seg, mono, exceptions, ...) {
   UseMethod("bin", x)
 }
 

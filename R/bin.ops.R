@@ -88,7 +88,7 @@
 
 #' @export
 reset <- function(b) {
-  do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), b$opts))
+  bin(x=b$data$x, y=b$data$y, name=b$name, bc=b$opts)
 }
 
 #' @export
@@ -96,7 +96,7 @@ mono <- function(b, v) {
   v <- if(v %in% c(-1,0,1,2)) v else 0
   opts <- b$opts
   opts$mono <- v
-  out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name, bc=opts)))
+  out <- bin(x=b$data$x, y=b$data$y, name=b$name, bc=opts)
   out$opts <- b$opts
   update.bin(out, b)
 }
@@ -105,7 +105,7 @@ mono <- function(b, v) {
 exception <- function(b, v) {
   opts <- b$opts
   opts$exceptions <- v
-  out <- do.call(bin, c(list(x=b$data$x, y=b$data$y, name=b$name), opts))
+  out <- bin(x=b$data$x, y=b$data$y, name=b$name, bc=opts)
   out$opts <- opts
   update.bin(out, b)
 }

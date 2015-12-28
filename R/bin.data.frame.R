@@ -1,25 +1,21 @@
 
 #' @export
-bin.data.frame <- function(x, y, name, bc=NULL, ...) {
+bin.data.frame <- function(df, y, bc=NULL, seg=NULL, mono=c(ALL=0), exceptions=list(ALL=numeric(0))) {
   if(is.null(bc)) bc <- bin.control()
-  args <- list(...)
   
   # if segment var is passed, recursively call bin on each split data.frame
-  if(!is.null(args$seg)) {
-    xs <- split(x, args$seg, drop=T)
-    ys <- split(y, args$seg, drop=T)
-    out <- mapply(bin, xs, ys, MoreArgs = c(list(bc=bc), args$mono, args$exceptions), SIMPLIFY = F)
+  if(!is.null(seg)) {
+    ys <- split(y, seg, drop=T)
+    dfs <- split(df, seg, drop=T)
+    out <- mapply(bin, dfs, ys, MoreArgs = list(bc=bc, mono=mono, exceptions=exceptions), SIMPLIFY = F)
     return(structure(out, class=c("segmented")))
   }
-  
-  mono <- if(!is.null(args$mono)) args$mono else c(ALL=0)
-  exceptions <- if(!is.null(args$exceptions)) args$exceptions else list(ALL=NULL)
   
   # stop checks
   stopifnot(is.list(exceptions))
   if (any(is.na(y))) stop("y response cannot have missing values")
   
-  v <- colnames(x)
+  v <- colnames(df)
   bcdf <- get.bin.control.df(v, mono, exceptions)
   
   dashes <- c('\\','|','/','-')
@@ -29,7 +25,7 @@ bin.data.frame <- function(x, y, name, bc=NULL, ...) {
     cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(v))))
     flush.console()
     bc <- bin.control(mono = bcdf$mono[v[i]], exceptions = bcdf$exceptionns[v[i]])
-    res[[v[i]]] <- bin(x[,v[i]], y, name = v[i], bc)
+    res[[v[i]]] <- bin(df[,v[i]], y, name = v[i], bc)
   }
   cat("\n")
   
@@ -52,9 +48,9 @@ get.bin.control.df <- function(v, mono, exceptions) {
 
 
 #' @export
-as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
+as.data.frame.bin <- function(b, row.names = NULL, optional = FALSE, ...) {
   # create filters excluding NAs
-  cnts <- do.call(rbind, x$core$counts)
+  cnts <- do.call(rbind, b$core$counts)
   cnts <- cbind(cnts, rowSums(cnts))
   f <- !is.na(rownames(cnts)) # NAs aren't used for certain calculations
   tots <- apply(matrix(cnts[f,], ncol=3), 2, sum)
@@ -62,7 +58,7 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   # create pieces for output data.frame
   pcts <- sweep(cnts, 2, tots, FUN = '/')
   #cnts <- cbind(cnts, apply(cnts, 1, sum))
-  woe <- na.omit(unlist(x$core$values))
+  woe <- na.omit(unlist(b$core$values))
   ivs <- woe * (pcts[,2] - pcts[,1])
   prob <- cnts[,2] / cnts[,3]
   pcts[!f,] <- 0 # keep counts, but set NA pcts to zero
@@ -83,7 +79,7 @@ as.data.frame.bin <- function(x, row.names = NULL, optional = FALSE, ...) {
   out <- as.data.frame(rbind(out, Total=total))
   
   # check for RCS
-  if (!is.null(x$rcs)) out$RC <- c(unlist(x$rcs), '')
+  if (!is.null(b$rcs)) out$RC <- c(unlist(b$rcs), '')
   out
 }
 
