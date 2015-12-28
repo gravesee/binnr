@@ -43,7 +43,9 @@ binnr.model <- function(bins, coefficients) {
 }
 
 #' @export
-predict.binnr.model <- function(obj, data, y=NULL, type='score', mode="max") {
+predict.binnr.model <- function(obj, data, y=NULL, type=c("score","contribution","woe","dist","bins","rcs"), mode="max") {
+  type <- match.arg(type)
+  
   v <- names(obj$coef[-1])
   missing <- v[!(v %in% names(obj$bins))]
 
@@ -51,8 +53,6 @@ predict.binnr.model <- function(obj, data, y=NULL, type='score', mode="max") {
     stop(sprintf("Vars not found in data: %s", paste0(missing, collapse = ',')))
   }
   
-  types <- c("score","contribution","woe","dist","bins","rcs")
-  stopifnot(type %in% types)
   if (type == 'score') {
     binned <- predict(obj$bins[v], data)
     calc.score(binned, obj$coef)
