@@ -1,3 +1,12 @@
+#' @export
+`-.bin.integer` <- function(e1, e2) {
+  `-.bin.numeric`(e1, e2)
+}
+
+#' @export
+`+.bin.integer` <- function(e1, e2) {
+  `+.bin.numeric`(e1, e2)
+}
 
 #' @export
 `-.bin.numeric` <- function(e1, e2) {
@@ -27,8 +36,8 @@
   q <- unique(quantile(vals, seq(0, 1, 0.2)))
   
   new_breaks <- sort(c(b[-z], q))
-  b <- bin.factory(e1$data$x, e1$data$y, e1$name, new_breaks, e1$opts)
   
+  b <- bin.factory(e1$data$x, e1$data$y, e1$name, new_breaks, e1$opts)
   update.bin(b, e1)
 }
 

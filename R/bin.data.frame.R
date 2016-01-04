@@ -1,8 +1,6 @@
 
 #' @export
-bin.data.frame <- function(df, y, bc=NULL, seg=NULL, mono=c(ALL=0), exceptions=list(ALL=numeric(0))) {
-  if(is.null(bc)) bc <- bin.control()
-  
+bin.data.frame <- function(df, y, bc=bin.control(), seg=NULL, mono=c(ALL=0), exceptions=list(ALL=numeric(0))) {
   # if segment var is passed, recursively call bin on each split data.frame
   if(!is.null(seg)) {
     ys <- split(y, seg, drop=T)

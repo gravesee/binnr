@@ -1,28 +1,10 @@
 Package: binnr
-Type: Package
-Title: Create, manage, and explore variable binnings for model development
-Version: 0.2
-Date: 2015-07-06
-Author: Eric E. Graves
-Maintainer: Eric E. Graves <gravcon5@gmail.com>
-Description: Binnr provides an environment for scorecard model development
-Imports:
-    glmnet
-License: Free as in beer
-Collate:
-    'adjust.R'
-    'bin.list.R'
-    'bin.plot.R'
-    'binnr.model.R'
-    'compare.R'
-    'fit.R'
-    'imports.R'
-    'predict.factor.R'
-    'predict.numeric.R'
-    'rc.report.R'
-    'rcs.R'
-    'sas.R'
-    'segment.mod.R'
-    'trim.R'
-    'util.R'
+Title: What the Package Does (one line, title case)
+Version: 0.0.0.9000
+Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+Depends:
+    R (>= 3.2.3)
+License: What license is it under?
+LazyData: true
 RoxygenNote: 5.0.1

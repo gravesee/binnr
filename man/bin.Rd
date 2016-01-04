@@ -4,7 +4,7 @@
 \alias{bin}
 \title{Bin variables for credit modeling}
 \usage{
-bin(x, y, name = NULL, bc = NULL, ...)
+bin(x, y, name = NULL, bc = NULL, seg, mono, exceptions, ...)
 }
 \arguments{
 \item{x}{a \code{factor} or \code{numeric} variable. Can also be a
@@ -14,17 +14,6 @@ bin(x, y, name = NULL, bc = NULL, ...)
 
 \item{name}{the name used for plotting and printing. Automatically supplied
 if called on a \code{data.frame}}
-
-\item{min.iv}{minimum information value required to split a continuous
-predictor}
-
-\item{min.cnt}{minimum number of observations to split a continuous
-predictor. Defaults to the square root of the number of observations.}
-
-\item{min.res}{minimum number of responses required to split}
-
-\item{max.bin}{maximum number of levels in resulting discretized, continuous
-predictor.}
 
 \item{mono}{monotonicity constraint for binning algorith. \code{binnr} uses 
 the sane assumption that the 1-labelled target is of most interest. Therefore
@@ -38,6 +27,17 @@ vector. The reserved name ALL is used for global values.}
 algorithm. These levels count towards weight of evidence calculations but are
 not collapsed. Exceptions values for \code{factors} are ignored. A reserved
 name, ALL, can be used to supply global exception values.}
+
+\item{min.iv}{minimum information value required to split a continuous
+predictor}
+
+\item{min.cnt}{minimum number of observations to split a continuous
+predictor. Defaults to the square root of the number of observations.}
+
+\item{min.res}{minimum number of responses required to split}
+
+\item{max.bin}{maximum number of levels in resulting discretized, continuous
+predictor.}
 }
 \value{
 a \code{bin} or \code{bin.list} object

@@ -1,7 +1,23 @@
 #' @export
+predict.bin.integer <- function(bin, x=NULL, type="woe", coef=NULL, mode="max") {
+#   predict.bin.numeric(bin, x=NULL, type="woe", coef=NULL, mode="max")
+  if (type == "bins") {
+    out <- predict.bin.numeric.bins(bin, x)
+  } else if (type == "dist") {
+    out <- predict.bin.numeric.dist(bin, x, coef, mode)
+  } else if (type == "rcs") {
+    out <- predict.bin.numeric.rcs(bin, x)
+  } else { # "woe"
+    out <- predict.bin.numeric.woe(bin, x)
+  }
+  names(out) <- NULL
+  out
+}
+
+#' @export
 predict.bin.numeric <- function(bin, x=NULL, type="woe", coef=NULL, mode="max") {
-  if(is.null(x)) x <- bin$data$x
-  if (is.null(coef)) coef <- 1
+#   if(is.null(x)) x <- bin$data$x
+#   if (is.null(coef)) coef <- 1
   if (type == "bins") {
     out <- predict.bin.numeric.bins(bin, x)
   } else if (type == "dist") {

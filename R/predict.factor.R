@@ -1,7 +1,13 @@
-#' @export
-predict.bin.factor <- function(bin, x=NULL, type="woe", coef=NULL, mode="max") {
+predict.bin <- function(bin, x=NULL, type=c('woe', 'dist', 'bins', 'rcs'), coef=NULL, mode=c('max','neutral')) {
+  type <- match.arg(type)
+  mode <- match.arg(mode)
   if (is.null(x)) x <- bin$data$x
   if (is.null(coef)) coef <- 1
+  NextMethod(bin, object=NULL, x=x, type=type, coef=coef, mode=mode)
+}
+
+#' @export
+predict.bin.factor <- function(bin, x=NULL, type="woe", coef=NULL, mode="max") {
   if (type == "bins") {
     out <- predict.bin.factor.bins(bin, x)
   } else if (type == "dist") {
