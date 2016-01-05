@@ -71,21 +71,20 @@ conditions <- function(b, pfx='', coef=1) {
   UseMethod("conditions", b)
 }
 
-conditions.bin.numeric <- function(b, pfx, coef, name) {
-  #name <- paste0(pfx, name, '_w')
+conditions.bin.numeric <- function(b, pfx, coef) {
   exclusions <- names(b$core$values$exc)
   values     <- tail(head(b$core$breaks, -1), -1)
-  c(sprintf("if missing(%s)\n  then"  , name),
-    sprintf("else if %s = %s\n  then" , name, exclusions),
-    sprintf("else if %s <= %s\n  then", name, values),
+  c(sprintf("if missing(%s)\n  then"  , b$name),
+    sprintf("else if %s = %s\n  then" , b$name, exclusions),
+    sprintf("else if %s <= %s\n  then", b$name, values),
     sprintf("else"))
 }
 
-conditions.bin.factor <- function(b, pfx, coef, name) {
+conditions.bin.factor <- function(b, pfx, coef) {
   #name <- paste0(pfx, name, '_w')
   values <- gsub(",","','", names(b$core$values$var))
-  c(sprintf("if missing(%s)\n  then", name),
-    sprintf("else if %s in ('%s')\n  then", name, values),
+  c(sprintf("if missing(%s)\n  then", b$name),
+    sprintf("else if %s in ('%s')\n  then", b$name, values),
     sprintf("else"))
 }
 
@@ -93,9 +92,7 @@ output.sas <- function(name, conds, vals, coef, rcs, pfx, d, mode) {
   ref <- if (mode == "max") min(vals) else 0
   name <- paste(pfx, name, 'w', sep='_')
   c(sprintf("%s %s = %0.5f;\n", conds, name, vals),
-    sprintf("\n*** points logic ***\n"),
-    sprintf("  %s_AA_dist_%d = (%0.5f - %s) * %0.5f;\n", pfx, d, ref, name, coef),
-    sprintf("\n*** RC logic ***\n"),
+    sprintf("\n  %s_AA_dist_%d = (%0.5f - %s) * %0.5f;\n\n", pfx, d, ref, name, coef),
     sprintf("%s %s_AA_code_%d = '%s';\n", conds, pfx, d, rcs))
 }
 
