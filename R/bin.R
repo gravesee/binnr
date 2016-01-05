@@ -89,11 +89,12 @@ make.bin <- function(x, y, name, breaks, counts, values, bc) {
       new=FALSE,
       modified=date()),
     notes=NULL),
-    class=c(paste0("bin.", class), "bin"))
+    class=c("bin", paste0("bin.", class)))
 }
 
-#' @export
-bin.control <- function(min.iv=0.01, min.cnt=25, min.res=0, max.bin=10, mono=0, exceptions=numeric(0)) {
+#' @export bin.control
+bin.control <- function(min.iv=0.01, min.cnt=25, min.res=0, max.bin=10, mono=0,
+                        exceptions=numeric(0)) {
   structure(
     list(
       min.iv=min.iv,
@@ -133,9 +134,11 @@ get.values.numeric <- function(x, y, counts) {
 #' @export
 bin.numeric <- function(x, y, name, bc=NULL, ...) {
   if(is.null(bc)) bc <- bin.control()
-  breaks <- .Call('bin', as.double(x[!is.na(x)]), as.double(y[!is.na(x)]),
-                  as.double(bc$min.iv), as.integer(bc$min.cnt), as.integer(bc$min.res),
-                  as.integer(bc$max.bin), as.integer(bc$mono), as.double(bc$exceptions))
+  breaks <- .Call(
+    'bin', as.double(x[!is.na(x)]), as.double(y[!is.na(x)]),
+    as.double(bc$min.iv), as.integer(bc$min.cnt), as.integer(bc$min.res),
+    as.integer(bc$max.bin), as.integer(bc$mono), as.double(bc$exceptions))
+  
   bin.factory(x, y, name, breaks, bc)
 }
 
@@ -158,5 +161,10 @@ bin.logical <- function(x, y, name, bc=NULL, ...) {
 #' @export
 bin.character <- function(x, y, name, bc=NULL, ...) {
   warning(sprintf("Not binned: %s -- Character, hint: cast to factor", name), call. = F)
+  NULL
+}
+
+#' @export
+bin.NULL <- function(x, y, name, bc=NULL, ...) {
   NULL
 }

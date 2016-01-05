@@ -43,8 +43,9 @@ binnr.model <- function(bins, coefficients) {
 }
 
 #' @export
-predict.binnr.model <- function(obj, data, y=NULL, type=c("score","contribution","woe","dist","bins","rcs"), mode="max") {
+predict.binnr.model <- function(obj, data, y=NULL, type=c("score","contribution","woe","dist","bins","rcs"), mode=c('max','neutral')) {
   type <- match.arg(type)
+  mode <- match.arg(mode)
   
   v <- names(obj$coef[-1])
   missing <- v[!(v %in% names(obj$bins))]

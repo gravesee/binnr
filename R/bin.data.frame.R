@@ -1,11 +1,11 @@
 
 #' @export
-bin.data.frame <- function(df, y, bc=bin.control(), seg=NULL, mono=c(ALL=0), exceptions=list(ALL=numeric(0))) {
+bin.data.frame <- function(x, y, bc=bin.control(), seg=NULL, mono=c(ALL=0), exceptions=list(ALL=numeric(0))) {
   # if segment var is passed, recursively call bin on each split data.frame
   if(!is.null(seg)) {
     ys <- split(y, seg, drop=T)
-    dfs <- split(df, seg, drop=T)
-    out <- mapply(bin, dfs, ys, MoreArgs = list(bc=bc, mono=mono, exceptions=exceptions), SIMPLIFY = F)
+    xs <- split(x, seg, drop=T)
+    out <- mapply(bin, xs, ys, MoreArgs = list(bc=bc, mono=mono, exceptions=exceptions), SIMPLIFY = F)
     return(structure(out, class=c("segmented")))
   }
   
@@ -13,7 +13,7 @@ bin.data.frame <- function(df, y, bc=bin.control(), seg=NULL, mono=c(ALL=0), exc
   stopifnot(is.list(exceptions))
   if (any(is.na(y))) stop("y response cannot have missing values")
   
-  v <- colnames(df)
+  v <- colnames(x)
   bcdf <- get.bin.control.df(v, mono, exceptions)
   
   dashes <- c('\\','|','/','-')
@@ -22,8 +22,9 @@ bin.data.frame <- function(df, y, bc=bin.control(), seg=NULL, mono=c(ALL=0), exc
   for (i in seq_along(v)) {
     cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(v))))
     flush.console()
-    bc <- bin.control(mono = bcdf$mono[v[i]], exceptions = bcdf$exceptionns[v[i]])
-    res[[v[i]]] <- bin(df[,v[i]], y, name = v[i], bc)
+    bc$mono <- bcdf$mono[v[i]]
+    bc$exceptions <- bcdf$exceptionns[v[i]]
+    res[[v[i]]] <- bin(x[,v[i]], y, name = v[i], bc)
   }
   cat("\n")
   

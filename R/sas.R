@@ -1,100 +1,102 @@
 #' @export
-sas <- function(x, pfx='', coef, d) {
-  UseMethod("sas", x)
+sas_ <- function(x, coef, pfx, d, mode) {
+  UseMethod("sas_", x)
 }
 
 #' @export
-conditions <- function(x, pfx='', coef=NULL) {
-  UseMethod("conditions", x)
+sas <- function(x, pfx="", mode='max') {
+  if(is.null(coef(x))) coef <- rep(1, length(x))
+  d <- seq_along(x)
+  mode <- match.arg(mode, c('max','neutral'))
+  sas_(x, coef, pfx, d, mode)
 }
 
-conditions.bin.numeric <- function(b, coef, pfx='') {
-  name       <- b$name
-  exclusions <- names(b$core$values$exc)
-  breaks     <- tail(head(b$core$breaks, -1), -1)
+#' @export
+sas_.binnr.model <- function(mod, coef, pfx, d, mode) {
+  out  <- list()
+  v <- names(mod$coef[-1])
   
+  # print the variable transforms
+  out[[length(out)+1]] <- sas_(mod$bins[v], mod$coef, pfx, seq_along(v), mode)
+  
+  # print the final model equation
+  out[[length(out)+1]] <- .sas.mod.equation(mod$coef, pfx)
+  
+  unlist(out)
+}
+
+#' @export
+sas_.bin.list <- function(bins, coef, pfx, d, mode='max') {
+  out <- list()
+  for(i in seq_along(bins)) {
+    b <- bins[[i]]
+    out[[i]] <- c(sprintf("\n\n*** Variable: %s ***;\n", b$name),
+                  sas_bin(b, coef[b$name], pfx, d[i], mode))
+  }
+  unlist(out)
+}
+
+#' @export
+sas_bin_ <- function(x, coef=1, pfx='', d, mode, conds, name) {
+  UseMethod("sas_bin_", x)
+}
+
+#' @export
+sas_bin <- function(b, coef=1, pfx='', d=1, mode='max') {
+  mode <- match.arg(mode, c('max','neutral'))
+  name  <- b$name
+  conds <- conditions(b, pfx, coef)
+  name  <- b$name
+  sas_bin_(b, coef, pfx, d, mode, conds, name)
+}
+
+#' @export
+sas_bin_.bin.numeric <- function(b, coef, pfx, d, mode, conds, name) {
+  if (is.null(rcs(b))) rcs(b) <- "BL"
+  rcs   <- rcs(b)
+  vals <- unlist(rev(b$core$values))
+  output.sas(name, conds, vals, coef, rcs, pfx, d, mode)
+}
+
+#' @export
+sas_bin_.bin.factor <- function(b, coef, pfx, d, mode, conds, name) {
+  if (is.null(rcs(b))) rcs(b) <- "BL"
+  rcs   <- rcs(b)
+  vals <- c(unlist(rev(b$core$values)), 0) # adding a zero to handle unseen lvls
+  rcs <- c(unlist(rev(b$rcs)), b$rcs$nas) # add RC for unknowns
+  output.sas(name, conds, vals, coef, rcs, pfx, d, mode)
+}
+
+conditions <- function(b, pfx='', coef=1) {
+  UseMethod("conditions", b)
+}
+
+conditions.bin.numeric <- function(b, pfx, coef, name) {
+  #name <- paste0(pfx, name, '_w')
+  exclusions <- names(b$core$values$exc)
+  values     <- tail(head(b$core$breaks, -1), -1)
   c(sprintf("if missing(%s)\n  then"  , name),
     sprintf("else if %s = %s\n  then" , name, exclusions),
-    sprintf("else if %s <= %s\n  then", name, breaks),
+    sprintf("else if %s <= %s\n  then", name, values),
     sprintf("else"))
 }
 
-sas.bin.numeric <- function(b, coef=1, pfx='', d=1) {
-  conds <- conditions(b)
-  vals  <- unlist(rev(b$core$values))
-  
-  if (is.null(rcs(b))) rcs(b) <- "BL"
-  rcs <- rcs(b)
-
-  output.sas(conds, vals, coef, rcs, pfx, b, d)
-}
-
-conditions.bin.factor <- function(b, coef, pfx='') {
-  name   <- b$name
+conditions.bin.factor <- function(b, pfx, coef, name) {
+  #name <- paste0(pfx, name, '_w')
   values <- gsub(",","','", names(b$core$values$var))
-  
   c(sprintf("if missing(%s)\n  then", name),
     sprintf("else if %s in ('%s')\n  then", name, values),
     sprintf("else"))
 }
 
-sas.bin.factor <- function(b, coef=1, pfx='', d=1) {
-  if (is.null(coef)) coef <- 1
-  
-  conds <- conditions(b)
-  vals  <- c(unlist(rev(b$core$values)), 0) # adding a zero to handle unseen lvls
-  
-  if (is.null(rcs(b))) rcs(b) <- "BL"
-  
-  rcs   <- c(unlist(rev(b$rcs)), b$rcs$nas)
-  
-  output.sas(conds, vals, coef, rcs, pfx, b, d)
-}
-
-output.sas <- function(conds, vals, coef, rcs, pfx, b, d) {
-  name <- sprintf("%s_%s_w", pfx, b$name)
-  
-  # print the woe sub
-  out <- sprintf("%s %s = %0.5f;\n", conds, name, vals)
-  
-  # AA dist calculation
-  out <- c(out, sprintf("\n*** points logic ***\n"))
-  out <- c(out, sprintf("  %s_AA_dist_%d = (%0.5f - %s) * %0.5f;\n",
-                        pfx, d, min(vals), name, coef))
-  
-  # RC Assignment
-  out <- c(out, sprintf("\n*** RC logic ***\n"))
-  out <- c(out, sprintf("%s %s_AA_code_%d = '%s';\n", conds, pfx, d, rcs))
-
-  out
-}
-
-#' @export
-sas.bin.list <- function(bins, coef=NULL, pfx="", d=1) {
-  out <- list()
-  for(i in seq_along(bins)) {
-    b <- bins[[i]]
-    c <- coef[b$name]
-    out[[i]] <- c(sprintf("\n\n*** Variable: %s ***;\n", b$name),
-                sas(b, c, pfx, d[i]))
-  }
-  unlist(out)
-}
-
-
-### Put these pieces into helper functions
-.sas.sort.logic <- function(pfx) {
-sprintf("\n\n*** Reason code sorting logic ***;
-drop i, j, tmp_pts, tmp_cd;
-do i = 1 to (dim(CDS)-1);
-  do j = i to dim(CDS);
-    if %1$s_PTS[j] < %1$s_PTS[i] then do;
-      tmp_pts = %1$s_PTS[i]; tmp_cd = %1$s_CDS[i];
-      %1$s_PTS[i] = %1$s_PTS[j]; %1$s_CDS[i] = %1$s_CDS[j];
-      %1$s_PTS[j] = tmp_pts; %1$s_CDS[j] = tmp_cd;
-    end;
-  end;
-end;", pfx)
+output.sas <- function(name, conds, vals, coef, rcs, pfx, d, mode) {
+  ref <- if (mode == "max") min(vals) else 0
+  name <- paste(pfx, name, 'w', sep='_')
+  c(sprintf("%s %s = %0.5f;\n", conds, name, vals),
+    sprintf("\n*** points logic ***\n"),
+    sprintf("  %s_AA_dist_%d = (%0.5f - %s) * %0.5f;\n", pfx, d, ref, name, coef),
+    sprintf("\n*** RC logic ***\n"),
+    sprintf("%s %s_AA_code_%d = '%s';\n", conds, pfx, d, rcs))
 }
 
 .sas.mod.equation <- function(coef, pfx) {
@@ -102,37 +104,3 @@ end;", pfx)
     sprintf("\n    + %s_%s_w * %s", pfx, names(coef[-1]), coef[-1]),
     "\n  ;")
 }
-
-.sas.rc.arrays <- function(rcs, pfx) {
-  n  <- length(rcs)
-  nc <- max(sapply(rcs, nchar))
-  
-  pts <- paste(strwrap(
-    paste0(pfx, "_RC_", rcs, collapse = " "), width=80), collapse="\n")
-  
-  cds <- paste(strwrap(paste(rcs, collapse="' '"), width=80), collapse="\n")
-  
-  c(sprintf("\narray %s_PTS {%d} \n%s\n(0);\n", pfx, n, pts),
-    sprintf("\narray %s_CDS {%d} $%d _TEMPORARY_ ('%s');\n", pfx, n, nc, cds))
-}
-
-#' @export
-sas.binnr.model <- function(mod, pfx="") {
-  out  <- list()
-  v <- names(mod$coef[-1])
-  rcs  <- rcs(mod$bins[v])
-  
-  # print the variable transforms
-  out[[length(out)+1]] <- sas(mod$bins[v], mod$coef, pfx, seq_along(v))
-  
-  # print the final model equation
-  out[[length(out)+1]] <- .sas.mod.equation(mod$coef, pfx)
-  
-  # sort the reason code arrays
-  if (!is.null(rcs)) out[[length(out)+1]] <- .sas.sort.logic(pfx)
-  
-  unlist(out)
-  
-}
-
-

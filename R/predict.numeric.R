@@ -1,6 +1,5 @@
 #' @export
 predict.bin.integer <- function(bin, x=NULL, type="woe", coef=NULL, mode="max") {
-#   predict.bin.numeric(bin, x=NULL, type="woe", coef=NULL, mode="max")
   if (type == "bins") {
     out <- predict.bin.numeric.bins(bin, x)
   } else if (type == "dist") {
@@ -16,8 +15,6 @@ predict.bin.integer <- function(bin, x=NULL, type="woe", coef=NULL, mode="max") 
 
 #' @export
 predict.bin.numeric <- function(bin, x=NULL, type="woe", coef=NULL, mode="max") {
-#   if(is.null(x)) x <- bin$data$x
-#   if (is.null(coef)) coef <- 1
   if (type == "bins") {
     out <- predict.bin.numeric.bins(bin, x)
   } else if (type == "dist") {
