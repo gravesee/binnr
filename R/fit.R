@@ -30,13 +30,14 @@
 
 #' @export
 fit <- function(x, data=NULL, y=NULL, nfolds=3, lower.limits=0, upper.limits=3,
-                family="binomial", alpha=1, drop=F) {
+                family="binomial", alpha=1, drop=F, fixed=F) {
   UseMethod("fit")
 }
 
 #' @export
 fit.binnr.model <- function(mod, data=NULL, y=NULL, nfolds=3, lower.limits=0,
-                            upper.limits=3, family="binomial", alpha=1, drop=F) {
+                            upper.limits=3, family="binomial", alpha=1, drop=F,
+                            fixed=F) {
   argg <- as.list(environment())
   
   old <- names(which(get.meta.attr(mod$bins, "inmodel")))
@@ -51,14 +52,23 @@ fit.binnr.model <- function(mod, data=NULL, y=NULL, nfolds=3, lower.limits=0,
 
 #' @export
 fit.bin.list <- function(bins, data=NULL, y=NULL, nfolds=3, lower.limits=0,
-                         upper.limits=3, family="binomial", alpha=1, drop=F) {
+                         upper.limits=3, family="binomial", alpha=1, drop=F,
+                         fixed=F) {
   
   if (is.null(y)) y <- bins[[1]]$data$y # grab the first y from a bin
   x <- predict(bins, data)
   
+  # create penalty factor
+  pf <- rep(1, length(bins))
+  if (fixed) {
+    im <- get.meta.attr(bins, "inmodel")
+    sk <- get.meta.attr(bins, "skip")
+    pf[im & !sk] <- 0
+  }
+  
   fit <- glmnet::cv.glmnet(x, y, nfolds=nfolds, lower.limits=lower.limits, 
                            upper.limits=upper.limits, family=family,
-                           alpha=alpha)
+                           alpha=alpha, penalty.factor=pf)
   
   betas <- glmnet::coef.cv.glmnet(fit, s="lambda.min")[,1]
   betas <- betas[betas != 0]
@@ -86,7 +96,8 @@ fit.bin.list <- function(bins, data=NULL, y=NULL, nfolds=3, lower.limits=0,
 
 #' @export
 fit.segmented <- function(obj, data=NULL, y=NULL, seg, nfolds=3, lower.limits=0,
-                          upper.limits=3, family="binomial", alpha=1, drop=F) {
+                          upper.limits=3, family="binomial", alpha=1, drop=F,
+                          fixed=T) {
   argg <- as.list(environment())[-(1:5)]
   
   # use data stored with objects if none is passed in

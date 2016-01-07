@@ -53,7 +53,9 @@ sas_bin <- function(b, coef=1, pfx='', d=1, mode='max') {
 #' @export
 sas_bin_.bin.numeric <- function(b, coef, pfx, d, mode, conds, name) {
   if (is.null(rcs(b))) rcs(b) <- "BL"
-  rcs   <- rcs(b)
+  
+  rcs <- c(b$rcs$nas, b$rcs$exc, b$rcs$var)
+  
   vals <- unlist(rev(b$core$values))
   output.sas(name, conds, vals, coef, rcs, pfx, d, mode)
 }
@@ -93,7 +95,11 @@ output.sas <- function(name, conds, vals, coef, rcs, pfx, d, mode) {
   name <- paste(pfx, name, 'w', sep='_')
   c(sprintf("%s %s = %0.5f;\n", conds, name, vals),
     sprintf("\n  %s_AA_dist_%d = (%0.5f - %s) * %0.5f;\n\n", pfx, d, ref, name, coef),
-    sprintf("%s %s_AA_code_%d = '%s';\n", conds, pfx, d, rcs))
+    sprintf("attrib %s_AA_code_%d length = $5;\n", pfx, d),
+    sprintf("if %s = %0.5f\n  then %s_AA_code_%d = ''\nelse ", name, min(vals), pfx, d),
+    sprintf("%s %s_AA_code_%d = '%s';\n", conds, pfx, d, rcs)
+    
+    )
 }
 
 .sas.mod.equation <- function(coef, pfx) {
