@@ -4,6 +4,11 @@ bin.list <- function(bins){
   structure(bins, class='bin.list')
 }
 
+#' @export 
+c.bin.list <- function(..., recursive=FALSE) {
+  bin.list(unlist(list(...), recursive = F))
+}
+
 #' @export
 `[.bin.list` <- function(x, i) {
   binnr:::bin.list(unclass(x)[i])
