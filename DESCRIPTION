@@ -1,6 +1,6 @@
 Package: binnr
 Title: Create, Manage, and Fit Scorecard models
-Version: 0.3
+Version: 0.4
 Authors@R: person("Eric", "Graves", email = "gravcon5@gmail.com", role = c("aut", "cre"))
 Description: Binnr creates bivariate objects called 'bins' that can be assembled into scorecards. Currently only supports binary response variables
 Depends:

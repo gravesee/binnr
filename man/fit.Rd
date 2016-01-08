@@ -5,7 +5,8 @@
 \title{fit binnr objects}
 \usage{
 fit(x, data = NULL, y = NULL, nfolds = 3, lower.limits = 0,
-  upper.limits = 3, family = "binomial", alpha = 1, drop = F)
+  upper.limits = 3, family = "binomial", alpha = 1, drop = F,
+  fixed = F)
 }
 \arguments{
 \item{x}{}

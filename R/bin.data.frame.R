@@ -23,7 +23,7 @@ bin.data.frame <- function(x, y, bc=bin.control(), seg=NULL, mono=c(ALL=0), exce
     cat(sprintf("\rProgress: %s %6.2f%%", dashes[(i %% 4) + 1], (100*i/length(v))))
     flush.console()
     bc$mono <- bcdf$mono[v[i]]
-    bc$exceptions <- bcdf$exceptionns[v[i]]
+    bc$exceptions <- bcdf$exceptions[[v[i]]]
     res[[v[i]]] <- bin(x[,v[i]], y, name = v[i], bc)
   }
   cat("\n")
