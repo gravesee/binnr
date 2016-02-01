@@ -100,4 +100,4 @@ fit.bin.list <- function(bins, data, y, nfolds=3, lower.limits=0, upper.limits=3
   
   betas <- coef(fit, s="lambda.min")
   binnr.model(bins, betas[,1])
-}ß
+}
