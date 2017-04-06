@@ -1,0 +1,37 @@
+Package: binnr
+Type: Package
+Title: Scorecard modeling in R
+Version: 0.1.0
+Author: Eric Graves
+Maintainer: Eric Graves <eric.graves@lexisnexisrisk.com>
+Description: binnr is an R package that helps modelers build scorecards.
+    Scorecard models need to be more than predictive. Regulatory oversight
+    often necessitates they be transparent as well. Model transparency is
+    difficult to enforce in more predictive, non-linear methods such as neural
+    networks, random forest, or gradient boosted decision trees. Often direct
+    modeler intervention is required to ensure proper treatment is given for
+    values of independent variables. binnr makes it easy to do just that.
+License: Proprietary
+Encoding: UTF-8
+LazyData: true
+Imports:
+    Rcpp (>= 0.12.8),
+    Matrix,
+    glmnet
+LinkingTo: Rcpp
+Collate:
+    'transform_class.R'
+    'performance_class.R'
+    'bin_class.R'
+    'discrete_class.R'
+    'continuous_class.R'
+    'binary_performance_class.R'
+    'classing_class.R'
+    'classing_adjust_method.R'
+    'imports.R'
+    'model_class.R'
+    'ops.R'
+    'scorecard_class.R'
+    'util.R'
+    'wrapper_funcs.R'
+RoxygenNote: 6.0.1
