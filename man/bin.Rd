@@ -41,7 +41,7 @@ discretization process.}
 A \code{Scorecard} object with \code{data} variables discretized.
 }
 \description{
-The starting point for any rubbish scorecard. The bin function
+The starting point for any binnr scorecard. The bin function
 prepares variables for scorecard modeling by returning a
 \code{\link{Scorecard}} object that is easily manipulated.
 }

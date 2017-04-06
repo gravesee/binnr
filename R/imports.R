@@ -1,9 +1,8 @@
 #' @importFrom glmnet cv.glmnet
 NULL
 
-#' @import glmnet
-NULL
+# #' @import glmnet
+# NULL
 
-#' @useDynLib rubbish
+#' @useDynLib binnr
 NULL
-
