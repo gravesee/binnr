@@ -243,6 +243,7 @@ Bin$methods(plot = function() {
 #' the bin weight-of-evidence values.
 NULL
 Bin$methods(predict = function(newdata=.self$x) {
+  # browser()
   idx <- as.character(factorize(newdata=newdata)$factor)
 
   out <- c(tf@subst, tf@nas, tf@exceptions)[idx]

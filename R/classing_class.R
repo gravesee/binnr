@@ -20,6 +20,7 @@ Classing <- setRefClass("Classing",
     performance = "Performance",
     dropped = "character"))
 
+
 #' generic method for create_bin
 #' @name create_bin
 #' @param x the varibale used for the Bins \code{x} value
@@ -52,12 +53,20 @@ setMethod("create_bin", "ANY", function(x, ...) {
 Classing$methods(initialize = function(data=NULL,
   performance=Performance$new(), ...) {
 
+  ## drop variables with all NA
+  all_na <- which(sapply(data, function(x) all(is.na(x))))
+
+  warning(sprintf("dropping variables with all NA values: %s",
+    paste0(names(all_na), collapse = ",")), call. = FALSE)
+
   .self$performance <<- performance
-  vnames <<- setNames(names(data), names(data))
+  vnames <<- names(data)[-all_na]
 
   variables <<- lapply(vnames, function(nm) {
     create_bin(x = data[[nm]], perf = performance, name = nm, ...)
   })
+
+  names(variables) <- vnames
 
   ## drop variables that aren't numeric or factors
   f <- !sapply(variables, is.null)
@@ -88,10 +97,6 @@ Classing$methods(bin = function(...) {
   dropped <<- names(variables)[zeros]
 
 })
-
-# Classing$methods(show = function() {
-#   print("Classing object")
-# })
 
 Classing$methods(get_variables = function(..., keep=FALSE) {
   if (!keep) {
@@ -176,7 +181,7 @@ Classing$methods(undrop = function(vars=character(0), all=FALSE, ...) {
 
 #' Cluster variables by correlation
 #'
-#' @name Scorecard_cluster
+#' @name Classing_cluster
 #' @param keep logical indicating whether to include dropped variables in the
 #' correlation cluster analysis.
 #' @details the cluster function first performs weight-of-evidence substitution.

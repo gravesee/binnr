@@ -18,6 +18,8 @@ Imports:
     Rcpp (>= 0.12.8),
     Matrix,
     glmnet
+Suggests: R.rsp
+VignetteBuilder: R.rsp
 LinkingTo: Rcpp
 Collate:
     'transform_class.R'

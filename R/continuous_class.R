@@ -80,7 +80,6 @@ Continuous$methods(fmt_numeric_cuts = function() {
 #' @return \code{list} with two fields. See details.
 NULL
 Continuous$methods(factorize = function(newdata=.self$x) {
-
   f <- callSuper(newdata=newdata)
 
   lbls <- fmt_numeric_cuts()

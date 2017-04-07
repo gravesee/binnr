@@ -30,7 +30,7 @@ setClass("Transform", slots = c(
 #' @return new Transform object with updated overrides
 neutralize_ <- function(tf, i) {
   x <- c(names(tf@subst), tf@exceptions, names(tf@nas))
-  if (!(all(i) %in% seq_along(x))) return(tf)
+  if (!all(i %in% seq_along(x))) return(tf)
 
   ## ones that are already neutralized are UN-neutralized
   neutral <- names(which(tf@overrides == 0))
