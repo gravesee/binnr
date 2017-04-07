@@ -43,6 +43,12 @@ setMethod("create_bin", "factor", function(x, ...) {
 
 
 #' @describeIn create_bin create_bin fallback warning user
+setMethod("create_bin", "character", function(x, ...) {
+  create_bin(factor(x), ...)
+})
+
+
+#' @describeIn create_bin create_bin fallback warning user
 setMethod("create_bin", "ANY", function(x, ...) {
   warning(sprintf("Class: %s cannot be binned. Removed from classing.",
     class(x)), call. = FALSE)
@@ -54,19 +60,21 @@ Classing$methods(initialize = function(data=NULL,
   performance=Performance$new(), ...) {
 
   ## drop variables with all NA
-  all_na <- which(sapply(data, function(x) all(is.na(x))))
+  all_na <- names(which(sapply(data, function(x) all(is.na(x)))))
 
-  warning(sprintf("dropping variables with all NA values: %s",
-    paste0(names(all_na), collapse = ",")), call. = FALSE)
+  if (length(all_na) > 0) {
+    warning(sprintf("dropping variables with all NA values: %s",
+      paste0(all_na, collapse = ", ")), call. = FALSE)
+  }
 
   .self$performance <<- performance
-  vnames <<- names(data)[-all_na]
+  vnames <<- setdiff(names(data), all_na)
 
   variables <<- lapply(vnames, function(nm) {
     create_bin(x = data[[nm]], perf = performance, name = nm, ...)
   })
 
-  names(variables) <- vnames
+  names(variables) <<- vnames
 
   ## drop variables that aren't numeric or factors
   f <- !sapply(variables, is.null)

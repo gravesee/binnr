@@ -22,6 +22,14 @@ setClass("Transform", slots = c(
 )
 
 
+setMethod("initialize", "Transform", function(.Object, ...) {
+  .Object <- callNextMethod()
+  .Object@overrides <- .Object@nas
+  validObject(.Object)
+  .Object
+})
+
+
 #' Neutralize selected levels of Transform setting substitution to zero
 #'
 #' @name neutralize
@@ -35,6 +43,9 @@ neutralize_ <- function(tf, i) {
   ## ones that are already neutralized are UN-neutralized
   neutral <- names(which(tf@overrides == 0))
   nix <- intersect(neutral, x[i])
+
+  to_drop <- match(nix, names(tf@overrides), 0)
+  tf@overrides <- tf@overrides[-to_drop]
 
   overrides <- setdiff(x[i], nix)
   tf@overrides[overrides] <- 0
