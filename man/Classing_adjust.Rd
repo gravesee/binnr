@@ -3,6 +3,10 @@
 \name{Classing_adjust}
 \alias{Classing_adjust}
 \title{adjust method for Classing objects}
+\arguments{
+\item{start}{character vector of length one denoting which variable to start
+on. Must be an exact match including case.}
+}
 \value{
 all of the requested operations modify the bin in place
 }

@@ -2,7 +2,7 @@
 #'
 #' @description The starting point for any binnr scorecard. The bin function
 #' prepares variables for scorecard modeling by returning a
-#' \code{\link{Scorecard}} object that is easily manipulated.
+#' \code{\link{Scorecard_Class}} object that is easily manipulated.
 #'
 #' @param data \code{\link{data.frame}} of independent predictors to discretize.
 #' Can only bin factors and numeric columns. All other data types are removed

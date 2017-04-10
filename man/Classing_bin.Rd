@@ -6,5 +6,5 @@
 \description{
 This bin function should not be directly called by the user.
 The Classing bin function is subsequently called from the
-\link{\code{bin}} wrapper function.
+\code{\link{bin}} wrapper function.
 }

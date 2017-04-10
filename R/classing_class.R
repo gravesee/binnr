@@ -89,7 +89,7 @@ Classing$methods(initialize = function(data=NULL,
 #' @name Classing_bin
 #' @description This bin function should not be directly called by the user.
 #' The Classing bin function is subsequently called from the
-#' \link{\code{bin}} wrapper function.
+#' \code{\link{bin}} wrapper function.
 NULL
 Classing$methods(bin = function(...) {
   on.exit(cat(sep = "\n"))
@@ -230,7 +230,7 @@ Classing$methods(cluster = function(keep=FALSE, bag.fraction=1, ...) {
 #' Return a data.frame summarizing the variable clusters
 #'
 #' @name Classing_get_clusters
-#' @param cc classing_cluster object produced by \link{\code{Scorecard_cluster}}
+#' @param cc classing_cluster object produced by \code{\link{Scorecard_cluster}}
 #' method
 #' @param corr minimum correlation coefficient threshold with which to group
 #' variables
@@ -261,7 +261,7 @@ Classing$methods(get_clusters =  function(cc, corr=0.80) {
 #' Prune clusters keeping only the most informative variables
 #'
 #' @name Classing_prune_clusters
-#' @param cc classing_cluster object produced by \link{\code{Scorecard_cluster}}
+#' @param cc classing_cluster object produced by \code{\link{Scorecard_cluster}}
 #' method
 #' @param corr minimum correlation coefficient threshold with which to group
 #' variables
@@ -291,10 +291,19 @@ Classing$methods(prune_clusters =  function(cc, corr=0.80, n=1) {
 #' @return a matrix summarizing the independent variables using the Performance
 #' object summary function
 NULL
-Classing$methods(summary = function(...) {
-  s <- lapply(variables, function(v) v$summary())
+Classing$methods(summary = function(keep=FALSE) {
+
+  if (keep) {
+    k <- TRUE
+  } else {
+    k <- !names(variables) %in% dropped
+  }
+
+  s <- lapply(variables[k], function(v) v$summary())
+
   res <- cbind(do.call(rbind, s), Dropped=0)
-  res[dropped, "Dropped"] <- 1
+  res[match(rownames(res), dropped, 0), "Dropped"] <- 1
+
   res
 })
 

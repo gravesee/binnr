@@ -9,9 +9,9 @@ setClassUnion("NumericOrFactor", members = c("numeric", "factor"))
 #' @description Bin object generator class used to wrap binned variables.
 #' @field x numeric or factor vector to be discretized or summarized
 #' @field name name of the variable
-#' @field perf \code{\link{Performance}} object used to discretize and summarize
-#' \code{x}. Currently only binary performance supported.
-#' @field tf \code{\link{Transform}} object containing information for
+#' @field perf \code{\link{Performance_Class}} object used to discretize and
+#' summarize \code{x}. Currently only binary performance supported.
+#' @field tf \code{\link{Transform_Class}} object containing information for
 #' discretizing and summarizing \code{x}.
 #' @field history \code{list} of \code{Transform} objects. One for every
 #' operation on the \code{Bin} object.
@@ -133,9 +133,10 @@ Bin$methods(factorize = function(newdata=.self$x) {
 #' Return matrix summarizing Bin object
 #'
 #' @name Bin_as.matrix
-#' @details \code{as.matrix} summarizes the \link{\code{Performance}} object
-#' within each level of the Bin object. As such, the summarization process must
-#' be described by implementing a summarize method for the Performance object.
+#' @details \code{as.matrix} summarizes the \code{\link{Performance_Class}}
+#' object within each level of the Bin object. As such, the summarization
+#' process must be described by implementing a summarize method for the
+#' Performance object.
 #'
 #' @return \code{matrix} of summarized bin data
 NULL
@@ -151,7 +152,7 @@ Bin$methods(as.matrix = function() {
 #' Print representation of Bin object
 #'
 #' @name Bin_show
-#' @param ... optional arguments passed on to the \link{\code{print}} function.
+#' @param ... optional arguments passed on to the \code{\link{print}} function.
 NULL
 Bin$methods(show = function(...) {
 

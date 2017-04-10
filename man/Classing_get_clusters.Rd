@@ -4,7 +4,7 @@
 \alias{Classing_get_clusters}
 \title{Return a data.frame summarizing the variable clusters}
 \arguments{
-\item{cc}{classing_cluster object produced by \link{\code{Scorecard_cluster}}
+\item{cc}{classing_cluster object produced by \code{\link{Scorecard_cluster}}
 method}
 
 \item{corr}{minimum correlation coefficient threshold with which to group

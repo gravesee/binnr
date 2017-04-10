@@ -4,7 +4,7 @@
 \alias{Bin_show}
 \title{Print representation of Bin object}
 \arguments{
-\item{...}{optional arguments passed on to the \link{\code{print}} function.}
+\item{...}{optional arguments passed on to the \code{\link{print}} function.}
 }
 \description{
 Print representation of Bin object

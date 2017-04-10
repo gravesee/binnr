@@ -4,6 +4,8 @@ NULL
 #' adjust method for Classing objects
 #'
 #' @name Classing_adjust
+#' @param start character vector of length one denoting which variable to start
+#' on. Must be an exact match including case.
 #' @description The adjust method starts an interactive loop where users may
 #' enter commands representing various bin operations. The loop starts with
 #' the first variable in the Scorecard object. The interactive session continues
@@ -28,8 +30,16 @@ NULL
 #' }
 #' @return all of the requested operations modify the bin in place
 NULL
-Classing$methods(adjust = function(...) {
-  i <- 1
+Classing$methods(adjust = function(start=NULL, ...) {
+  if (!is.null(start)) {
+    i <- match(start, names(variables))
+    if (is.na(i)) {
+      stop(sprintf("variable, %s, not found"), start)
+    }
+  } else {
+    i <- 1
+  }
+
 
   while(i <= length(variables)) {
     nm <- variables[[i]]$name
@@ -60,8 +70,7 @@ Classing$methods(adjust = function(...) {
         (d)rop / undrop
         != <#> : Neutralize level
         +  <#> : Expand level
-        -  <#> : Collapse level(s)
-        <= <#> : Cap at # and rebin\n")
+        -  <#> : Collapse level(s)\n")
       cat("Press any key to continue")
       readLines(n=1)
       invisible()

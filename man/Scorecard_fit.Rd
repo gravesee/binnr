@@ -40,9 +40,9 @@ package.
 \details{
 the fit function first calls predict and substitutes the
 weight-of-evidence for all predictor variables. It then passes this matrix
-on to \link{\code{cv.glmnet}}. The coefficients of a binner model fit
+on to \code{\link[glmnet]{cv.glmnet}}. The coefficients of a binner model fit
 are restricted to [0,3]. This ensures there are no sign flips in the
 model coefficients and that the relationships observed on margin are
 retained in the final model.
-\link{\code{bin}} wrapper function.
+\code{\link{bin}} wrapper function.
 }

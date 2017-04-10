@@ -15,10 +15,10 @@ Bin object generator class used to wrap binned variables.
 
 \item{\code{name}}{name of the variable}
 
-\item{\code{perf}}{\code{\link{Performance}} object used to discretize and summarize
-\code{x}. Currently only binary performance supported.}
+\item{\code{perf}}{\code{\link{Performance_Class}} object used to discretize and
+summarize \code{x}. Currently only binary performance supported.}
 
-\item{\code{tf}}{\code{\link{Transform}} object containing information for
+\item{\code{tf}}{\code{\link{Transform_Class}} object containing information for
 discretizing and summarizing \code{x}.}
 
 \item{\code{history}}{\code{list} of \code{Transform} objects. One for every

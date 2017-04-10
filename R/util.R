@@ -30,3 +30,7 @@ ks_ <- function(score, y, w) {
   cml_gds <- cumsum(((y == 0)*w)[order(-score)]) / sum((y == 0) * w)
   max(abs(cml_bds - cml_gds))
 }
+
+.onAttach <- function(libname, pkgname) {
+  packageStartupMessage("For binnr cheat sheet run: vignette(\"binnr-cheat-sheet\")")
+}

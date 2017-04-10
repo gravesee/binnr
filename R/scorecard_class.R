@@ -71,7 +71,7 @@ Scorecard$methods(add_model = function(mod) {
 #' @name Scorecard_bin
 #' @description This bin function should not be directly called by the user.
 #' The Scorecard bin function is subsequently called from the
-#' \link{\code{bin}} wrapper function.
+#' \code{\link{bin}} wrapper function.
 NULL
 Scorecard$methods(bin = function(...) {
   callSuper(...)
@@ -88,11 +88,11 @@ Scorecard$methods(bin = function(...) {
 #' package.
 #' @details the fit function first calls predict and substitutes the
 #' weight-of-evidence for all predictor variables. It then passes this matrix
-#' on to \link{\code{cv.glmnet}}. The coefficients of a binner model fit
+#' on to \code{\link[glmnet]{cv.glmnet}}. The coefficients of a binner model fit
 #' are restricted to [0,3]. This ensures there are no sign flips in the
 #' model coefficients and that the relationships observed on margin are
 #' retained in the final model.
-#' \link{\code{bin}} wrapper function.
+#' \code{\link{bin}} wrapper function.
 #' @param name brief model name as character
 #' @param description character description describing the model
 #' @param overwrite should model be overwriiten if it already exists?
@@ -209,13 +209,13 @@ Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type="score", ...
 #' implementation summary function. Also displays the coefficients and model
 #' contributions of the predictors.
 NULL
-Scorecard$methods(summary = function(keep=FALSE) {
+Scorecard$methods(summary = function(keep=FALSE, inmodel.only=FALSE) {
 
   mod <- models[[selected_model]]
 
   cat(mod@name, "\nOut-of-Fold KS: ", mod@ks, "\n")
 
-  res <- callSuper(tfs = get_transforms(keep=keep))
+  res <- callSuper(keep=keep)
   vars <- row.names(res)
 
 
@@ -223,7 +223,12 @@ Scorecard$methods(summary = function(keep=FALSE) {
     `Contribution` = mod@contribution[vars])
 
   out[inmodel,"In Model"] <- 1
-  out
+
+  if (inmodel.only) {
+    out[inmodel,]
+  } else {
+    out
+  }
 })
 
 
@@ -317,7 +322,7 @@ Scorecard$methods(compare = function(...) {
   summaries <- lapply(mods, function(x) {
 
     select(x)
-    res <- summary()
+    res <- summary(inmodel.only = TRUE)
 
     ## only keep vars in model
     res[inmodel, c("IV","Dropped","In Model","Coefs","Contribution")]

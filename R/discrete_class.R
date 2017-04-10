@@ -1,6 +1,7 @@
 #' @include bin_class.R
 NULL
 
+
 #' Discrete class
 #'
 #' Discrete object generator class used to wrap binned factor variables.
@@ -9,11 +10,11 @@ NULL
 #' @exportClass Discrete
 Discrete <- setRefClass("Discrete", contains = "Bin")
 
-Discrete$methods(initialize = function(x, ...) {
+Discrete$methods(initialize = function(x_, ...) {
   ## get rid of pesky blank levels
-  levels(x)[levels(x) == ""] <- NA
-  x <- droplevels(x)
-  callSuper(x=x, ...)
+  levels(x_)[levels(x_) == ""] <- NA
+  x_ <- droplevels(x_)
+  callSuper(x=x_, ...)
 })
 
 
