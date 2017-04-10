@@ -244,12 +244,12 @@ Bin$methods(plot = function() {
 NULL
 Bin$methods(predict = function(newdata=.self$x) {
   # browser()
-  idx <- as.character(factorize(newdata=newdata)$factor)
+  idx <- factorize(newdata=newdata)
 
   out <- c(tf@subst, tf@nas, tf@exceptions)[idx]
 
-  i <- intersect(names(out), names(tf@overrides))
-  out[i] <- tf@overrides[i]
+  ors <- intersect(names(out), names(tf@overrides))
+  out[ors] <- tf@overrides[ors]
 
   unname(out)
 })

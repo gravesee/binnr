@@ -80,17 +80,19 @@ Continuous$methods(fmt_numeric_cuts = function() {
 #' @return \code{list} with two fields. See details.
 NULL
 Continuous$methods(factorize = function(newdata=.self$x) {
-  f <- callSuper(newdata=newdata)
-
   lbls <- fmt_numeric_cuts()
-  out <- factor(newdata, exclude=NULL,
-    levels = c(lbls, names(tf@exceptions), NA))
 
-  levels(out)[is.na(levels(out))] <- "Missing"
-  out[f$normal] <- cut(newdata[f$normal], tf@tf, include.lowest = T,
-    labels = lbls)
+  i <- findInterval(newdata, tf@tf, all.inside = T)
 
-  list(factor=out, types=f)
+  out <- lbls[i]
+  out[is.na(out)] <- "Missing"
+
+  f <- newdata %in% as.numeric(names(tf@exceptions))
+  out[f] <- newdata[f]
+
+  lvls <- c(lbls, names(tf@exceptions), "Missing")
+
+  factor(out, levels = lvls)
 })
 
 #' Weight-of-Evidence subistitution for Continuous bins

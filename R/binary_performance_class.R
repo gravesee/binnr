@@ -104,26 +104,29 @@ Binary_Performance$methods(summarize = function(x, y, w) {
 #' @return a list of matrices with summarized information.
 NULL
 Binary_Performance$methods(update = function(b, ...) {
-    info <- b$factorize()
 
-    ## can now split x and y and w and calculate
-    out <- list()
-    f <- info$types$normal
-    out$normal <- summarize(factor(info$factor[f]), y[f], w[f])
+  f <- b$factorize()
 
-    f <- info$types$exception
-    out$exception <- summarize(factor(info$factor[f],
-      levels=names(b$tf@exceptions)), y[f], w[f])
+  m <- summarize(f, y, w)
 
-    f <- info$types$missing
-    out$missing <- summarize(factor(info$factor[f]), y[f], w[f])
+  lvls <- levels(f)
+  ids <- list(
+    normal = NULL,
+    exceptions = match(names(b$tf@exceptions), lvls, 0),
+    missing = match("Missing", lvls, 0))
 
-    out$Total <- matrix(colSums(do.call(rbind, out), na.rm=TRUE), nrow=1,
-      dimnames = list(NULL, colnames(out$normal)))
-    out$Total[,c("P(1)", "WoE", "Pred")] <- 0
-    out
+  ids$normal <- seq.int(nrow(m))[-c(ids$missing, ids$exceptions)]
 
-  })
+  out <- lapply(ids, function(x) m[x,,drop=FALSE])
+
+  out$Total <- matrix(colSums(m, na.rm=TRUE), nrow=1,
+    dimnames = list("Total", colnames(m)))
+
+  out$Total[,c("P(1)", "WoE", "Pred")] <- 0
+
+  out
+
+})
 
 # internal helper function for plotting
 make_bars_ <- function(v, width=0.70, ...) {

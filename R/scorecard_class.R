@@ -275,7 +275,7 @@ Scorecard$methods(pseudo_pvalues = function(times=20, bag.fraction = 0.50,
 
   coefs <- list()
   for (i in seq.int(times)) {
-    progress_(i, times, "Fitting")
+    progress_(i, times, "Fitting   ")
 
     s <- sample.int(nrow(x), nrow(x)*bag.fraction, replace = replace)
 
@@ -318,7 +318,9 @@ Scorecard$methods(compare = function(...) {
 
     select(x)
     res <- summary()
-    res[,c("IV","Dropped","In Model","Coefs","Contribution")]
+
+    ## only keep vars in model
+    res[inmodel, c("IV","Dropped","In Model","Coefs","Contribution")]
 
   })
 

@@ -106,16 +106,23 @@ Classing$methods(bin = function(...) {
 
 })
 
-Classing$methods(get_variables = function(..., keep=FALSE) {
-  if (!keep) {
-    lapply(variables[setdiff(vnames, dropped)], function(x) x$x)
+Classing$methods(get_variables = function(keep=FALSE, bag.fraction=1) {
+  n <- length(variables[[1]]$x)
+  if (identical(bag.fraction, 1)) {
+    s <- TRUE
   } else {
-    lapply(variables, function(x) x$x)
+    s <- sample(seq.int(n), min(n, n * bag.fraction), replace=FALSE)
+  }
+
+  if (!keep) {
+    lapply(variables[setdiff(vnames, dropped)], function(x) x$x[s])
+  } else {
+    lapply(variables, function(x) x$x[s])
   }
 })
 
 
-Classing$methods(get_transforms = function(..., keep=FALSE) {
+Classing$methods(get_transforms = function(keep=FALSE) {
   if (!keep) {
     lapply(variables[setdiff(vnames, dropped)], function(x) x$tf)
   } else {
@@ -192,6 +199,9 @@ Classing$methods(undrop = function(vars=character(0), all=FALSE, ...) {
 #' @name Classing_cluster
 #' @param keep logical indicating whether to include dropped variables in the
 #' correlation cluster analysis.
+#' @param bag.fraction sample the development data without replacement to
+#' cluster more quickly. The bag.fraction is multiplied by the number of
+#' observations.
 #' @details the cluster function first performs weight-of-evidence substitution.
 #' Cluster returns a classing_cluster object which is a list containing
 #' two fields: correlation & cluster. The first is a correlation matrix for all
@@ -199,8 +209,11 @@ Classing$methods(undrop = function(vars=character(0), all=FALSE, ...) {
 #' result of hierarchical clustering of the correlation matrix.
 #' @return a classing_cluster object
 NULL
-Classing$methods(cluster = function(keep=FALSE, ...) {
-  woe <- predict(newdata=get_variables(keep = keep), type="woe", ...)
+Classing$methods(cluster = function(keep=FALSE, bag.fraction=1, ...) {
+
+  woe <- predict(newdata=get_variables(keep = keep, bag.fraction=bag.fraction),
+    type="woe", ...)
+
   dups <- apply(woe, 2, function(x) all(duplicated(x)[-1L]))
 
   corr <- cor(woe[,which(!dups)])
@@ -211,6 +224,37 @@ Classing$methods(cluster = function(keep=FALSE, ...) {
       cluster = hclust(as.dist(1 - abs(corr)))),
     class="classing_cluster")
 
+})
+
+
+#' Return a data.frame summarizing the variable clusters
+#'
+#' @name Scorecard_get_clusters
+#' @param cc classing_cluster object produced by \link{\code{Scorecard_cluster}}
+#' method
+#' @param corr minimum correlation coefficient threshold with which to group
+#' variables
+#' @return a data.frame of variable clusters and information value
+NULL
+Classing$methods(get_clusters =  function(cc, corr=0.80) {
+  stopifnot(is(cc, "classing_cluster"))
+
+  ## get information values
+  p <- sapply(variables[colnames(cc$correlations)], function(x) x$sort_value())
+
+  ## cutree
+  grps <- cutree(cc$cluster, h=1-corr)
+
+  # split correlations into groups and return everyone after the first
+  out <- split(data.frame(variable=names(grps), sort_value=p,
+    stringsAsFactors = F), grps)
+
+  out <- lapply(out, function(x) x[order(-x$sort_value),])
+  out <- Map(`[<-.data.frame`, out, "Cluster", value=seq_along(out))
+
+  out <- do.call(rbind, out)
+  row.names(out) <- NULL
+  out
 })
 
 
@@ -229,17 +273,14 @@ NULL
 Classing$methods(prune_clusters =  function(cc, corr=0.80, n=1) {
   stopifnot(is(cc, "classing_cluster"))
 
-  ## get information values
-  p <- sapply(variables[colnames(cc$correlations)], function(x) x$sort_value())
+  clusters <- get_clusters(cc=cc, corr=corr)
+  splt <- split(clusters, clusters$Cluster)
 
-  ## cutree
-  grps <- cutree(cc$cluster, h=1-corr)
+  ## order each group by descending perf value and drop all but the first n
+  to_drop <- lapply(splt, function(x) {
+    x$variable[order(-x$sort_value)][-seq.int(n)]
+  })
 
-  # split correlations into groups and return everyone after the first
-  splt <- split(data.frame(var=names(grps), val=p, stringsAsFactors = F), grps)
-
-  ## order each group by descending perf value and drop all but the first
-  to_drop <- lapply(splt, function(x) x$var[order(-x$val)][-seq.int(n)])
   unlist(to_drop)
 })
 
@@ -255,4 +296,31 @@ Classing$methods(summary = function(...) {
   res <- cbind(do.call(rbind, s), Dropped=0)
   res[dropped, "Dropped"] <- 1
   res
+})
+
+
+Classing$methods(combine = function(other) {
+  stopifnot(is(other, "Classing"))
+
+  ## check for name collisions
+  if (any(other$vnames %in% vnames)) {
+
+    dups <- other$vnames[other$vnames %in% vnames]
+
+    stop("duplicate variables from 'other' found in Classing: ",
+      paste0(dups, collapse = ", "), call. = FALSE)
+  }
+
+  ## check that the same performance is used
+  if (!identical(all.equal(performance, oth$performance), TRUE)) {
+    stop("'other' performance does not match current performance",
+      call. = FALSE)
+  }
+
+  ## if all checks are passed, can add the other variables to this
+
+  variables <<- c(variables, other$variables)
+  vnames <<- c(vnames, other$vnames)
+  dropped <<- c(dropped, other$dropped)
+
 })
