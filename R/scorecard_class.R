@@ -141,7 +141,7 @@ Scorecard$methods(fit = function(name, description="", overwrite=FALSE,
     lower.limits=lower.limits, keep=TRUE, ...)
 
   ## get the coeficients
-  coefs <- coef(this_fit, s="lambda.min")[,1]
+  coefs <- glmnet::coef.cv.glmnet(this_fit, s="lambda.min")[,1]
   coefs <- coefs[which(coefs != 0)]
 
   ## set the inmodel vector

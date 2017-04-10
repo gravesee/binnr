@@ -163,7 +163,7 @@ Classing$methods(predict = function(newdata=NULL, keep=keep) {
 
 #' Flag supplied variables as dropped
 #'
-#' @name Scorecard_drop
+#' @name Classing_drop
 #' @param vars character vector of variables to drop
 #' @param all logical indicating whether all variables should be dropped
 NULL
@@ -179,7 +179,7 @@ Classing$methods(drop = function(vars=character(0), all=FALSE, ...) {
 
 #' Flag supplied variables as undropped
 #'
-#' @name Scorecard_undrop
+#' @name Classing_undrop
 #' @param vars character vector of variables to undrop
 #' @param all logical indicating whether all variables should be undropped
 NULL
@@ -229,7 +229,7 @@ Classing$methods(cluster = function(keep=FALSE, bag.fraction=1, ...) {
 
 #' Return a data.frame summarizing the variable clusters
 #'
-#' @name Scorecard_get_clusters
+#' @name Classing_get_clusters
 #' @param cc classing_cluster object produced by \link{\code{Scorecard_cluster}}
 #' method
 #' @param corr minimum correlation coefficient threshold with which to group
@@ -260,7 +260,7 @@ Classing$methods(get_clusters =  function(cc, corr=0.80) {
 
 #' Prune clusters keeping only the most informative variables
 #'
-#' @name Scorecard_prune_clusters
+#' @name Classing_prune_clusters
 #' @param cc classing_cluster object produced by \link{\code{Scorecard_cluster}}
 #' method
 #' @param corr minimum correlation coefficient threshold with which to group
@@ -299,6 +299,17 @@ Classing$methods(summary = function(...) {
 })
 
 
+#' Add variables from one classing to another
+#'
+#' @name Classing_combine
+#' @param other an object of class \code{\link{Classing_Class}} that will be
+#' incorporated into the calling method's Classing object
+#' @details \code{combine} adds a Classing object's variables to the caller
+#' object. The 'other' Classing object must not have any of the same variables.
+#' It must also use the same performance as the calling method's Classing
+#' object.
+#' @return an updated Classing object
+NULL
 Classing$methods(combine = function(other) {
   stopifnot(is(other, "Classing"))
 

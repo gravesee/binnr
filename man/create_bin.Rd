@@ -5,6 +5,7 @@
 \alias{create_bin}
 \alias{create_bin,numeric-method}
 \alias{create_bin,factor-method}
+\alias{create_bin,character-method}
 \alias{create_bin,ANY-method}
 \title{generic method for create_bin}
 \usage{
@@ -13,6 +14,8 @@ create_bin(x, ...)
 \S4method{create_bin}{numeric}(x, ...)
 
 \S4method{create_bin}{factor}(x, ...)
+
+\S4method{create_bin}{character}(x, ...)
 
 \S4method{create_bin}{ANY}(x, ...)
 }
@@ -34,6 +37,8 @@ generic method for create_bin
 \item \code{numeric}: wrap variable in Continuous object
 
 \item \code{factor}: wrap variable in Discrete object
+
+\item \code{character}: create_bin fallback warning user
 
 \item \code{ANY}: create_bin fallback warning user
 }}

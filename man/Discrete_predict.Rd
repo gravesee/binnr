@@ -2,7 +2,7 @@
 % Please edit documentation in R/discrete_class.R
 \name{Discrete_predict}
 \alias{Discrete_predict}
-\title{Weight-of-Evidence subistitution for Discrete bins}
+\title{Weight-of-Evidence substitution for Discrete bins}
 \arguments{
 \item{newdata}{Factor vector to apply performance substition. Defaults to
 data used to create the Discrete object.}
@@ -12,5 +12,5 @@ numeric variable with bin performance values substituted for
 the inputs.
 }
 \description{
-Weight-of-Evidence subistitution for Discrete bins
+Weight-of-Evidence substitution for Discrete bins
 }

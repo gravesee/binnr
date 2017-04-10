@@ -10,7 +10,9 @@ NULL
 Discrete <- setRefClass("Discrete", contains = "Bin")
 
 Discrete$methods(initialize = function(x, ...) {
-  if(any(levels(x) %in% "")) stop("Factor variable contains blanks")
+  ## get rid of pesky blank levels
+  levels(x)[levels(x) == ""] <- NA
+  x <- droplevels(x)
   callSuper(x=x, ...)
 })
 
