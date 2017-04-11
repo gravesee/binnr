@@ -225,7 +225,7 @@ Scorecard$methods(summary = function(keep=FALSE, inmodel.only=FALSE) {
   out[inmodel,"In Model"] <- 1
 
   if (inmodel.only) {
-    out[inmodel,]
+    out[match(inmodel, row.names(out), 0), ]
   } else {
     out
   }
@@ -370,15 +370,19 @@ Scorecard$methods(compare = function(...) {
 #'  }
 #' @return a character vector of SAS code
 NULL
-Scorecard$methods(gen_code_sas = function(pfx="", method="min", ...) {
+Scorecard$methods(gen_code_sas = function(pfx="", method="min", out=NULL, ...) {
 
   v <- inmodel
   mod <- models[[selected_model]]
 
   coefs <- mod@coefs[-1][v]
 
+  if (getOption("mkivtools_REGISTERED")) {
+    out <- do.call(c, mkivtools::pkg.env$mkiv_map[tolower(v)])
+  }
+
   ## Print the reason code mappings
-  out <- "/** Adverse Action Code Mappings **/"
+  out <- c(out, "/** Adverse Action Code Mappings **/")
   out <- c(out, lapply(seq_along(v), function(i) {
     sprintf("%%let %s_AA_%02d = \"\"; /** %s **/", pfx, i, v[i])
   }))

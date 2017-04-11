@@ -38,13 +38,20 @@ setMethod("create_bin", "numeric", function(x, ...) {
 #' @describeIn create_bin wrap variable in Discrete object
 #' @return a Discrete object
 setMethod("create_bin", "factor", function(x, ...) {
+
+  if (length(levels(x)) > 20) {
+    nm <- list(...)$name
+    warning(sprintf("Variable, %s, has more than 20 levels -- Skipping", nm),
+      call. = FALSE)
+    return(NULL)
+  }
   Discrete$new(x = x, ...)
 })
 
 
 #' @describeIn create_bin create_bin fallback warning user
 setMethod("create_bin", "character", function(x, ...) {
-  create_bin(factor(x), ...)
+    create_bin(factor(x), ...)
 })
 
 
