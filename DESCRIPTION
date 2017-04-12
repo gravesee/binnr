@@ -14,6 +14,7 @@ Description: binnr is an R package that helps modelers build scorecards.
 License: Proprietary
 Encoding: UTF-8
 LazyData: true
+Depends: glmnet
 Imports:
     Rcpp (>= 0.12.8),
     Matrix,

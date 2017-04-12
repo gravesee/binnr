@@ -272,3 +272,12 @@ NULL
 Bin$methods(summary = function(tf=.self$tf) {
   perf$summary(tf = tf)
 })
+
+
+#' Return object for exporting to Excel
+#'
+#' @name Bin_get_excel_table
+NULL
+Bin$methods(get_excel_table = function() {
+  perf$get_excel_table(b=.self)
+})

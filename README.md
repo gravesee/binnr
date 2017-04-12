@@ -13,13 +13,18 @@ are treated in scorecard models.
 
 ## Installing binnr
 
-```
-install.packages(repo="Z:\Resources\_R\binnr\binnr_0.1.0.zip", repos=NULL, method="binary")
-```
-Alternatively, if you have `devtools` and `Rtools` installed you can use the 
-following method to get the latest version hosted on Gitlab.
+### Prerequisites
 
 ```
+if(!require(installr)) install.packages("installr")
+installr::install.Rtools()
+```
+
+With all of the prerequisites installed, installing `binnr` is easy:
+
+```
+## used to install packages directly from github
+if(!require(devtools)) install.packages("devtools")
 devtools::install_git("https://gitlab.ins.risk.regn.net/minneapolis-r-packages/binnr.git")
 ```
 

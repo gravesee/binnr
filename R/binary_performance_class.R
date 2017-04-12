@@ -193,6 +193,7 @@ Binary_Performance$methods(plot = function(b, ...) {
 #' @description summary returns the appropriate pieces from the Transform object
 #' to summarize the relationship in a conciese one-line entry.
 #' @return a name vector of summary information
+NULL
 Binary_Performance$methods(summary = function(tf, ...) {
   ## return the information value of the bin
   tot <- tf@repr$Total[,c("IV", "N", "#1", "#0", "P(1)")]
@@ -212,6 +213,33 @@ Binary_Performance$methods(summary = function(tf, ...) {
 #' @param b Bin object to update
 #' @description sort_value returns the information value for the requested Bin
 #' @return the value to use for sorting bins using Binary_Performance
+NULL
 Binary_Performance$methods(sort_value = function(b, ...) {
   b$tf@repr$Total[,"IV"]
+})
+
+
+#' Return an object that tells openxlsx how to print it to Excel
+#'
+#' @name Binary_Performance_get_excel_table
+#' @param b Bin object to update
+#' @return Returns a \code{openxlsx-table} object that \code{binnrtools} can
+#' use to format a bin object for Excel
+NULL
+Binary_Performance$methods(get_excel_table = function(b, ...) {
+
+  structure(
+    list(
+      data = b$as.matrix(),
+      name = b$name,
+      format_info = list(
+        percent_cols = 4:7,
+        comma_cols = 1:3,
+        rounded_cols = 8:10,
+        bar_cols = 10
+      )
+    ),
+    class="openxlsx-table"
+  )
+
 })
