@@ -398,7 +398,7 @@ Scorecard$methods(gen_code_sas = function(pfx="", method="min", out=NULL, ...) {
     sprintf("  + %s_V%02d_w", pfx, seq_along(v)),
     ";")
 
-  unlist(out)
+  unname(unlist(out))
 
 })
 
