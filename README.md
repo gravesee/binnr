@@ -23,9 +23,10 @@ installr::install.Rtools()
 With all of the prerequisites installed, installing `binnr` is easy:
 
 ```
-## used to install packages directly from github
+## used to install packages directly from gitlab
 if(!require(devtools)) install.packages("devtools")
-devtools::install_git("https://gitlab.ins.risk.regn.net/minneapolis-r-packages/binnr.git")
+
+devtools::install_git("https://gitlab.ins.risk.regn.net/minneapolis-r-packages/binnr.git", build_vignettes=TRUE)
 ```
 
 ## Binnr Cheat Sheet
