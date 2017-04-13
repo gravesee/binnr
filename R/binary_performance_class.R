@@ -49,7 +49,7 @@ setMethod("bin_",
 
     b$tf@tf <- as.list(levels(b$x))
     names(b$tf@tf) <- levels(b$x)
-    b$tf@exceptions <- setNames(rep(0, length(exceptions)), exceptions)
+
   })
 
 
