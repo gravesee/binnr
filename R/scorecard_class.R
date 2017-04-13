@@ -377,7 +377,7 @@ Scorecard$methods(gen_code_sas = function(pfx="", method="min", out=NULL, ...) {
 
   coefs <- mod@coefs[-1][v]
 
-  if (getOption("mkivtools_REGISTERED")) {
+  if (!is.null(getOption("mkivtools_REGISTERED"))) {
     out <- do.call(c, mkivtools::pkg.env$mkiv_map[tolower(v)])
   }
 
