@@ -45,7 +45,9 @@ neutralize_ <- function(tf, i) {
   nix <- intersect(neutral, x[i])
 
   to_drop <- match(nix, names(tf@overrides), 0)
-  tf@overrides <- tf@overrides[-to_drop]
+  if (length(to_drop) > 0) {
+    tf@overrides <- tf@overrides[-to_drop]
+  }
 
   overrides <- setdiff(x[i], nix)
   tf@overrides[overrides] <- 0
@@ -62,6 +64,8 @@ neutralize_ <- function(tf, i) {
 #' @param v2 value with which to override v1's substitution
 #' @return new Transform object with updated overrides
 set_equal_ <- function(tf, v1, v2) {
+
+  if (! (length(v1) == 1L & length(v2) == 1L) ) return(tf)
 
   x <- c(tf@subst, tf@exceptions, tf@nas)
   if (!(all(c(v1, v2)) %in% seq_along(x))) return(tf)
