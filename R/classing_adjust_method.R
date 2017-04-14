@@ -163,9 +163,10 @@ Classing$methods(adjust = function(start=NULL, ...) {
       n <- as.numeric(strsplit(readline(), "\\s+")[[1]])
       variables[[i]]$set_cutpoints(n)
 
-    } else if (command == "?" & !is.null(getOption("mkivtools_REGISTERED"))) {
+    } else if (command == "?" &&
+        getOption("mkivtools_REGISTERED", default = FALSE)) {
 
-      mkivtools::view_mkiv_code(tolower(names(variables)[i]))
+      mkivtools::view_mkiv_code(names(variables)[i])
 
     } else {
       tryCatch({

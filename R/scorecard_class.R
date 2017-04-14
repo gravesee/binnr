@@ -370,15 +370,17 @@ Scorecard$methods(compare = function(...) {
 #'  }
 #' @return a character vector of SAS code
 NULL
-Scorecard$methods(gen_code_sas = function(pfx="", method="min", out=NULL, ...) {
+Scorecard$methods(gen_code_sas = function(pfx="", method="min"...) {
 
+  out <- character(0)
   v <- inmodel
   mod <- models[[selected_model]]
 
   coefs <- mod@coefs[-1][v]
 
-  if (!is.null(getOption("mkivtools_REGISTERED"))) {
-    out <- do.call(c, mkivtools::pkg.env$mkiv_map[tolower(v)])
+  if (getOption("mkivtools_REGISTERED", default = FALSE)) {
+    out <- do.call(c, lapply(v, mkivtools::get_mkiv_code))
+    # out <- do.call(c, mkivtools::pkg.env$mkiv_map[tolower(v)])
   }
 
   ## Print the reason code mappings
