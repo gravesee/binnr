@@ -78,6 +78,7 @@ Discrete$methods(factorize = function(newdata=.self$x) {
 #' the inputs.
 NULL
 Discrete$methods(predict = function(newdata=.self$x) {
+  if (is.character(newdata)) newdata <- factor(newdata)
   stopifnot(is.factor(newdata))
   callSuper(newdata=newdata)
 })

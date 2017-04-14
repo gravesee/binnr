@@ -225,7 +225,7 @@ Scorecard$methods(summary = function(keep=FALSE, inmodel.only=FALSE) {
   out[inmodel,"In Model"] <- 1
 
   if (inmodel.only) {
-    out[match(inmodel, row.names(out), 0), ]
+    out[match(row.names(out), inmodel, 0), ]
   } else {
     out
   }
@@ -366,11 +366,11 @@ Scorecard$methods(compare = function(...) {
 #' \itemize{
 #'  \item{"min" }{Calculate difference from minimum of perf values - default}
 #'  \item{"max" }{Calculate difference from maximum of perf values}
-#'  \item{"neutral" }{Calculate difference from zero}#'
+#'  \item{"neutral" }{Calculate difference from zero}
 #'  }
 #' @return a character vector of SAS code
 NULL
-Scorecard$methods(gen_code_sas = function(pfx="", method="min"...) {
+Scorecard$methods(gen_code_sas = function(pfx="", method="min", ...) {
 
   out <- character(0)
   v <- inmodel
