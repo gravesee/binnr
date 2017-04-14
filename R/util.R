@@ -33,4 +33,5 @@ ks_ <- function(score, y, w) {
 
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage("For binnr cheat sheet run: vignette(\"binnr-cheat-sheet\")")
+  packageStartupMessage("For binnr quick start run: vignette(\"binnr-quick-start-guide\")")
 }
