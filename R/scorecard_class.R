@@ -218,14 +218,13 @@ Scorecard$methods(summary = function(keep=FALSE, inmodel.only=FALSE) {
   res <- callSuper(keep=keep)
   vars <- row.names(res)
 
-
   out <- cbind(res, `In Model` = 0, `Coefs` = mod@coefs[vars],
     `Contribution` = mod@contribution[vars])
 
   out[inmodel,"In Model"] <- 1
 
   if (inmodel.only) {
-    out[match(row.names(out), inmodel, 0), ]
+    out[match(inmodel, row.names(out), 0), ]
   } else {
     out
   }
@@ -325,7 +324,7 @@ Scorecard$methods(compare = function(...) {
     res <- summary(inmodel.only = TRUE)
 
     ## only keep vars in model
-    res[inmodel, c("IV","Dropped","In Model","Coefs","Contribution")]
+    res[, c("IV","Dropped","In Model","Coefs","Contribution")]
 
   })
 
