@@ -5,5 +5,5 @@
 ^.\.git$
 test.R
 \.Rhistory
-^.\.git$
 ^\.Rproj\.user$
+^\.travis\.yml$
