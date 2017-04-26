@@ -4,7 +4,7 @@
 \alias{Classing_combine}
 \title{Add variables from one classing to another}
 \arguments{
-\item{other}{an object of class \code{\link{Classing_Class}} that will be
+\item{other}{an object of class \code{\link{Classing-class}} that will be
 incorporated into the calling method's Classing object}
 }
 \value{

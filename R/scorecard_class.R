@@ -2,7 +2,7 @@
 NULL
 
 #' @title Scorecard reference class generator
-#' @name Scorecard_Class
+#' @name Scorecard-class
 #' @description Scorecard class that wraps a data.frame and prepares it for
 #' scorecard modeling.
 #' @field seed saved random seed that is based on  \code{\link{Sys.time}}.

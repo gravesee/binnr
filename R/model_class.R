@@ -1,6 +1,6 @@
 #' @title Model class definition
 #'
-#' @name Model_Class
+#' @name Model-class
 #' @description The Model object contains all of the information describing a
 #' fitted binnr Scorecard. This includes a list of the Transforms used for WoE
 #' substitution, which variables entered the model, and some performance

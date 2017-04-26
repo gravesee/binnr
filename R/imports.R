@@ -1,8 +1,9 @@
 #' @importFrom glmnet cv.glmnet
-NULL
-
-# #' @import glmnet
-# NULL
-
+#' @importFrom graphics rect
+#' @importFrom methods callNextMethod
+#' @importFrom methods new
+#' @importFrom methods validObject
+#' @importFrom stats plogis
+#' @importFrom stats setNames
 #' @useDynLib binnr
 NULL

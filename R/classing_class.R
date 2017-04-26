@@ -1,8 +1,8 @@
 #' @include performance_class.R
 NULL
 
-#' @title Classing reference class generator
-#' @name Classing_Class
+#' @title Class Classing
+#' @name Classing-class
 #' @description Classing class that wraps a data.frame and prepares it for
 #' scorecard modeling.
 #' @field variables list of binned variables
@@ -237,7 +237,7 @@ Classing$methods(cluster = function(keep=FALSE, bag.fraction=1, ...) {
 #' Return a data.frame summarizing the variable clusters
 #'
 #' @name Classing_get_clusters
-#' @param cc classing_cluster object produced by \code{\link{Scorecard_cluster}}
+#' @param cc classing_cluster object produced by \code{\link{Classing_cluster}}
 #' method
 #' @param corr minimum correlation coefficient threshold with which to group
 #' variables
@@ -268,7 +268,7 @@ Classing$methods(get_clusters =  function(cc, corr=0.80) {
 #' Prune clusters keeping only the most informative variables
 #'
 #' @name Classing_prune_clusters
-#' @param cc classing_cluster object produced by \code{\link{Scorecard_cluster}}
+#' @param cc classing_cluster object produced by \code{\link{Classing_cluster}}
 #' method
 #' @param corr minimum correlation coefficient threshold with which to group
 #' variables
@@ -318,7 +318,7 @@ Classing$methods(summary = function(keep=FALSE) {
 #' Add variables from one classing to another
 #'
 #' @name Classing_combine
-#' @param other an object of class \code{\link{Classing_Class}} that will be
+#' @param other an object of class \code{\link{Classing-class}} that will be
 #' incorporated into the calling method's Classing object
 #' @details \code{combine} adds a Classing object's variables to the caller
 #' object. The 'other' Classing object must not have any of the same variables.

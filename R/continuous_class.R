@@ -3,7 +3,7 @@ NULL
 
 #' @title Continuous reference class generator
 #'
-#' @name Continuous_Class
+#' @name Continuous-class
 #' @description Continuous object generator class used to wrap binned
 #' numeric variables.
 #' @export Continuous

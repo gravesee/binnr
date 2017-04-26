@@ -3,7 +3,7 @@ NULL
 
 #' Bin reference class generator
 #'
-#' @name Binary_Performance_Class
+#' @name Binary_Performance-class
 #' @description Binary_Performance object generator class that implements
 #' the Performance class methods
 #' @field ones sum of \code{y == 0}
@@ -24,6 +24,14 @@ Binary_Performance$methods(initialize =  function(y=.self$y, ...) {
 
 
 #' @describeIn bin_ Bin a Continuous object using Binary_Performance
+#' @param .self a Binary_Performance object
+#' @param b a Continuous bin object
+#' @param min.iv minimum information value to split
+#' @param min.cnt minimum number of observations per bin
+#' @param min.res minimum number of response counts per bin
+#' @param max.bin maximum number of resulting bins
+#' @param mono montoncity constraint of discretization process
+#' @param exceptions numeric vector of values to exclude from discretization#'
 #' @return modifies the Bin object in place
 setMethod("bin_",
   signature = c(.self="Binary_Performance", b="Continuous"),
@@ -45,7 +53,7 @@ setMethod("bin_",
 #' @return modifies the Bin object in place
 setMethod("bin_",
   signature = c(.self="Binary_Performance", b="Discrete"),
-  function(.self, b, exceptions=numeric(0), ...) {
+  function(.self, b) {
 
     b$tf@tf <- as.list(levels(b$x))
     names(b$tf@tf) <- levels(b$x)
@@ -58,7 +66,7 @@ setMethod("bin_",
 #' @name Binary_Performance_bin
 #' @description This bin function should not be directly called by the user.
 #' The Classing bin function is subsequently called from the
-#' \link{\code{bin}} wrapper function.
+#' \code{\link{Bin_bin}} wrapper function.
 NULL
 Binary_Performance$methods(bin = bin_)
 

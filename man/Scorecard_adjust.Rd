@@ -2,17 +2,11 @@
 % Please edit documentation in R/scorecard_class.R
 \name{Scorecard_adjust}
 \alias{Scorecard_adjust}
-\alias{Scorecard_adjust}
 \title{Scorecard adjust method entry point}
 \description{
 Scorecard adjust method entry point
-
-Scorecard adjust method entry point
 }
 \details{
-calling adjust enters an interactive variable edit mode. Press "h"
-for a list of commands.
-
 calling adjust enters an interactive variable edit mode. Press "h"
 for a list of commands.
 }

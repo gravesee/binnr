@@ -4,7 +4,7 @@
 \alias{Classing_prune_clusters}
 \title{Prune clusters keeping only the most informative variables}
 \arguments{
-\item{cc}{classing_cluster object produced by \code{\link{Scorecard_cluster}}
+\item{cc}{classing_cluster object produced by \code{\link{Classing_cluster}}
 method}
 
 \item{corr}{minimum correlation coefficient threshold with which to group

@@ -5,13 +5,13 @@ setClassUnion("NumericOrFactor", members = c("numeric", "factor"))
 
 #' Bin reference class generator
 #'
-#' @name Bin_Class
+#' @name Bin-class
 #' @description Bin object generator class used to wrap binned variables.
 #' @field x numeric or factor vector to be discretized or summarized
 #' @field name name of the variable
-#' @field perf \code{\link{Performance_Class}} object used to discretize and
+#' @field perf \code{\link{Performance-class}} object used to discretize and
 #' summarize \code{x}. Currently only binary performance supported.
-#' @field tf \code{\link{Transform_Class}} object containing information for
+#' @field tf \code{\link{Transform-class}} object containing information for
 #' discretizing and summarizing \code{x}.
 #' @field history \code{list} of \code{Transform} objects. One for every
 #' operation on the \code{Bin} object.
@@ -133,7 +133,7 @@ Bin$methods(factorize = function(newdata=.self$x) {
 #' Return matrix summarizing Bin object
 #'
 #' @name Bin_as.matrix
-#' @details \code{as.matrix} summarizes the \code{\link{Performance_Class}}
+#' @details \code{as.matrix} summarizes the \code{\link{Performance-class}}
 #' object within each level of the Bin object. As such, the summarization
 #' process must be described by implementing a summarize method for the
 #' Performance object.

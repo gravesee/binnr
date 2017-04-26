@@ -12,7 +12,7 @@ action codes. Three possible choices:
 \itemize{
  \item{"min" }{Calculate difference from minimum of perf values - default}
  \item{"max" }{Calculate difference from maximum of perf values}
- \item{"neutral" }{Calculate difference from zero}#'
+ \item{"neutral" }{Calculate difference from zero}
  }}
 }
 \value{

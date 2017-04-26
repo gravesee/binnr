@@ -10,7 +10,7 @@
 Return matrix summarizing Bin object
 }
 \details{
-\code{as.matrix} summarizes the \code{\link{Performance_Class}}
+\code{as.matrix} summarizes the \code{\link{Performance-class}}
 object within each level of the Bin object. As such, the summarization
 process must be described by implementing a summarize method for the
 Performance object.

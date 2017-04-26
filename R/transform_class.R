@@ -1,6 +1,6 @@
 #' Transfrom reference class generator
 #'
-#' @name Transform_Class
+#' @name Transform-class
 #' @description Transform object class definition. The Transform object controls
 #' how an independent variable is binned and manages missing values, exceptions,
 #' overrides, and weight-of-evidence substitution.

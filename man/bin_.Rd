@@ -14,13 +14,28 @@ bin_(.self, b, ...)
   min.cnt = 10, min.res = 0, max.bin = 10, mono = 0,
   exceptions = numeric(0))
 
-\S4method{bin_}{Binary_Performance,Discrete}(.self, b,
-  exceptions = numeric(0), ...)
+\S4method{bin_}{Binary_Performance,Discrete}(.self, b)
 }
 \arguments{
 \item{.self}{the Performance object calling bin_}
 
 \item{b}{a Bin object}
+
+\item{min.iv}{minimum information value to split}
+
+\item{min.cnt}{minimum number of observations per bin}
+
+\item{min.res}{minimum number of response counts per bin}
+
+\item{max.bin}{maximum number of resulting bins}
+
+\item{mono}{montoncity constraint of discretization process}
+
+\item{exceptions}{numeric vector of values to exclude from discretization#'}
+
+\item{.self}{a Binary_Performance object}
+
+\item{b}{a Continuous bin object}
 }
 \value{
 modifies the Bin object in place

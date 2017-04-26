@@ -9,9 +9,8 @@ setClassUnion("NumericOrFactor", members = c("numeric", "factor"))
 #' @param b a Bin object
 setGeneric("bin_", def = function(.self, b, ...) callGeneric("bin_"))
 
-#' @title Performnace reference class generator
-#'
-#' @name Performance_Class
+#' Performnace reference class generator#'
+#' @name Performance-class
 #' @field y numeric or factor response variable
 #' @field w numeric weight variable
 #' @export Performance

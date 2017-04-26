@@ -43,7 +43,7 @@ A \code{Scorecard} object with \code{data} variables discretized.
 \description{
 The starting point for any binnr scorecard. The bin function
 prepares variables for scorecard modeling by returning a
-\code{\link{Scorecard_Class}} object that is easily manipulated.
+\code{\link{Scorecard-class}} object that is easily manipulated.
 }
 \details{
 \code{bin} Is the workhorse of binnr Depending on the input
