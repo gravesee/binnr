@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Zelazny7/binnr.svg?branch=master)](https://travis-ci.org/Zelazny7/binnr)
+
 # What is binnr?
 
 `binnr` is an R package that helps modelers build scorecards. Scorecard models
