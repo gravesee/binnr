@@ -266,14 +266,44 @@ Scorecard$methods(sort = function() {
 })
 
 
-#' Scorecard adjust method entry point
+#' Deprecated method. Use Scorecard_bootstrap instead.
 #'
-#' @name Scorecard_adjust
-#' @details calling adjust enters an interactive variable edit mode. Press "h"
-#' for a list of commands.
+#' @name Scorecard_pseudo_pvalues
 NULL
 Scorecard$methods(pseudo_pvalues = function(times=20, bag.fraction = 0.50,
-  replace=FALSE,  nfolds=5, upper.limits=3, lower.limits=0, alpha=1, ...) {
+  replace=FALSE, nfolds=5, upper.limits=3, lower.limits=0, alpha=1, ...) {
+
+  warning("pseudo_pvalues will be deprecated in future versions of binnr. Use `bootstrap` instead.")
+
+  res <- bootstrap(times=20, bag.fraction = 0.50, replace=FALSE, nfolds=5,
+    upper.limits=3, lower.limits=0, alpha=1, ...)
+
+  class(res) <- "pseudo_values"
+
+  res
+})
+
+
+#' Run bootstrap model fits to assess coefficient distributions.
+#'
+#' @name Scorecard_bootstrap
+#' @param times number of bootstrap samples to run
+#' @param bag.fraction fraction of observations to sample for each bootstrap run
+#' @param replace whether to sample with or without replacement
+#' @param nfolds number of CV folds to run within each bootstrap fit
+#' @param upper.limits maximum coffecient value for each fit
+#' @param lower.limits minimum coffecient value for each fit
+#' @param alpha mixing paramater between LASSO and Ridge regression. Default 1.
+#' @param ... other parameters passed on to cv.glmnet
+#' @details True boostratp samples should be run with \code{bag.fraction=1} and
+#' \code{replace=TRUE}.
+#' @return a list with two elements: pvals and coefficients. The former is a
+#' vector indicating what proportion of bootstrap model fits each coefficient
+#' returned a zero. The latter an nRuns x nVars matrix containing the
+#' coefficients of each run.
+NULL
+Scorecard$methods(bootstrap = function(times=20, bag.fraction = 0.50,
+  replace=FALSE, nfolds=5, upper.limits=3, lower.limits=0, alpha=1, ...) {
 
   x <- predict(newdata=get_variables(), type="woe")
 
@@ -299,7 +329,7 @@ Scorecard$methods(pseudo_pvalues = function(times=20, bag.fraction = 0.50,
     list(
       pvalues = pvals,
       coefs = res),
-    class = "psuedo_pvalues")
+    class = "bootstrap")
 })
 
 

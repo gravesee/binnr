@@ -122,7 +122,8 @@ Binary_Performance$methods(update = function(b, ...) {
   out$Total <- matrix(colSums(m, na.rm=TRUE), nrow=1,
     dimnames = list("Total", colnames(m)))
 
-  out$Total[,c("P(1)", "WoE", "Pred")] <- 0
+  out$Total[,c("WoE", "Pred")] <- 0
+  out$Total[,"P(1)"] <- out$Total[,"#1"]/out$Total[,"N"]
 
   out
 
