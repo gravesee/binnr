@@ -2,6 +2,7 @@
 % Please edit documentation in R/ops.R
 \docType{methods}
 \name{Bin_plus}
+\alias{+,Bin,numeric-method}
 \alias{Bin_plus}
 \title{Expand Bins}
 \usage{
@@ -15,3 +16,4 @@
 \description{
 Expand Bins
 }
+

@@ -12,3 +12,4 @@ the value to use for sorting bins using Binary_Performance
 \description{
 sort_value returns the information value for the requested Bin
 }
+

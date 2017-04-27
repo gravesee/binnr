@@ -20,3 +20,4 @@ a character vector of variables to drop
 \description{
 Prune clusters keeping only the most informative variables
 }
+

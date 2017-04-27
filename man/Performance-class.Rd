@@ -2,8 +2,8 @@
 % Please edit documentation in R/performance_class.R
 \docType{class}
 \name{Performance-class}
-\alias{Performance-class}
 \alias{Performance}
+\alias{Performance-class}
 \title{Performnace reference class generator#'}
 \description{
 Performnace reference class generator#'
@@ -15,5 +15,4 @@ Performnace reference class generator#'
 
 \item{\code{w}}{numeric weight variable}
 }}
-
 

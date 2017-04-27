@@ -10,3 +10,4 @@ Compare multiple scorecards side-by-side
 calling adjust enters an interactive variable edit mode. Press "h"
 for a list of commands.
 }
+

@@ -2,6 +2,7 @@
 % Please edit documentation in R/ops.R
 \docType{methods}
 \name{Bin_minus}
+\alias{-,Bin,numeric-method}
 \alias{Bin_minus}
 \title{Collapse Bins}
 \usage{
@@ -15,3 +16,4 @@
 \description{
 Collapse Bins
 }
+

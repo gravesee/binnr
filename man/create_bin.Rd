@@ -3,10 +3,10 @@
 \docType{methods}
 \name{create_bin}
 \alias{create_bin}
-\alias{create_bin,numeric-method}
-\alias{create_bin,factor-method}
-\alias{create_bin,character-method}
 \alias{create_bin,ANY-method}
+\alias{create_bin,character-method}
+\alias{create_bin,factor-method}
+\alias{create_bin,numeric-method}
 \title{generic method for create_bin}
 \usage{
 create_bin(x, ...)

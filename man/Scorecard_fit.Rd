@@ -46,3 +46,4 @@ model coefficients and that the relationships observed on margin are
 retained in the final model.
 \code{\link{bin}} wrapper function.
 }
+

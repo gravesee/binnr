@@ -2,8 +2,8 @@
 % Please edit documentation in R/classing_class.R
 \docType{class}
 \name{Classing-class}
-\alias{Classing-class}
 \alias{Classing}
+\alias{Classing-class}
 \title{Class Classing}
 \description{
 Classing class that wraps a data.frame and prepares it for
@@ -22,5 +22,4 @@ implementation of the Performance object interface.}
 \item{\code{dropped}}{character vector of variable names that are flagged as
 dropped}
 }}
-
 

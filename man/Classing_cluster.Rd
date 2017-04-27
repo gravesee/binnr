@@ -24,3 +24,4 @@ two fields: correlation & cluster. The first is a correlation matrix for all
 of the variables in the classing. The second is an hclust object which is
 result of hierarchical clustering of the correlation matrix.
 }
+

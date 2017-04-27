@@ -11,3 +11,4 @@ variables that are in the currently selected model are sorted to the
 front while dropped variables are sorted to the end. Variables within each
 group are sort by descending information value.
 }
+

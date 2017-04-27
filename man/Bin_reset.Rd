@@ -7,3 +7,4 @@
 \code{reset} re-bins the object using the \code{args} that were
 saved during the first call to \code{bin}.
 }
+

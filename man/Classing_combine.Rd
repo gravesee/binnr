@@ -19,3 +19,4 @@ object. The 'other' Classing object must not have any of the same variables.
 It must also use the same performance as the calling method's Classing
 object.
 }
+

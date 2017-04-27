@@ -6,3 +6,4 @@
 \description{
 Access and return the sort value for the performance object
 }
+

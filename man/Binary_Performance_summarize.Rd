@@ -18,3 +18,4 @@ this function summarizes the relationship between the
 independent and response variables. The inherited Performance class demands
 that it be implemented.
 }
+

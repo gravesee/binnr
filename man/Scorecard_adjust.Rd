@@ -10,3 +10,4 @@ Scorecard adjust method entry point
 calling adjust enters an interactive variable edit mode. Press "h"
 for a list of commands.
 }
+

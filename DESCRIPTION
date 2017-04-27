@@ -21,10 +21,11 @@ Imports:
     Rcpp (>= 0.12.8),
     Matrix,
     glmnet
-Suggests: R.rsp
+Suggests:
+    R.rsp
 VignetteBuilder: R.rsp
 LinkingTo: Rcpp
-Collate: 
+Collate:
     'transform_class.R'
     'performance_class.R'
     'bin_class.R'
@@ -40,4 +41,4 @@ Collate:
     'scorecard_class.R'
     'util.R'
     'wrapper_funcs.R'
-RoxygenNote: 6.0.1
+RoxygenNote: 5.0.1

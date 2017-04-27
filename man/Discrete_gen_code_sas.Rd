@@ -28,3 +28,4 @@ numeric values to the substituted performance values. Also generates code
 calculating difference from min/max/neutral and adverse action code
 assignments.
 }
+

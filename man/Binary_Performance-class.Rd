@@ -2,8 +2,8 @@
 % Please edit documentation in R/binary_performance_class.R
 \docType{class}
 \name{Binary_Performance-class}
-\alias{Binary_Performance-class}
 \alias{Binary_Performance}
+\alias{Binary_Performance-class}
 \title{Bin reference class generator}
 \description{
 Binary_Performance object generator class that implements
@@ -16,5 +16,4 @@ the Performance class methods
 
 \item{\code{zeros}}{sum of \code{y == 1}}
 }}
-
 

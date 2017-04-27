@@ -33,3 +33,4 @@ Run bootstrap model fits to assess coefficient distributions.
 True boostratp samples should be run with \code{bag.fraction=1} and
 \code{replace=TRUE}.
 }
+

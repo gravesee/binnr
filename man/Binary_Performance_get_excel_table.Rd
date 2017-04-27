@@ -13,3 +13,4 @@ use to format a bin object for Excel
 \description{
 Return an object that tells openxlsx how to print it to Excel
 }
+

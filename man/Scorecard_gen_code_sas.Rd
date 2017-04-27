@@ -24,3 +24,4 @@ code that is genereated calculates the score, adverse action code distances,
 and provides a set of macro assignments for assigning adverse action codes
 to particular bin levels.
 }
+

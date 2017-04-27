@@ -15,3 +15,4 @@ Expand a level of a Discrete bin into multiple new levels
 \details{
 All of the collapsed levels will be expanded.
 }
+

@@ -61,3 +61,4 @@ may be collapsed.
 Missing values are always held out of binning. They may be combined only if
 the variable was binned as discrete.
 }
+

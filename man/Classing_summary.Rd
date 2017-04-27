@@ -10,3 +10,4 @@ object summary function
 \description{
 Summarize the Classing object
 }
+

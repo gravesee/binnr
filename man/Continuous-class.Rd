@@ -2,8 +2,8 @@
 % Please edit documentation in R/continuous_class.R
 \docType{class}
 \name{Continuous-class}
-\alias{Continuous-class}
 \alias{Continuous}
+\alias{Continuous-class}
 \title{Continuous reference class generator}
 \description{
 Continuous object generator class used to wrap binned

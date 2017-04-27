@@ -7,6 +7,7 @@ setClassUnion("NumericOrFactor", members = c("numeric", "factor"))
 #' @name bin_
 #' @param .self the Performance object calling bin_
 #' @param b a Bin object
+#' @param ... further arguments passed on to bin_ methods
 setGeneric("bin_", def = function(.self, b, ...) callGeneric("bin_"))
 
 #' Performnace reference class generator#'

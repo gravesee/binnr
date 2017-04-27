@@ -16,3 +16,4 @@ a data.frame of variable clusters and information value
 \description{
 Return a data.frame summarizing the variable clusters
 }
+

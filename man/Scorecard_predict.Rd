@@ -19,3 +19,4 @@ substitutions.
 \description{
 Return scorecard predictions or WoE substitution
 }
+

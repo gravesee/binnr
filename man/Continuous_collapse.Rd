@@ -12,3 +12,4 @@ modifies the transform object in place.
 \description{
 Collapse adjacent levels of a Continuous bin object
 }
+

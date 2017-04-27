@@ -13,3 +13,4 @@ a name vector of summary information
 summary returns the appropriate pieces from the Transform object
 to summarize the relationship in a conciese one-line entry.
 }
+

@@ -17,3 +17,4 @@ new Transform object with updated subst, nas, exceptions, and repr
 \description{
 Update Transform object with new information after Bin operations
 }
+

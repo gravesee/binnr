@@ -9,3 +9,4 @@ a character vector of dropped variable names
 \description{
 Return names of varibales flagged as dropped
 }
+

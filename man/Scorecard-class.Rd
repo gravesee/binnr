@@ -2,8 +2,8 @@
 % Please edit documentation in R/scorecard_class.R
 \docType{class}
 \name{Scorecard-class}
-\alias{Scorecard-class}
 \alias{Scorecard}
+\alias{Scorecard-class}
 \title{Scorecard reference class generator}
 \description{
 Scorecard class that wraps a data.frame and prepares it for
@@ -22,7 +22,6 @@ transforms}
 \item{\code{inmodel}}{character vector of variable names that are in the selected
 model}
 }}
-
 \section{Methods}{
 
 \describe{

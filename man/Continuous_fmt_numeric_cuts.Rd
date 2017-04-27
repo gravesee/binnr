@@ -9,3 +9,4 @@ character vector of bin labels
 \description{
 Helper function to format Continuous bin labels
 }
+

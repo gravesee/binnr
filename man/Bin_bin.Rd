@@ -16,3 +16,4 @@ summarizing variables by some arbitray performance metric. Each Performance
 object must implement a bin method for numeric and factor variables.
 Currently only binary performance is supported.
 }
+

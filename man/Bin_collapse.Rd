@@ -15,3 +15,4 @@ Collapse levels of a Bin object
 \seealso{
 Continuous_collapse Discrete_collapse
 }
+

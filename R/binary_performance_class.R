@@ -23,7 +23,9 @@ Binary_Performance$methods(initialize =  function(y=.self$y, ...) {
 })
 
 
-#' @describeIn bin_ Bin a Continuous object using Binary_Performance
+
+#' Bin a Continuous object using Binary_Performance
+#' @aliases bin_,Binary_Performance,Continuous-method
 #' @param .self a Binary_Performance object
 #' @param b a Continuous bin object
 #' @param min.iv minimum information value to split
@@ -49,7 +51,10 @@ setMethod("bin_",
   })
 
 
-#' @describeIn bin_ Bin a Discrete object using Binary_Performance
+#' Bin a Discrete object using Binary_Performance
+#' @aliases bin_,Binary_Performance,Discrete-method
+#' @param .self A Binary_Performance object
+#' @param b A Discrete bin object
 #' @return modifies the Bin object in place
 setMethod("bin_",
   signature = c(.self="Binary_Performance", b="Discrete"),

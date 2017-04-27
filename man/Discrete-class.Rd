@@ -2,8 +2,8 @@
 % Please edit documentation in R/discrete_class.R
 \docType{class}
 \name{Discrete-class}
-\alias{Discrete-class}
 \alias{Discrete}
+\alias{Discrete-class}
 \title{Discrete class}
 \description{
 Discrete object generator class used to wrap binned factor variables.

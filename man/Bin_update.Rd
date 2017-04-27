@@ -8,3 +8,4 @@ The update method is called any time the user makes changes to
 the Bin object. The transform object is changed and the history list is
 updated.
 }
+

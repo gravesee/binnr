@@ -23,3 +23,4 @@ A dataset containing attributes and outcomes for 891 passengers of the
 Titanic disaster.
 }
 \keyword{datasets}
+

@@ -6,3 +6,4 @@
 \description{
 Deprecated method. Use Scorecard_bootstrap instead.
 }
+

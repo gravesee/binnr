@@ -16,3 +16,4 @@ Expand a level of a Continuous bin into multiple new levels
 The requested level is divided into quintiles if possible. Duplicate
 levels are removed.
 }
+

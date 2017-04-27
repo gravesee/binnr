@@ -14,3 +14,4 @@ update is called after every applicable bin operation that
 modifies the Transform object. The result of calling update is used for
 displaying the Bin matrix as well as plotting the Bin object.
 }
+

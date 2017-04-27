@@ -2,6 +2,7 @@
 % Please edit documentation in R/ops.R
 \docType{methods}
 \name{Bin_not_equal}
+\alias{!=,Bin,numeric-method}
 \alias{Bin_not_equal}
 \title{Neutralize Bins}
 \usage{
@@ -15,3 +16,4 @@
 \description{
 Neutralize Bins
 }
+
