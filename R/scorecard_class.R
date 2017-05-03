@@ -197,8 +197,9 @@ Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type=c("score", "
 
   switch(type,
     labels = data.frame(lapply(woe, names)),
-    woe    = do.call(cbind, woe),
-    score  = do.call(cbind, woe)[,v] %*% mod@coefs[v] + mod@coefs[1], NA)
+    woe    = `row.names<-`(do.call(cbind, woe), NULL),
+    score  = `row.names<-`(
+        do.call(cbind, woe)[,v] %*% mod@coefs[v] + mod@coefs[1], NULL), NA)
 })
 
 
