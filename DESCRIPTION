@@ -1,7 +1,7 @@
 Package: binnr
 Type: Package
 Title: Scorecard modeling in R
-Version: 0.1.2
+Version: 0.1.3
 Author: Eric Graves
 Maintainer: Eric Graves <eric.graves@lexisnexisrisk.com>
 Description: binnr is an R package that helps modelers build scorecards.
@@ -24,7 +24,7 @@ Imports:
 Suggests: R.rsp
 VignetteBuilder: R.rsp
 LinkingTo: Rcpp
-Collate: 
+Collate:
     'transform_class.R'
     'performance_class.R'
     'bin_class.R'

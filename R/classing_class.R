@@ -161,10 +161,8 @@ Classing$methods(predict = function(newdata=NULL, keep=keep) {
     b$predict(newdata=v)
   }
 
-  woe <- mapply(func, seq_along(vnm), variables[vnm], newdata[vnm])
-
-  colnames(woe) <- vnm
-  woe
+  mapply(func, setNames(seq_along(vnm), vnm), variables[vnm], newdata[vnm],
+    SIMPLIFY = FALSE)
 
 })
 

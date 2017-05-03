@@ -53,7 +53,7 @@ setMethod("bin_",
 #' @return modifies the Bin object in place
 setMethod("bin_",
   signature = c(.self="Binary_Performance", b="Discrete"),
-  function(.self, b) {
+  function(.self, b, ...) {
 
     b$tf@tf <- as.list(levels(b$x))
     names(b$tf@tf) <- levels(b$x)

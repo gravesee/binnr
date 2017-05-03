@@ -188,16 +188,17 @@ Scorecard$methods(show = function(...) {
 #' matching the input dimension of the dataset containing weight-of-evidence
 #' substitutions.
 NULL
-Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type="score", ...) {
-
-  woe <- callSuper(newdata=newdata, keep=keep)
-
-  if (type == "woe") return(woe)
+Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type=c("score", "woe", "labels"), ...) {
+  type <- match.arg(type)
 
   mod <- models[[selected_model]]
   v <- names(mod@coefs[-1])
+  woe <- callSuper(newdata=newdata, keep=keep)
 
-  woe[,v] %*% mod@coefs[v] + mod@coefs[1]
+  switch(type,
+    labels = data.frame(lapply(woe, names)),
+    woe    = do.call(cbind, woe),
+    score  = do.call(cbind, woe)[,v] %*% mod@coefs[v] + mod@coefs[1], NA)
 })
 
 

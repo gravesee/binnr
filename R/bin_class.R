@@ -244,7 +244,6 @@ Bin$methods(plot = function() {
 #' the bin weight-of-evidence values.
 NULL
 Bin$methods(predict = function(newdata=.self$x) {
-  # browser()
   idx <- factorize(newdata=newdata)
 
   out <- c(tf@subst, tf@nas, tf@exceptions)[idx]
@@ -252,7 +251,7 @@ Bin$methods(predict = function(newdata=.self$x) {
   ors <- intersect(names(out), names(tf@overrides))
   out[ors] <- tf@overrides[ors]
 
-  unname(out)
+  out
 })
 
 
