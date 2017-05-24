@@ -47,11 +47,18 @@ Continuous$methods(expand = function(i) {
     a <- min(max(1, i), length(tf@tf))  # can't be smaller than 1
     z <- max(min(i + 1, length(tf@tf)), a) # or larger than max els
 
-    vals <- c(x[x > tf@tf[a] & x <= tf@tf[z] & f])
+    vals <- x[x > tf@tf[a] & x <= tf@tf[z] & f]
 
-    q <- c(quantile(vals, seq(0.2, 0.8, 0.2))) # quintiles
+    nvals <- length(unique(vals))
+    if (nvals > 1) {
+      step_ <- min(0.20, (1/nvals))
+      q <- quantile(vals, seq(0, 1, step_))
+    } else {
+      q <- NULL
+    }
 
     tf@tf <<- sort(unique(c(tf@tf, q)))
+
     callSuper()
   }
 )
