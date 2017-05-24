@@ -23,6 +23,7 @@ contributions_ <- function(data, coefs, y, w) {
   })
   names(lr2) <- c("Base", names(coefs)[-1])
   lr2[1] - lr2[-1]
+  #lr2[-1]
 }
 
 ks_ <- function(score, y, w) {

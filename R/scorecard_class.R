@@ -422,7 +422,7 @@ Scorecard$methods(gen_code_sas = function(pfx="", method="min", ...) {
 
   ### Print the variables
   out <- c(out, lapply(seq_along(v), function(i) {
-    variables[[v[i]]]$gen_code_sas(method=method, pfx=pfx, coef=coefs[i])
+    variables[[v[i]]]$gen_code_sas(method=method, pfx=pfx, coef=coefs[i], i=i)
   }))
 
   out <- c(out,
