@@ -148,7 +148,7 @@ Scorecard$methods(fit = function(name, description="", overwrite=FALSE,
   inmodel <<- names(coefs)[-1]
 
   ## performance metrics
-  contr <- contributions_(x[,names(coefs)[-1]], coefs, y, w)
+  contr <- contributions_(x[,names(coefs)[-1],drop=F], coefs, y, w)
   ks <- ks_(this_fit$fit.preval[,which.min(this_fit$cvm)], y, w) # kfold
 
   ## store the last transforms
