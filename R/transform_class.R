@@ -37,7 +37,7 @@ setMethod("initialize", "Transform", function(.Object, ...) {
 #' @param i numeric vector of levels to neutralize
 #' @return new Transform object with updated overrides
 neutralize_ <- function(tf, i) {
-  x <- c(names(tf@subst), tf@exceptions, names(tf@nas))
+  x <- c(names(tf@subst), names(tf@exceptions), names(tf@nas))
   if (!all(i %in% seq_along(x))) return(tf)
 
   ## ones that are already neutralized are UN-neutralized
