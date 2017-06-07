@@ -30,7 +30,8 @@ Continuous$methods(collapse = function(i) {
 )
 
 
-#' Expand a level of a Continuous bin into multiple new levels
+#'
+#'  a level of a Continuous bin into multiple new levels
 #'
 #' @name Continuous_expand
 #' @param i numeric vector of length 1 indiicating bin level to expand.
@@ -51,8 +52,8 @@ Continuous$methods(expand = function(i) {
 
     nvals <- length(unique(vals))
     if (nvals > 1) {
-      step_ <- min(0.20, (1/nvals))
-      q <- quantile(vals, seq(0, 1, step_))
+      step_ <- max(0.20, (1/nvals))
+      q <- tail(head(quantile(vals, seq(0, 1, step_)), -1), -1)
     } else {
       q <- NULL
     }
@@ -89,7 +90,7 @@ NULL
 Continuous$methods(factorize = function(newdata=.self$x) {
   lbls <- fmt_numeric_cuts()
 
-  i <- findInterval(newdata, tf@tf, all.inside = T)
+  i <- findInterval(newdata, tf@tf, left.open = T)
 
   out <- lbls[i]
   out[is.na(out)] <- "Missing"
