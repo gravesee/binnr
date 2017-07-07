@@ -32,6 +32,9 @@ NULL
 #' @return all of the requested operations modify the bin in place
 NULL
 Classing$methods(adjust = function(start=NULL, ...) {
+
+  nvars <- length(variables)
+
   if (!is.null(start)) {
     i <- match(start, names(variables))
     if (is.na(i)) {
@@ -41,15 +44,14 @@ Classing$methods(adjust = function(start=NULL, ...) {
     i <- 1
   }
 
-
   while(i <= length(variables)) {
     nm <- variables[[i]]$name
 
     cat("\014")
     variables[[i]]$show()
 
-    cat(sprintf("\n [In Model: %5s | Dropped: %5s]",
-      nm %in% inmodel, nm %in% dropped), sep = "\n")
+    cat(sprintf("\n [ %d of %d | In Model: %5s | Dropped: %5s ]",
+      i, nvars, nm %in% inmodel, nm %in% dropped), sep = "\n")
 
     variables[[i]]$plot()
     cat ("\nEnter command (Q to quit; h for help):")

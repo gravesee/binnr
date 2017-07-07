@@ -317,7 +317,7 @@ Scorecard$methods(bootstrap = function(times=20, bag.fraction = 0.50,
 
     fit <- glmnet::cv.glmnet(x = x[s,], y = performance$y[s],
       weights = performance$w[s], nfolds = 10, alpha = alpha,
-      upper.limits=upper.limits, lower.limits=lower.limits, keep=TRUE)
+      upper.limits=upper.limits, lower.limits=lower.limits, keep=TRUE, ...)
 
     coefs[[i]] <- coef(fit, s="lambda.min")
   }
