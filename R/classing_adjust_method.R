@@ -34,11 +34,15 @@ NULL
 Classing$methods(adjust = function(start=NULL, ...) {
 
   nvars <- length(variables)
-
   if (!is.null(start)) {
-    i <- match(start, names(variables))
-    if (is.na(i)) {
-      stop(sprintf("variable, %s, not found"), start)
+    if (is.character(start)) {
+
+      i <- match(start, names(variables))
+      if (is.na(i)) {
+        stop(sprintf("variable, %s, not found", start))
+      }
+    } else if (is.numeric(start) && start <= nvars) {
+      i <- start
     }
   } else {
     i <- 1

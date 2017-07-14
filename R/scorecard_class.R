@@ -18,7 +18,8 @@ Scorecard <- setRefClass("Scorecard",
    seed = "numeric",
    models = "list",
    selected_model = "character",
-   inmodel = "character"),
+   inmodel = "character",
+   steptwo = "numeric"),
  contains = "Classing")
 
 Scorecard$methods(initialize = function(..., seed=as.numeric(strftime(Sys.time(), format="%H%M%S"))) {
@@ -51,6 +52,7 @@ Scorecard$methods(select = function(model) {
 
   dropped <<- mod@dropped
   inmodel <<- mod@inmodel
+  steptwo <<- mod@steptwo
 
   for (v in names(mod@transforms)) {
     variables[[v]]$tf <<- mod@transforms[[v]]
@@ -147,6 +149,12 @@ Scorecard$methods(fit = function(name, description="", overwrite=FALSE,
   ## set the inmodel vector
   inmodel <<- names(coefs)[-1]
 
+  ## set the steptwo vector
+  betas <- as.matrix(this_fit$glmnet.fit$beta)
+  step2 <- matrix(order(betas, decreasing = TRUE), nrow = nrow(betas))
+  step2 <- setdiff(v[unique(row(step2)[step2])], inmodel)
+  steptwo <<- setNames(seq_along(step2), step2)
+
   ## performance metrics
   contr <- contributions_(x[,names(coefs)[-1],drop=F], coefs, y, w)
   ks <- ks_(this_fit$fit.preval[,which.min(this_fit$cvm)], y, w) # kfold
@@ -154,7 +162,7 @@ Scorecard$methods(fit = function(name, description="", overwrite=FALSE,
   ## store the last transforms
   m <- new("Model", name=name, description=description, dropped=dropped,
            transforms=get_transforms(), coefs=coefs, inmodel=inmodel,
-           contribution=contr, ks=ks, fit=this_fit)
+           steptwo=steptwo, contribution=contr, ks=ks, fit=this_fit)
 
   add_model(m)
 
@@ -220,10 +228,11 @@ Scorecard$methods(summary = function(keep=FALSE, inmodel.only=FALSE) {
   res <- callSuper(keep=keep)
   vars <- row.names(res)
 
-  out <- cbind(res, `In Model` = 0, `Coefs` = mod@coefs[vars],
+  out <- cbind(res, `In Model` = 0, `Step Two` = 0, `Coefs` = mod@coefs[vars],
     `Contribution` = mod@contribution[vars])
 
   out[inmodel,"In Model"] <- 1
+  out[names(steptwo),"Step Two"] <- steptwo
 
   if (inmodel.only) {
     out[match(inmodel, row.names(out), 0), ]
@@ -255,13 +264,16 @@ Scorecard$methods(sort = function() {
 
   v <- setNames(sapply(variables, function(x) x$sort_value()), names(variables))
 
-  im <- setNames(rep(0, length(v)), names(v))
-  dr <- setNames(rep(0, length(v)), names(v))
+  base <- setNames(rep(0, length(v)), names(v))
+  im <- base
+  dr <- base
+  s2 <- base
 
   im[inmodel] <- 1
   dr[dropped] <- 1
+  s2[names(steptwo)] <- steptwo
 
-  i <- order(im, -dr, v, decreasing = TRUE, na.last = TRUE)
+  i <- order(im, -s2, -dr, v, decreasing = TRUE, na.last = TRUE)
 
   variables <<- variables[i]
 

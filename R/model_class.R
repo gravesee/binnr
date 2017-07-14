@@ -12,6 +12,8 @@
 #' @slot dropped character vector denoting which variables were dropped at time
 #' of fit
 #' @slot inmodel character vector denoting which variables entered the model
+#' @slot steptwo named numeric vector of how varaibles would enter the model
+#' if the lambda value was lowered (a "looser" fitting model).
 #' @slot coefs intercept and coefficients of the fitted model as a numeric
 #' vector
 #' @slot contribution some measure of variable contribution to the model's
@@ -26,6 +28,7 @@ setClass("Model", slots = c(
   transforms = "list",
   dropped = "character",
   inmodel = "character",
+  steptwo = "numeric",
   coefs = "numeric",
   contribution = "numeric",
   ks = "numeric",
