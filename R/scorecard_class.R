@@ -204,7 +204,10 @@ Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type=c("score", "
   woe <- callSuper(newdata=newdata, keep=keep)
 
   switch(type,
-    labels = data.frame(lapply(woe, names)),
+    labels = data.frame(mapply(function(w, va) {
+      l <- unlist(sapply(va$tf@repr[1:3], row.names))
+      factor(names(w), levels = l, labels = l)
+    }, woe, variables[names(woe)], SIMPLIFY = FALSE)),
     woe    = `row.names<-`(do.call(cbind, woe), NULL),
     score  = `row.names<-`(
         do.call(cbind, woe)[,v] %*% mod@coefs[v] + mod@coefs[1], NULL), NA)
