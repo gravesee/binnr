@@ -280,3 +280,52 @@ NULL
 Bin$methods(get_excel_table = function() {
   perf$get_excel_table(b=.self)
 })
+
+
+
+
+#' Substitute weight-of-evidence for the input \code{x} values
+#'
+#' @name Bin_predict_sparse
+#' @param newdata vector of the same type as \code{x} for which to substitute
+#' the bin weight-of-evidence values.
+NULL
+Bin$methods(predict_sparse = function(newdata=.self$x) {
+  idx <- factorize(newdata=newdata)
+
+  ## drop neutralized levels
+  idx <- factor(idx, setdiff(levels(idx), .self$tf@neutralized))
+
+  f <- !is.na(idx)
+  j <- as.integer(idx)[f]
+  i <- seq_along(idx)[f]
+
+  Matrix::sparseMatrix(i=i, j=j, dims = c(length(idx), length(levels(idx))))
+})
+
+
+#' Override values of subst/pred with bin-level coefficients
+#'
+#' @name Bin_set_overrides
+#' @param i1 overrides of all values
+NULL
+Bin$methods(set_overrides = function(i) {
+  tf <<- set_overrides_(tf, i)
+  update()
+})
+
+
+#' Set one level equal to another
+#'
+#' @name Bin_set_overrides
+#' @param i1 overrides of all values
+NULL
+Bin$methods(set_constraints = function(i, dir) {
+  tf <<- set_constraints_(tf, i, dir)
+  #update()
+})
+
+
+Bin$methods(make_constraint_matrix = function() {
+  make_constraint_matrix_(tf)
+})

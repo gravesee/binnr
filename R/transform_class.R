@@ -1,3 +1,5 @@
+setOldClass("constraint_map", "constraint_map")
+
 #' Transfrom reference class generator
 #'
 #' @name Transform-class
@@ -10,14 +12,18 @@
 #' @slot nas WoE value for missing value sof \code{x}
 #' @slot overrides named vector of bin levels to overriden substituion values
 #' @slot repr cached, tabular representation of the bin object for quick display
+#' @slot neutralized which levels are neutrazlied
+#' @slot constraints list of pairs of constraints
 #' @exportClass Transform
 setClass("Transform", slots = c(
-    tf = "ANY",
-    subst = "numeric",
-    exceptions = "numeric",
-    nas = "numeric",
-    overrides = "numeric",
-    repr = "list"),
+  tf = "ANY",
+  subst = "numeric",
+  exceptions = "numeric",
+  nas = "numeric",
+  overrides = "numeric",
+  repr = "list",
+  neutralized = "character",
+  constraints = "constraint_map"),
   prototype = list(nas = c(Missing=0))
 )
 
@@ -37,7 +43,7 @@ setMethod("initialize", "Transform", function(.Object, ...) {
 #' @param i numeric vector of levels to neutralize
 #' @return new Transform object with updated overrides
 neutralize_ <- function(tf, i) {
-  x <- c(names(tf@subst), names(tf@exceptions), names(tf@nas))
+  x <- names(c(tf@subst, tf@exceptions, tf@nas))
   if (!all(i %in% seq_along(x))) return(tf)
 
   ## ones that are already neutralized are UN-neutralized
@@ -51,6 +57,84 @@ neutralize_ <- function(tf, i) {
 
   overrides <- setdiff(x[i], nix)
   tf@overrides[overrides] <- 0
+
+  ## Experimental
+  tf@neutralized <- unique(c(tf@neutralized, x[i]))
+
+  tf
+}
+
+
+constraint_map <- function(i, dir=c("inc", "dec", "cls")) {
+  dir <- match.arg(dir)
+  d <- switch(dir, "inc" = -1, "dec" = 1, "cls" = 0)
+
+  res <- structure(
+    list(
+      ids = mapply(c, head(i, -1), i[-1], SIMPLIFY = F),
+      dir = rep(d, length(i) - 1)),
+    class = "constraint_map")
+
+  if (length(res$ids) != length(res$dir)) stop("Error constructing constraing map")
+
+  return(res)
+}
+
+`+.constraint_map` <- function(e1, e2) {
+
+  ## check if nothing has been assigned yet
+  if (identical(new("constraint_map"), e1)) {
+    return(e2)
+  }
+
+  ## update the constraint map
+  current <- e1
+
+  i <- lapply(e2$ids, function(z) which(sapply(current$ids, function(y) all(z == y))))
+  lens <- lengths(i)
+  i[lens == 0] <- 0
+  i <- unlist(i)
+
+  ## if dir is 0 then remove them
+  if (unique(e2$dir) == 0) {
+    current <- current[-i]
+  } else {
+    current$dir[i] <- unique(e2$dir)
+  }
+
+  ## add the new additions
+  current$ids <- c(current$ids, e2$ids[i == 0])
+  current$dir <- c(current$dir, e2$dir[i == 0])
+  current
+}
+
+### Turn a constraint map into a matrix?
+
+make_constraint_matrix_ <- function(tf, ...) {
+  x <- tf@constraints
+
+  ncols <- length(setdiff(names(c(tf@subst, tf@exceptions, tf@nas)), tf@neutralized))
+
+  if (identical(new("constraint_map"), x)) {
+    return(matrix(0, ncols, ncols))
+  }
+
+  ## always return the number of columns as there are bins
+  m <- matrix(0, nrow = length(x$ids), ncol = ncols)
+
+  ## create index vector used to assign -1 & 1
+  idx <- cbind(seq.int(nrow(m)), as.vector(do.call(rbind, x$ids)))
+  m[idx] <- t(sapply(x$dir, `*`, c(1,-1)))
+
+  return(m)
+}
+
+
+set_constraints_ <- function(tf, i, dir=c("inc", "dec", "cls")) {
+
+  m <- constraint_map(i, dir)
+
+  tf@constraints <- tf@constraints + m
 
   tf
 }
@@ -94,6 +178,31 @@ update_transform <- function(tf, result) {
 
   tf@repr <- result
 
+  ## changes must(?) invalidate a constraint map because number of cols changes
+  tf@constraints <- new("constraint_map")
+
   tf
 }
 
+
+#' Set substitution of one level equal to substitution of another
+#'
+#' @name set_equal
+#' @param tf Transform object
+#' @param v1 level to override
+#' @param v2 value with which to override v1's substitution
+#' @return new Transform object with updated overrides
+set_overrides_ <- function(tf, v1) {
+  x <- c(tf@subst, tf@exceptions, tf@nas)
+
+  overrides <- setNames(v1, names(x[x != 0]))
+  tf@overrides <- overrides
+
+  tf
+}
+
+
+toString.constraint_map <- function(x, ...) {
+  sym <- ifelse(x$dir == 1, ">", "<")
+  paste0(sym, sapply(x$ids, '[', 2))
+}

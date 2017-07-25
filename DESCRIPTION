@@ -1,7 +1,7 @@
 Package: binnr
 Type: Package
 Title: Scorecard modeling in R
-Version: 0.1.6a
+Version: 0.1.61
 Author: Eric E. Graves [aut, cre]
 Maintainer: Eric E. Graves <gravcon5@gmail.com>
 Description: binnr is an R package that helps modelers build scorecards.
@@ -11,12 +11,13 @@ Description: binnr is an R package that helps modelers build scorecards.
     networks, random forest, or gradient boosted decision trees. Often direct
     modeler intervention is required to ensure proper treatment is given for
     values of independent variables. binnr makes it easy to do just that.
-License: MIT + file LICENSE
+License: Copyright
 Encoding: UTF-8
 LazyData: true
 Depends:
     methods,
-    stats
+    stats,
+    Matrix
 Imports:
     Rcpp (>= 0.12.8),
     Matrix,
