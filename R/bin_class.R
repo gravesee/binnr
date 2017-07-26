@@ -43,7 +43,7 @@ Bin$methods(initialize = function(name="Unknown", x, perf, ...) {
 #' the Bin object. The transform object is changed and the history list is
 #' updated.
 NULL
-Bin$methods(update = function() {
+Bin$methods(update = function(keep_constraints=FALSE) {
 
   result <- perf$update(b = .self)
 
@@ -57,7 +57,7 @@ Bin$methods(update = function() {
     v
   })
 
-  tf <<- update_transform(tf, result)
+  tf <<- update_transform(tf, result, keep_constraints)
 
   ## append to the history and the cache
   history <<- c(history, list(tf))
@@ -159,14 +159,18 @@ Bin$methods(show = function(...) {
   m <- as.matrix()
 
   ## add row labels
-  lbls <- sprintf("[%02d]  ", seq.int(nrow(m)))
-  lbls[length(lbls)] <- ""
+  lbls <- sprintf("[%02d]", seq.int(nrow(m)))
+  lbls[length(lbls)] <- "" ## total row
 
-  row.names(m) <- paste0(lbls, row.names(m))
+  ## add shape contraint symbols
+  res <- toString(.self$tf@constraints)
+  z <- rep("", length(lbls))
+  z[res$i] <- res$str
 
+  #row.names(m) <- paste(lbls, z, row.names(m))
+  row.names(m) <- sprintf("%s %3s %s", lbls, z, row.names(m))
   cat(name, sep="\n")
   print(m, ...)
-
 })
 
 
@@ -224,7 +228,7 @@ Bin$methods(set_equal = function(i1, i2) {
 NULL
 Bin$methods(neutralize = function(i) {
   tf <<- neutralize_(tf, i)
-  update()
+  update(keep_constraints=TRUE)
 })
 
 
@@ -294,13 +298,18 @@ Bin$methods(predict_sparse = function(newdata=.self$x) {
   idx <- factorize(newdata=newdata)
 
   ## drop neutralized levels
-  idx <- factor(idx, setdiff(levels(idx), .self$tf@neutralized))
+  # idx <- factor(idx, setdiff(levels(idx), .self$tf@neutralized))
 
-  f <- !is.na(idx)
-  j <- as.integer(idx)[f]
-  i <- seq_along(idx)[f]
+  j <- as.integer(idx)
+  i <- seq_along(idx)
 
-  Matrix::sparseMatrix(i=i, j=j, dims = c(length(idx), length(levels(idx))))
+  ## return a sparse matrix, which levels are neutralized, and the constraint matrix
+
+  list(
+    m = Matrix::sparseMatrix(i=i, j=j, dims = c(length(idx), length(levels(idx)))),
+    neutral = match(.self$tf@neutralized, levels(idx)),
+    constraints = make_constraint_matrix())
+
 })
 
 
@@ -311,7 +320,7 @@ Bin$methods(predict_sparse = function(newdata=.self$x) {
 NULL
 Bin$methods(set_overrides = function(i) {
   tf <<- set_overrides_(tf, i)
-  update()
+  update(keep_constraints=TRUE)
 })
 
 
@@ -322,7 +331,7 @@ Bin$methods(set_overrides = function(i) {
 NULL
 Bin$methods(set_constraints = function(i, dir) {
   tf <<- set_constraints_(tf, i, dir)
-  #update()
+  update(keep_constraints=TRUE)
 })
 
 

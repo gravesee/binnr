@@ -24,7 +24,7 @@ setClass("Transform", slots = c(
   repr = "list",
   neutralized = "character",
   constraints = "constraint_map"),
-  prototype = list(nas = c(Missing=0))
+  prototype = list(nas = c(Missing=0), neutralized="Missing")
 )
 
 
@@ -113,7 +113,7 @@ constraint_map <- function(i, dir=c("inc", "dec", "cls")) {
 make_constraint_matrix_ <- function(tf, ...) {
   x <- tf@constraints
 
-  ncols <- length(setdiff(names(c(tf@subst, tf@exceptions, tf@nas)), tf@neutralized))
+  ncols <- length(c(tf@subst, tf@exceptions, tf@nas))
 
   if (identical(new("constraint_map"), x)) {
     return(matrix(0, ncols, ncols))
@@ -168,7 +168,7 @@ set_equal_ <- function(tf, v1, v2) {
 #' @param tf Transform object
 #' @param result list of summarized performane values for the updated Bin object
 #' @return new Transform object with updated subst, nas, exceptions, and repr
-update_transform <- function(tf, result) {
+update_transform <- function(tf, result, keep_constraints=FALSE) {
 
   tf@subst <- setNames(result$normal[,"Pred"], row.names(result$normal))
   tf@nas <- c(Missing=result$missing[,"Pred"])
@@ -179,10 +179,13 @@ update_transform <- function(tf, result) {
   tf@repr <- result
 
   ## changes must(?) invalidate a constraint map because number of cols changes
-  tf@constraints <- new("constraint_map")
+  if (!keep_constraints) {
+    tf@constraints <- new("constraint_map")
+  }
 
   tf
 }
+
 
 
 #' Set substitution of one level equal to substitution of another
@@ -194,15 +197,17 @@ update_transform <- function(tf, result) {
 #' @return new Transform object with updated overrides
 set_overrides_ <- function(tf, v1) {
   x <- c(tf@subst, tf@exceptions, tf@nas)
-
-  overrides <- setNames(v1, names(x[x != 0]))
-  tf@overrides <- overrides
-
+  tf@overrides <- setNames(v1, names(x)) ## neutralized aren't even covariates
   tf
 }
 
 
 toString.constraint_map <- function(x, ...) {
-  sym <- ifelse(x$dir == 1, ">", "<")
-  paste0(sym, sapply(x$ids, '[', 2))
+  if (identical(new("constraint_map"), x)) {
+    return (list(i=0, str=""))
+  } else {
+    sym <- ifelse(x$dir == 1, ">", "<")
+    str <- paste0(sym, sapply(x$ids, '[', 2))
+    list(i=sapply(x$ids, '[', 1), str=str)
+  }
 }

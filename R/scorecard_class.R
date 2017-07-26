@@ -469,3 +469,63 @@ NULL
 Scorecard$methods(get_inmodel = function(invert=FALSE) {
   if (invert) setdiff(vnames, inmodel) else inmodel
 })
+
+
+
+#' Fit2
+NULL
+Scorecard$methods(fit2 = function(name, description="", overwrite=FALSE,
+  newdata=.self$get_variables(), y=performance$y, w=performance$w,
+  nfolds=5, upper.limits=3, lower.limits=0, alpha=1,
+  family="binomial", ...) {
+
+  ## check for consistent dimensions
+  if (length(newdata[[1]]) != length(y)) {
+    stop("newdata and y must be the same length", call. = FALSE)
+  }
+
+  if (length(y) != length(w)) {
+    stop("y and w must be the same length", call. = FALSE)
+  }
+
+  if (!overwrite) {
+    if (name %in% names(models)) {
+      stop("Model name already exists and overwrite=FALSE",
+        call. = FALSE)
+    }
+  }
+
+  v <- setdiff(vnames, dropped)
+  x <- predict(newdata=newdata[v], type="woe")
+
+  set.seed(seed)
+  this_fit <- cv.glmnet(x = x, y = y, weights = w, nfolds = nfolds,
+    family=family, alpha=alpha, upper.limits=upper.limits,
+    lower.limits=lower.limits, keep=TRUE, ...)
+
+  ## get the coeficients
+  coefs <- glmnet::coef.cv.glmnet(this_fit, s="lambda.min")[,1]
+  coefs <- coefs[which(coefs != 0)]
+
+  ## set the inmodel vector
+  inmodel <<- names(coefs)[-1]
+
+  ## set the steptwo vector
+  betas <- as.matrix(this_fit$glmnet.fit$beta)
+  step2 <- matrix(order(betas, decreasing = TRUE), nrow = nrow(betas))
+  step2 <- setdiff(v[unique(row(step2)[step2])], inmodel)
+  steptwo <<- setNames(seq_along(step2), step2)
+
+  ## performance metrics
+  contr <- contributions_(x[,names(coefs)[-1],drop=F], coefs, y, w)
+  ks <- ks_(this_fit$fit.preval[,which.min(this_fit$cvm)], y, w) # kfold
+
+  ## store the last transforms
+  m <- new("Model", name=name, description=description, dropped=dropped,
+    transforms=get_transforms(), coefs=coefs, inmodel=inmodel,
+    steptwo=steptwo, contribution=contr, ks=ks, fit=this_fit)
+
+  add_model(m)
+
+})
+
