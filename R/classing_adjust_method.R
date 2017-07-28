@@ -48,14 +48,14 @@ Classing$methods(adjust = function(start=NULL, ...) {
     i <- 1
   }
 
-  while(i <= length(variables)) {
+  while(i <= nvars) {
     nm <- variables[[i]]$name
 
     cat("\014")
+    cat(sprintf(" *** STEP: %d\n", step[nm]))
     variables[[i]]$show()
 
-    cat(sprintf("\n [ %d of %d | In Model: %5s | Dropped: %5s ]",
-      i, nvars, nm %in% inmodel, nm %in% dropped), sep = "\n")
+    cat(sprintf("\n [ %d of %d ]\n", i, nvars))
 
     variables[[i]]$plot()
     cat ("\nEnter command (Q to quit; h for help):")
@@ -117,12 +117,7 @@ Classing$methods(adjust = function(start=NULL, ...) {
       }
     } else if (command == "d") {
 
-      ## get current status
-      if (nm %in% dropped) {
-        undrop(nm)
-      } else {
-        drop(nm)
-      }
+      step[nm] <<- NA
 
     } else if (command == "m") {
 
@@ -140,15 +135,11 @@ Classing$methods(adjust = function(start=NULL, ...) {
         variables[[i]]$exceptions(e)
       }
 
-    } else if (command == "s") {
+    } else if (command %in% c("1", "2")) {
 
-      cat("Enter Level to Change:")
-      v1 <- as.integer(readLines(n = 1))
-      cat("Change WoE to which level?:")
-      v2 <- as.integer(readLines(n = 1))
-      variables[[i]]$set_equal(v1, v2)
+      step[nm] <<- as.integer(command)
 
-    } else if (command == "n") {
+    } else if (command %in% c("","n",NULL)) {
       i <- i + 1
     } else if (command == "p") {
       if (i > 1) {

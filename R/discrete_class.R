@@ -1,13 +1,13 @@
 #' @include bin_class.R
 NULL
 
+# #' @exportClass Discrete
 
 #' Discrete class
 #'
 #' Discrete object generator class used to wrap binned factor variables.
 #'
 #' @export Discrete
-#' @exportClass Discrete
 Discrete <- setRefClass("Discrete", contains = "Bin")
 
 Discrete$methods(initialize = function(x_, ...) {

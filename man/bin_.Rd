@@ -14,7 +14,7 @@ bin_(.self, b, ...)
   min.cnt = 10, min.res = 0, max.bin = 10, mono = 0,
   exceptions = numeric(0))
 
-\S4method{bin_}{Binary_Performance,Discrete}(.self, b)
+\S4method{bin_}{Binary_Performance,Discrete}(.self, b, ...)
 }
 \arguments{
 \item{.self}{the Performance object calling bin_}

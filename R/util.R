@@ -7,7 +7,7 @@ progress_ <- function(i, max, text = "Progress", extra="") {
 
 ## calcualte LR2 for logistic regression
 lr2_ <- function(f, y, w) {
-  f <- plogis(f)
+  f <- plogis(as.vector(f))
   sum((y == 1)*w*log(f) + (y == 0)*w*log(1 - f))
 }
 

@@ -43,7 +43,7 @@ Bin$methods(initialize = function(name="Unknown", x, perf, ...) {
 #' the Bin object. The transform object is changed and the history list is
 #' updated.
 NULL
-Bin$methods(update = function(keep_constraints=FALSE) {
+Bin$methods(update = function() {
 
   result <- perf$update(b = .self)
 
@@ -57,7 +57,7 @@ Bin$methods(update = function(keep_constraints=FALSE) {
     v
   })
 
-  tf <<- update_transform(tf, result, keep_constraints)
+  tf <<- update_transform(tf, result)
 
   ## append to the history and the cache
   history <<- c(history, list(tf))
@@ -162,13 +162,8 @@ Bin$methods(show = function(...) {
   lbls <- sprintf("[%02d]", seq.int(nrow(m)))
   lbls[length(lbls)] <- "" ## total row
 
-  ## add shape contraint symbols
-  res <- toString(.self$tf@constraints)
-  z <- rep("", length(lbls))
-  z[res$i] <- res$str
-
   #row.names(m) <- paste(lbls, z, row.names(m))
-  row.names(m) <- sprintf("%s %3s %s", lbls, z, row.names(m))
+  row.names(m) <- sprintf("%s %s", lbls, row.names(m))
   cat(name, sep="\n")
   print(m, ...)
 })
@@ -228,7 +223,7 @@ Bin$methods(set_equal = function(i1, i2) {
 NULL
 Bin$methods(neutralize = function(i) {
   tf <<- neutralize_(tf, i)
-  update(keep_constraints=TRUE)
+  update()
 })
 
 
@@ -303,12 +298,10 @@ Bin$methods(predict_sparse = function(newdata=.self$x) {
   j <- as.integer(idx)
   i <- seq_along(idx)
 
-  ## return a sparse matrix, which levels are neutralized, and the constraint matrix
-
-  list(
-    m = Matrix::sparseMatrix(i=i, j=j, dims = c(length(idx), length(levels(idx)))),
-    neutral = match(.self$tf@neutralized, levels(idx)),
-    constraints = make_constraint_matrix())
+  m <- Matrix::sparseMatrix(i=i, j=j, dims = c(length(idx), length(levels(idx))))
+  n <- match(.self$tf@neutralized, levels(idx), 0)
+  m[,n] <- FALSE
+  m
 
 })
 
@@ -320,21 +313,14 @@ Bin$methods(predict_sparse = function(newdata=.self$x) {
 NULL
 Bin$methods(set_overrides = function(i) {
   tf <<- set_overrides_(tf, i)
-  update(keep_constraints=TRUE)
+  update()
 })
 
 
-#' Set one level equal to another
-#'
-#' @name Bin_set_overrides
-#' @param i1 overrides of all values
+#' Set step
+#' @name Bin_set_step
 NULL
-Bin$methods(set_constraints = function(i, dir) {
-  tf <<- set_constraints_(tf, i, dir)
+Bin$methods(set_step = function(i) {
+  tf <<- neutralize_(tf, i)
   update(keep_constraints=TRUE)
-})
-
-
-Bin$methods(make_constraint_matrix = function() {
-  make_constraint_matrix_(tf)
 })

@@ -31,5 +31,6 @@ setClass("Model", slots = c(
   steptwo = "numeric",
   coefs = "numeric",
   contribution = "numeric",
+  level_contribution = "list",
   ks = "numeric",
   fit = "ANY"))

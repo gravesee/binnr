@@ -30,6 +30,7 @@ The list of commands is rather extensive and summarized here:
  \item{(u)}{ndo the last entered operation}
  \item{(r)}{eset the Bin object to its original state}
  \item{(d)}{rop or undrop the current variable}
+ \item{(c)}{cut points. Specify space-separated bin boundaries.}
  \item{(!= )}{Set requested bin levels to zero}
  \item{(+ )}{Expand requested bin level. Only one level allowed.}
  \item{(- )}{Collapse requested range of bins. Must be adjacent for

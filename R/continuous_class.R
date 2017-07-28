@@ -1,13 +1,15 @@
 #' @include bin_class.R
 NULL
 
+# #' @exportClass Continuous
+
+
 #' @title Continuous reference class generator
 #'
 #' @name Continuous-class
 #' @description Continuous object generator class used to wrap binned
 #' numeric variables.
 #' @export Continuous
-#' @exportClass Continuous
 Continuous <- setRefClass("Continuous", contains = "Bin")
 
 

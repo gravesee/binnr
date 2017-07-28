@@ -2,7 +2,7 @@
 % Please edit documentation in R/continuous_class.R
 \name{Continuous_expand}
 \alias{Continuous_expand}
-\title{Expand a level of a Continuous bin into multiple new levels}
+\title{a level of a Continuous bin into multiple new levels}
 \arguments{
 \item{i}{numeric vector of length 1 indiicating bin level to expand.}
 }
@@ -10,7 +10,7 @@
 modifies the transform object in place.
 }
 \description{
-Expand a level of a Continuous bin into multiple new levels
+a level of a Continuous bin into multiple new levels
 }
 \details{
 The requested level is divided into quintiles if possible. Duplicate

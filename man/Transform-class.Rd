@@ -23,5 +23,7 @@ overrides, and weight-of-evidence substitution.
 \item{\code{overrides}}{named vector of bin levels to overriden substituion values}
 
 \item{\code{repr}}{cached, tabular representation of the bin object for quick display}
+
+\item{\code{neutralized}}{which levels are neutrazlied}
 }}
 

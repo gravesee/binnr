@@ -3,11 +3,21 @@
 \name{set_equal}
 \alias{set_equal}
 \alias{set_equal_}
+\alias{set_equal}
+\alias{set_overrides_}
 \title{Set substitution of one level equal to substitution of another}
 \usage{
 set_equal_(tf, v1, v2)
+
+set_overrides_(tf, v1)
 }
 \arguments{
+\item{tf}{Transform object}
+
+\item{v1}{level to override}
+
+\item{v2}{value with which to override v1's substitution}
+
 \item{tf}{Transform object}
 
 \item{v1}{level to override}
@@ -16,7 +26,11 @@ set_equal_(tf, v1, v2)
 }
 \value{
 new Transform object with updated overrides
+
+new Transform object with updated overrides
 }
 \description{
+Set substitution of one level equal to substitution of another
+
 Set substitution of one level equal to substitution of another
 }

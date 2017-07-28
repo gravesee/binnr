@@ -267,18 +267,10 @@ Scorecard$methods(sort = function() {
 
   v <- setNames(sapply(variables, function(x) x$sort_value()), names(variables))
 
-  base <- setNames(rep(0, length(v)), names(v))
-  im <- base
-  dr <- base
-  s2 <- base
-
-  im[inmodel] <- 1
-  dr[dropped] <- 1
-  s2[names(steptwo)] <- steptwo
-
-  i <- order(im, -s2, -dr, v, decreasing = TRUE, na.last = TRUE)
+  i <- order(step, -v, na.last = TRUE)
 
   variables <<- variables[i]
+  step <<- step[names(variables)]
 
 })
 
@@ -476,7 +468,7 @@ Scorecard$methods(get_inmodel = function(invert=FALSE) {
 NULL
 Scorecard$methods(fit2 = function(name, description="", overwrite=FALSE,
   newdata=.self$get_variables(), y=performance$y, w=performance$w,
-  nfolds=5, upper.limits=3, lower.limits=0, alpha=1,
+  nfolds=5, upper.limits=3, lower.limits=0, alpha=0,
   family="binomial", ...) {
 
   ## check for consistent dimensions
@@ -495,37 +487,123 @@ Scorecard$methods(fit2 = function(name, description="", overwrite=FALSE,
     }
   }
 
-  v <- setdiff(vnames, dropped)
-  x <- predict(newdata=newdata[v], type="woe")
+
+  if (!any(step %in% 1)) stop("no step 1 variables in classing", call. = F)
+  ## get step one fields
+
+    ## change this to make step 3?
+  v <- names(step)[step %in% 1]
+
+  # browser()
+  x <- lapply(variables[v], function(x) x$predict_sparse())
+
+  l <- sapply(x, ncol)
+  x <- do.call(cbind, x)
 
   set.seed(seed)
   this_fit <- cv.glmnet(x = x, y = y, weights = w, nfolds = nfolds,
-    family=family, alpha=alpha, upper.limits=upper.limits,
-    lower.limits=lower.limits, keep=TRUE, ...)
+    family=family, alpha=alpha, keep=TRUE, ...)
 
-  ## get the coeficients
-  coefs <- glmnet::coef.cv.glmnet(this_fit, s="lambda.min")[,1]
-  coefs <- coefs[which(coefs != 0)]
+  betas <- coef(this_fit, s="lambda.min")
 
-  ## set the inmodel vector
-  inmodel <<- names(coefs)[-1]
+  ## split the coefficients up
+  wgts <- setNames(split(betas[-1],  rep(seq_along(l), l)), names(l))
+  coefs <- c(`(Intercept)`=betas[1], unlist(wgts))
 
-  ## set the steptwo vector
-  betas <- as.matrix(this_fit$glmnet.fit$beta)
-  step2 <- matrix(order(betas, decreasing = TRUE), nrow = nrow(betas))
-  step2 <- setdiff(v[unique(row(step2)[step2])], inmodel)
-  steptwo <<- setNames(seq_along(step2), step2)
+  #### PERFORMANCE METRICS ####
+  ## calculate per-level contributions & total contributions
+  lvls <- contributions_(x, coefs, y, w)
+  lvls <- split(lvls, rep(seq_along(l), l))
+  contr <- sapply(lvls, sum)
 
-  ## performance metrics
-  contr <- contributions_(x[,names(coefs)[-1],drop=F], coefs, y, w)
   ks <- ks_(this_fit$fit.preval[,which.min(this_fit$cvm)], y, w) # kfold
+
+  ## overwrite the bin weights?
+  ## map these back on the bins
+  for (i in names(wgts)) {
+    variables[[i]]$set_overrides(wgts[[i]])
+  }
 
   ## store the last transforms
   m <- new("Model", name=name, description=description, dropped=dropped,
-    transforms=get_transforms(), coefs=coefs, inmodel=inmodel,
-    steptwo=steptwo, contribution=contr, ks=ks, fit=this_fit)
+    transforms=get_transforms(), coefs=coefs, inmodel=inmodel, steptwo=0,
+    contribution=contr, level_contribution = lvls, ks=ks, fit=this_fit)
 
   add_model(m)
 
+  ### add weights for step two predictors
+  if (any(step %in% 2)) {
+
+    phat <- glmnet::predict.cv.glmnet(this_fit, x)
+    s2 <- names(step)[step %in% 2]
+
+    set.seed(seed)
+
+    s2_wgts <- lapply(variables[s2], function(x) {
+      x <- x$predict_sparse()
+
+      s2_fit <- cv.glmnet(x = x, y = y, weights = w, nfolds = nfolds,
+        family=family, alpha=alpha, keep=FALSE, offset=phat, ...)
+
+      coef(s2_fit, s="lambda.min")[-1]
+    })
+
+    for (i in names(s2_wgts)) {
+      variables[[i]]$set_overrides(s2_wgts[[i]])
+    }
+
+  }
+
+
+
+
+
+  sort()
+
 })
 
+
+#' Return scorecard predictions or WoE substitution
+#'
+#' @name Scorecard_predict
+#' @param newdata data.frame on which to calculate predictions
+#' @param keep whether to keep dropped values
+#' @param type "score" to return the model score. "woe" to return the WoE
+#' substitution for the input dataset
+#' @return Either a single column matrix of score predictions or a matrix
+#' matching the input dimension of the dataset containing weight-of-evidence
+#' substitutions.
+NULL
+Scorecard$methods(predict2 = function(newdata=NULL, keep=FALSE, type=c("score", "woe", "labels", "indicators"), ...) {
+
+  type <- match.arg(type)
+
+  mod <- models[[selected_model]]
+  woe <- do.call(cbind, callSuper(newdata, keep=keep))
+  row.names(woe) <- NULL
+
+  if (type == "score") {
+
+    return(rowSums(woe) + mod@coefs["(Intercept)"])
+
+  } else if (type == "woe") {
+
+    return(woe)
+
+  } else if (type == "labels") {
+
+
+    stop("Not implemented yet")
+
+
+  } else if (type == "indicators") {
+
+    callSuper(newdata=newdata)
+
+
+  } else {
+
+    stop("invalid prediction type requested")
+  }
+
+})
