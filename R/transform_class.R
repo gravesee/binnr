@@ -20,7 +20,8 @@ setClass("Transform", slots = c(
   nas = "numeric",
   overrides = "numeric",
   repr = "list",
-  neutralized = "character"),
+  neutralized = "character",
+  contribution = "numeric"),
   prototype = list(nas = c(Missing=0), neutralized="Missing")
 )
 
@@ -99,6 +100,8 @@ update_transform <- function(tf, result) {
   tf@exceptions[exception_names] <- result$exception[,"Pred"]
 
   tf@repr <- result
+
+  tf@contribution <- numeric(0)
 
   tf
 }

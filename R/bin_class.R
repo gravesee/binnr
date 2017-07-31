@@ -158,6 +158,9 @@ Bin$methods(show = function(...) {
 
   m <- as.matrix()
 
+  contr <- round(c(tf@contribution, sum(tf@contribution)), 5)
+  m <- cbind(m, Contr=contr)
+
   ## add row labels
   lbls <- sprintf("[%02d]", seq.int(nrow(m)))
   lbls[length(lbls)] <- "" ## total row
@@ -231,8 +234,8 @@ Bin$methods(neutralize = function(i) {
 #'
 #' @name Bin_plot
 NULL
-Bin$methods(plot = function() {
-  perf$plot(b = .self)
+Bin$methods(plot = function(...) {
+  perf$plot(b = .self, ...)
 })
 
 
@@ -321,6 +324,6 @@ Bin$methods(set_overrides = function(i) {
 #' @name Bin_set_step
 NULL
 Bin$methods(set_step = function(i) {
-  tf <<- neutralize_(tf, i)
-  update(keep_constraints=TRUE)
+  tf <<- neutralize_(tf, as.integer(i))
+  update()
 })

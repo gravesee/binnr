@@ -33,6 +33,8 @@ NULL
 NULL
 Classing$methods(adjust = function(start=NULL, ...) {
 
+  mod <- models[[selected_model]]
+
   nvars <- length(variables)
   if (!is.null(start)) {
     if (is.character(start)) {
@@ -51,13 +53,26 @@ Classing$methods(adjust = function(start=NULL, ...) {
   while(i <= nvars) {
     nm <- variables[[i]]$name
 
+    col <- switch(step[nm], "red", "blue")
+    if (is.null(col)) col <- "black"
+
     cat("\014")
     cat(sprintf(" *** STEP: %d\n", step[nm]))
+
+    ### extra columns to pass into the bin variable
+    # if (!is.na(step[nm])) {
+    #   Contribution <- round(c(mod@level_contribution[[nm]], mod@contribution[nm]), 5)
+    #   variables[[i]]$show(Contribution=Contribution)
+    # } else {
+    #   variables[[i]]$show()
+    # }
+
     variables[[i]]$show()
 
     cat(sprintf("\n [ %d of %d ]\n", i, nvars))
 
-    variables[[i]]$plot()
+    variables[[i]]$plot(col=col)
+
     cat ("\nEnter command (Q to quit; h for help):")
     command <- readLines(n = 1)
     if (command == "Q") {

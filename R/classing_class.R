@@ -139,34 +139,6 @@ Classing$methods(get_transforms = function(keep=FALSE) {
 })
 
 
-Classing$methods(predict = function(newdata=NULL, keep=keep) {
-  on.exit(cat(sep = "\n"))
-
-  if (is.null(newdata)) newdata <- get_variables(keep=keep)
-  vnm <- if (keep) vnames else setdiff(vnames, dropped)
-
-  ## check that data has var names
-  stopifnot(!is.null(names(newdata)))
-
-  dnm <- names(newdata)
-
-  ## check that all variables are found in newdata
-  if (!all(vnm %in% dnm)) {
-    msg <- paste0(vnm[!vnm %in% dnm], collapse = ", ")
-    stop(sprintf("Vars not found in data: %s", msg), call. = F)
-  }
-
-  ## put the newdata in the same order as the variables
-  func <- function(i, b, v) {
-    progress_(i, length(vnm), "Predicting", b$name)
-    b$predict(newdata=v)
-  }
-
-  mapply(func, setNames(seq_along(vnm), vnm), variables[vnm], newdata[vnm],
-    SIMPLIFY = FALSE)
-
-})
-
 #' Flag supplied variables as dropped
 #'
 #' @name Classing_drop
@@ -183,113 +155,6 @@ Classing$methods(drop = function(vars=character(0), all=FALSE, ...) {
 })
 
 
-#' Flag supplied variables as undropped
-#'
-#' @name Classing_undrop
-#' @param vars character vector of variables to undrop
-#' @param all logical indicating whether all variables should be undropped
-NULL
-Classing$methods(undrop = function(vars=character(0), all=FALSE, ...) {
-  if (all) {
-    dropped <<- character(0)
-  } else {
-    stopifnot(all(vars %in% vnames))
-    dropped <<- setdiff(dropped, vars)
-  }
-})
-
-
-
-#' Cluster variables by correlation
-#'
-#' @name Classing_cluster
-#' @param keep logical indicating whether to include dropped variables in the
-#' correlation cluster analysis.
-#' @param bag.fraction sample the development data without replacement to
-#' cluster more quickly. The bag.fraction is multiplied by the number of
-#' observations.
-#' @details the cluster function first performs weight-of-evidence substitution.
-#' Cluster returns a classing_cluster object which is a list containing
-#' two fields: correlation & cluster. The first is a correlation matrix for all
-#' of the variables in the classing. The second is an hclust object which is
-#' result of hierarchical clustering of the correlation matrix.
-#' @return a classing_cluster object
-NULL
-Classing$methods(cluster = function(keep=FALSE, bag.fraction=1, ...) {
-
-  woe <- predict(newdata=get_variables(keep = keep, bag.fraction=bag.fraction),
-    type="woe", ...)
-
-  dups <- apply(woe, 2, function(x) all(duplicated(x)[-1L]))
-
-  corr <- cor(woe[,which(!dups)])
-
-  structure(
-    list(
-      correlations = corr,
-      cluster = hclust(as.dist(1 - abs(corr)))),
-    class="classing_cluster")
-
-})
-
-
-#' Return a data.frame summarizing the variable clusters
-#'
-#' @name Classing_get_clusters
-#' @param cc classing_cluster object produced by \code{\link{Classing_cluster}}
-#' method
-#' @param corr minimum correlation coefficient threshold with which to group
-#' variables
-#' @return a data.frame of variable clusters and information value
-NULL
-Classing$methods(get_clusters =  function(cc, corr=0.80) {
-  stopifnot(is(cc, "classing_cluster"))
-
-  ## get information values
-  p <- sapply(variables[colnames(cc$correlations)], function(x) x$sort_value())
-
-  ## cutree
-  grps <- cutree(cc$cluster, h=1-corr)
-
-  # split correlations into groups and return everyone after the first
-  out <- split(data.frame(variable=names(grps), sort_value=p,
-    stringsAsFactors = F), grps)
-
-  out <- lapply(out, function(x) x[order(-x$sort_value),])
-  out <- Map(`[<-.data.frame`, out, "Cluster", value=seq_along(out))
-
-  out <- do.call(rbind, out)
-  row.names(out) <- NULL
-  out
-})
-
-
-#' Prune clusters keeping only the most informative variables
-#'
-#' @name Classing_prune_clusters
-#' @param cc classing_cluster object produced by \code{\link{Classing_cluster}}
-#' method
-#' @param corr minimum correlation coefficient threshold with which to group
-#' variables
-#' @param n number of variables to keep from each cluster exceeding the
-#' correlation threshold. The n variables with the highest information value
-#' are retained. The remaining variables are returned as a character vector.
-#' @return a character vector of variables to drop
-NULL
-Classing$methods(prune_clusters =  function(cc, corr=0.80, n=1) {
-  stopifnot(is(cc, "classing_cluster"))
-
-  clusters <- get_clusters(cc=cc, corr=corr)
-  splt <- split(clusters, clusters$Cluster)
-
-  ## order each group by descending perf value and drop all but the first n
-  to_drop <- lapply(splt, function(x) {
-    x$variable[order(-x$sort_value)][-seq.int(n)]
-  })
-
-  unlist(to_drop)
-})
-
 
 #' Summarize the Classing object
 #'
@@ -297,18 +162,10 @@ Classing$methods(prune_clusters =  function(cc, corr=0.80, n=1) {
 #' @return a matrix summarizing the independent variables using the Performance
 #' object summary function
 NULL
-Classing$methods(summary = function(keep=FALSE) {
+Classing$methods(summary = function() {
 
-  if (keep) {
-    k <- TRUE
-  } else {
-    k <- !names(variables) %in% dropped
-  }
-
-  s <- lapply(variables[k], function(v) v$summary())
-
-  res <- cbind(do.call(rbind, s), Dropped=0)
-  res[match(rownames(res), dropped, 0), "Dropped"] <- 1
+  s <- lapply(variables, function(v) v$summary())
+  res <- do.call(rbind, s)
 
   res
 })
@@ -369,12 +226,14 @@ Classing$methods(set_step = function(vars=character(0), lvl=1L) {
 
 
 
-Classing$methods(predict2 = function(newdata=NULL, keep=FALSE) {
+Classing$methods(predict = function(newdata=NULL, keep=FALSE) {
+
+  #browser()
 
   on.exit(cat(sep = "\n"))
 
   ## grab names from the step variable
-  vnm <- if (keep) names(step) else names(which(step %in% 1))
+  vnm <- if (keep) names(step) else names(which(step == 1))
 
   if (is.null(newdata)) {
     newdata <- .self$get_variables(keep = keep)
@@ -400,4 +259,3 @@ Classing$methods(predict2 = function(newdata=NULL, keep=FALSE) {
     SIMPLIFY = FALSE)
 
 })
-

@@ -2,16 +2,8 @@
 % Please edit documentation in R/scorecard_class.R
 \name{Scorecard_predict}
 \alias{Scorecard_predict}
-\alias{Scorecard_predict}
 \title{Return scorecard predictions or WoE substitution}
 \arguments{
-\item{newdata}{data.frame on which to calculate predictions}
-
-\item{keep}{whether to keep dropped values}
-
-\item{type}{"score" to return the model score. "woe" to return the WoE
-substitution for the input dataset}
-
 \item{newdata}{data.frame on which to calculate predictions}
 
 \item{keep}{whether to keep dropped values}
@@ -23,13 +15,7 @@ substitution for the input dataset}
 Either a single column matrix of score predictions or a matrix
 matching the input dimension of the dataset containing weight-of-evidence
 substitutions.
-
-Either a single column matrix of score predictions or a matrix
-matching the input dimension of the dataset containing weight-of-evidence
-substitutions.
 }
 \description{
-Return scorecard predictions or WoE substitution
-
 Return scorecard predictions or WoE substitution
 }

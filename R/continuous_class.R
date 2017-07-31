@@ -139,16 +139,21 @@ Continuous$methods(predict = function(newdata=.self$x) {
 #' @param i numeric value enumerating the variables. Passed in from other code.
 #' @return a character vector of SAS code
 NULL
-Continuous$methods(gen_code_sas = function(pfx="", coef=1, method="min", i=1, ...) {
+Continuous$methods(gen_code_sas = function(pfx="", method="min", i=1, ...) {
 
   val <- tail(head(tf@tf, -1), -1)
-  p <- tf@subst * coef
+  # p <- tf@subst * coef
+  p <- tf@subst
 
   ref <- switch(method,"min" = min(p), "max" = max(p), "neutral" = 0, min(p))
 
   E <- names(tf@exceptions)
-  m <- if (length(tf@nas) == 0) 0 else tf@nas * coef
-  e <- if (length(tf@exceptions) == 0) 0 else tf@exceptions * coef
+  # m <- if (length(tf@nas) == 0) 0 else tf@nas * coef
+  # e <- if (length(tf@exceptions) == 0) 0 else tf@exceptions * coef
+
+  m <- if (length(tf@nas) == 0) 0 else tf@nas
+  e <- if (length(tf@exceptions) == 0) 0 else tf@exceptions
+
 
   ## WoE Substitution
   c(sprintf("\n/*** %s ***/", name),

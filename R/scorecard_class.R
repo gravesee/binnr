@@ -51,8 +51,6 @@ Scorecard$methods(select = function(model) {
   selected_model <<- model
 
   dropped <<- mod@dropped
-  inmodel <<- mod@inmodel
-  steptwo <<- mod@steptwo
 
   for (v in names(mod@transforms)) {
     variables[[v]]$tf <<- mod@transforms[[v]]
@@ -80,6 +78,198 @@ Scorecard$methods(bin = function(...) {
   scratch <- new("Model", name="scratch", description="", fit=NULL, ks=0,
                  dropped=dropped, transforms=get_transforms())
   add_model(scratch)
+})
+
+
+
+
+#' Print the Scorecard representation to the console
+#'
+#' @name Scorecard_show
+NULL
+Scorecard$methods(show = function(...) {
+  ## show the models / coefs?
+  cat(sprintf("%d models", length(models)), sep="\n")
+  i <- rep("", length(models))
+  i[names(models) == selected_model] <- "*"
+  cat(sprintf(" |-- %-2s %-20s | %04.1f ks | %s", i,
+              sapply(models, slot, "name"),
+              sapply(models, slot, "ks") * 100,
+              sapply(models, slot, "description")), sep="\n")
+})
+
+
+
+
+#' Summarize the currently selected model
+#'
+#' @name Scorecard_summary
+#' @param keep whether to summarize droppped variables as well
+#' @return a matrix summarizing the independent variables using the performance
+#' implementation summary function. Also displays the coefficients and model
+#' contributions of the predictors.
+NULL
+Scorecard$methods(summary = function() {
+
+  mod <- models[[selected_model]]
+
+  cat(mod@name, "\nOut-of-Fold KS: ", mod@ks, "\n")
+
+  res <- callSuper()
+
+  ## get the contributions
+  contr <- round(sapply(variables, function(x) sum(x$tf@contribution)), 5)
+
+  out <- cbind(res, Step=step, Contr=contr)
+
+  out
+
+})
+
+
+#' Scorecard adjust method entry point
+#'
+#' @name Scorecard_adjust
+#' @details calling adjust enters an interactive variable edit mode. Press "h"
+#' for a list of commands.
+NULL
+Scorecard$methods(adjust = function(...) {
+  callSuper(...)
+})
+
+
+#' Sort variables of a scorecard
+#'
+#' @name Scorecard_sort
+#' @details variables that are in the currently selected model are sorted to the
+#' front while dropped variables are sorted to the end. Variables within each
+#' group are sort by descending information value.
+NULL
+Scorecard$methods(sort = function() {
+
+  ## use IV if not yet fit otherwise use contribution
+  if (selected_model == "scratch") {
+    v <- sapply(variables, function(x) x$sort_value())
+  } else {
+    v <- sapply(variables, function(x) sum(x$tf@contribution))
+  }
+
+  i <- order(step, -v, na.last = TRUE)
+
+  variables <<- variables[i]
+  step <<- step[names(variables)]
+
+})
+
+
+#' Compare multiple scorecards side-by-side
+#'
+#' @name Scorecard_compare
+#' @details calling adjust enters an interactive variable edit mode. Press "h"
+#' for a list of commands.
+NULL
+Scorecard$methods(compare = function(...) {
+
+  mods <- unlist(list(...))
+
+  ## check that requested models are in the scorecard
+  stopifnot(all(mods %in% names(models)))
+
+  on.exit(select(selected_model))
+
+  ## select each and get the summary
+  summaries <- lapply(mods, function(x) {
+
+    select(x)
+    res <- summary()
+
+    ## only keep vars in model
+    res[, c("IV", "Step", "Contr")]
+
+  })
+
+  ## merge them all
+  # contribution <- lapply(summaries, function(x) x[,"Contr"])
+
+  # merge helper for use with Reduce
+  merge_ <- function(a, b) {
+    tmp <- merge(a, b, by=0, all=T, sort=FALSE)
+    row.names(tmp) <- tmp$Row.names
+    subset(tmp, select = -Row.names)
+  }
+
+
+  res <- Reduce(merge_, summaries)
+
+  cols <- paste(c("IV", "Step", "Contr"), rep(mods, each=3), sep = ".")
+  colnames(res) <- cols
+
+  res
+  # res[order(-res[2], na.last = TRUE),]
+
+})
+
+
+#' Generate SAS code for Scorecard object
+#'
+#' @name Scorecard_gen_code_sas
+#' @description generate SAS code represenation of the Scorecard object. The SAS
+#' code that is genereated calculates the score, adverse action code distances,
+#' and provides a set of macro assignments for assigning adverse action codes
+#' to particular bin levels.
+#' @param pfx character prefix to prepend to variable names
+#' by the Scorecard model object. Defaults to 1.
+#' @param method method used for calculating the reference level for adverse
+#' action codes. Three possible choices:
+#' \itemize{
+#'  \item{"min" }{Calculate difference from minimum of perf values - default}
+#'  \item{"max" }{Calculate difference from maximum of perf values}
+#'  \item{"neutral" }{Calculate difference from zero}
+#'  }
+#' @return a character vector of SAS code
+NULL
+Scorecard$methods(gen_code_sas = function(pfx="", method="min", ...) {
+
+  out <- character(0)
+  v <- names(which(step == 1))
+  mod <- models[[selected_model]]
+
+  # coefs <- mod@coefs[-1][v]
+
+  if (getOption("mkivtools_REGISTERED", default = FALSE)) {
+    out <- do.call(c, lapply(v, mkivtools::get_mkiv_code))
+    # out <- do.call(c, mkivtools::pkg.env$mkiv_map[tolower(v)])
+  }
+
+  ## Print the reason code mappings
+  out <- c(out, "/** Adverse Action Code Mappings **/")
+  out <- c(out, lapply(seq_along(v), function(i) {
+    sprintf("%%let %s_AA_%02d = \"\"; /** %s **/", pfx, i, v[i])
+  }))
+
+  ### Print the variables
+  out <- c(out, lapply(seq_along(v), function(i) {
+    variables[[v[i]]]$gen_code_sas(method=method, pfx=pfx, i=i)
+  }))
+
+  ### TODO ###
+
+  out <- c(out,
+    sprintf("\n/*** Final Score Calculation ***/"),
+    sprintf("%s_lgt = %s + sum(of: %s_V:);", pfx, mod@coefs["(Intercept)"], pfx))
+
+  unname(unlist(out))
+
+})
+
+
+#' Return names of varibales flagged as dropped
+#'
+#' @name Scorecard_get_dropped
+#' @return a character vector of dropped variable names
+NULL
+Scorecard$methods(get_dropped = function(invert=FALSE) {
+  if (invert) setdiff(vnames, dropped) else dropped
 })
 
 
@@ -113,363 +303,15 @@ Scorecard$methods(bin = function(...) {
 #' @param family response variable distribution. Default is "binomial".
 #' @param ... additional arguments passed on to cv.glmnet
 NULL
-Scorecard$methods(fit = function(name, description="", overwrite=FALSE,
-  newdata=.self$get_variables(), y=performance$y, w=performance$w,
-  nfolds=5, upper.limits=3, lower.limits=0, alpha=1,
-  family="binomial", ...) {
-
-  ## check for consistent dimensions
-  if (length(newdata[[1]]) != length(y)) {
-    stop("newdata and y must be the same length", call. = FALSE)
-  }
-
-  if (length(y) != length(w)) {
-    stop("y and w must be the same length", call. = FALSE)
-  }
-
-  if (!overwrite) {
-    if (name %in% names(models)) {
-        stop("Model name already exists and overwrite=FALSE",
-             call. = FALSE)
-      }
-  }
-
-  v <- setdiff(vnames, dropped)
-  x <- predict(newdata=newdata[v], type="woe")
-
-  set.seed(seed)
-  this_fit <- cv.glmnet(x = x, y = y, weights = w, nfolds = nfolds,
-    family=family, alpha=alpha, upper.limits=upper.limits,
-    lower.limits=lower.limits, keep=TRUE, ...)
-
-  ## get the coeficients
-  coefs <- glmnet::coef.cv.glmnet(this_fit, s="lambda.min")[,1]
-  coefs <- coefs[which(coefs != 0)]
-
-  ## set the inmodel vector
-  inmodel <<- names(coefs)[-1]
-
-  ## set the steptwo vector
-  betas <- as.matrix(this_fit$glmnet.fit$beta)
-  step2 <- matrix(order(betas, decreasing = TRUE), nrow = nrow(betas))
-  step2 <- setdiff(v[unique(row(step2)[step2])], inmodel)
-  steptwo <<- setNames(seq_along(step2), step2)
-
-  ## performance metrics
-  contr <- contributions_(x[,names(coefs)[-1],drop=F], coefs, y, w)
-  ks <- ks_(this_fit$fit.preval[,which.min(this_fit$cvm)], y, w) # kfold
-
-  ## store the last transforms
-  m <- new("Model", name=name, description=description, dropped=dropped,
-           transforms=get_transforms(), coefs=coefs, inmodel=inmodel,
-           steptwo=steptwo, contribution=contr, ks=ks, fit=this_fit)
-
-  add_model(m)
-
-})
-
-
-#' Print the Scorecard representation to the console
-#'
-#' @name Scorecard_show
-NULL
-Scorecard$methods(show = function(...) {
-  ## show the models / coefs?
-  cat(sprintf("%d models", length(models)), sep="\n")
-  i <- rep("", length(models))
-  i[names(models) == selected_model] <- "*"
-  cat(sprintf(" |-- %-2s %-20s | %04.1f ks | %s", i,
-              sapply(models, slot, "name"),
-              sapply(models, slot, "ks") * 100,
-              sapply(models, slot, "description")), sep="\n")
-})
-
-
-#' Return scorecard predictions or WoE substitution
-#'
-#' @name Scorecard_predict
-#' @param newdata data.frame on which to calculate predictions
-#' @param keep whether to keep dropped values
-#' @param type "score" to return the model score. "woe" to return the WoE
-#' substitution for the input dataset
-#' @return Either a single column matrix of score predictions or a matrix
-#' matching the input dimension of the dataset containing weight-of-evidence
-#' substitutions.
-NULL
-Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type=c("score", "woe", "labels"), ...) {
-  type <- match.arg(type)
-
-  mod <- models[[selected_model]]
-  v <- names(mod@coefs[-1])
-  woe <- callSuper(newdata=newdata, keep=keep)
-
-  switch(type,
-    labels = data.frame(mapply(function(w, va) {
-      l <- unlist(sapply(va$tf@repr[1:3], row.names))
-      factor(names(w), levels = l, labels = l)
-    }, woe, variables[names(woe)], SIMPLIFY = FALSE)),
-    woe    = `row.names<-`(do.call(cbind, woe), NULL),
-    score  = `row.names<-`(
-        do.call(cbind, woe)[,v] %*% mod@coefs[v] + mod@coefs[1], NULL), NA)
-})
-
-
-#' Summarize the currently selected model
-#'
-#' @name Scorecard_summary
-#' @param keep whether to summarize droppped variables as well
-#' @return a matrix summarizing the independent variables using the performance
-#' implementation summary function. Also displays the coefficients and model
-#' contributions of the predictors.
-NULL
-Scorecard$methods(summary = function(keep=FALSE, inmodel.only=FALSE) {
-
-  mod <- models[[selected_model]]
-
-  cat(mod@name, "\nOut-of-Fold KS: ", mod@ks, "\n")
-
-  res <- callSuper(keep=keep)
-  vars <- row.names(res)
-
-  out <- cbind(res, `In Model` = 0, `Step Two` = 0, `Coefs` = mod@coefs[vars],
-    `Contribution` = mod@contribution[vars])
-
-  out[inmodel,"In Model"] <- 1
-  out[names(steptwo),"Step Two"] <- steptwo
-
-  if (inmodel.only) {
-    out[match(inmodel, row.names(out), 0), ]
-  } else {
-    out
-  }
-})
-
-
-#' Scorecard adjust method entry point
-#'
-#' @name Scorecard_adjust
-#' @details calling adjust enters an interactive variable edit mode. Press "h"
-#' for a list of commands.
-NULL
-Scorecard$methods(adjust = function(...) {
-  callSuper(...)
-})
-
-
-#' Sort variables of a scorecard
-#'
-#' @name Scorecard_sort
-#' @details variables that are in the currently selected model are sorted to the
-#' front while dropped variables are sorted to the end. Variables within each
-#' group are sort by descending information value.
-NULL
-Scorecard$methods(sort = function() {
-
-  v <- setNames(sapply(variables, function(x) x$sort_value()), names(variables))
-
-  i <- order(step, -v, na.last = TRUE)
-
-  variables <<- variables[i]
-  step <<- step[names(variables)]
-
-})
-
-
-#' Deprecated method. Use Scorecard_bootstrap instead.
-#'
-#' @name Scorecard_pseudo_pvalues
-NULL
-Scorecard$methods(pseudo_pvalues = function(times=20, bag.fraction = 0.50,
-  replace=FALSE, nfolds=5, upper.limits=3, lower.limits=0, alpha=1, ...) {
-
-  warning("pseudo_pvalues will be deprecated in future versions of binnr. Use `bootstrap` instead.")
-
-  res <- bootstrap(times=20, bag.fraction = 0.50, replace=FALSE, nfolds=5,
-    upper.limits=3, lower.limits=0, alpha=1, ...)
-
-  class(res) <- "pseudo_values"
-
-  res
-})
-
-
-#' Run bootstrap model fits to assess coefficient distributions.
-#'
-#' @name Scorecard_bootstrap
-#' @param times number of bootstrap samples to run
-#' @param bag.fraction fraction of observations to sample for each bootstrap run
-#' @param replace whether to sample with or without replacement
-#' @param nfolds number of CV folds to run within each bootstrap fit
-#' @param upper.limits maximum coffecient value for each fit
-#' @param lower.limits minimum coffecient value for each fit
-#' @param alpha mixing paramater between LASSO and Ridge regression. Default 1.
-#' @param ... other parameters passed on to cv.glmnet
-#' @details True boostratp samples should be run with \code{bag.fraction=1} and
-#' \code{replace=TRUE}.
-#' @return a list with two elements: pvals and coefficients. The former is a
-#' vector indicating what proportion of bootstrap model fits each coefficient
-#' returned a zero. The latter an nRuns x nVars matrix containing the
-#' coefficients of each run.
-NULL
-Scorecard$methods(bootstrap = function(times=20, bag.fraction = 0.50,
-  replace=FALSE, nfolds=5, upper.limits=3, lower.limits=0, alpha=1, ...) {
-
-  x <- predict(newdata=get_variables(), type="woe")
-
-  coefs <- list()
-  for (i in seq.int(times)) {
-    progress_(i, times, "Fitting   ")
-
-    s <- sample.int(nrow(x), nrow(x)*bag.fraction, replace = replace)
-
-    fit <- glmnet::cv.glmnet(x = x[s,], y = performance$y[s],
-      weights = performance$w[s], nfolds = 10, alpha = alpha,
-      upper.limits=upper.limits, lower.limits=lower.limits, keep=TRUE, ...)
-
-    coefs[[i]] <- coef(fit, s="lambda.min")
-  }
-
-  res <- as.matrix(do.call(cbind, coefs))
-
-  ## what is the probability of the coefficient being zero?
-  pvals <- sapply(apply(res, 1, ecdf), function(x) x(0))
-
-  structure(
-    list(
-      pvalues = pvals,
-      coefs = res),
-    class = "bootstrap")
-})
-
-
-#' Compare multiple scorecards side-by-side
-#'
-#' @name Scorecard_compare
-#' @details calling adjust enters an interactive variable edit mode. Press "h"
-#' for a list of commands.
-NULL
-Scorecard$methods(compare = function(...) {
-  mods <- unlist(list(...))
-
-  ## check that requested models are in the scorecard
-  stopifnot(all(mods %in% names(models)))
-
-  on.exit(select(selected_model))
-
-  ## select each and get the summary
-  summaries <- lapply(mods, function(x) {
-
-    select(x)
-    res <- summary(inmodel.only = TRUE)
-
-    ## only keep vars in model
-    res[, c("IV","Dropped","In Model","Coefs","Contribution")]
-
-  })
-
-  ## merge them all
-  contribution <- lapply(summaries, function(x) x[,"Contribution"])
-  coefficients <- lapply(summaries, function(x) x[,"Coefs"])
-
-  # merge helper for use with Reduce
-  merge_ <- function(a, b) {
-    tmp <- merge(a,b, by=0, all=T)
-    row.names(tmp) <- tmp$Row.names
-    subset(tmp, select = -Row.names)
-  }
-
-  res <- merge(
-    Reduce(merge_, contribution),
-    Reduce(merge_, coefficients), by=0, all=T)
-
-  cols <- c("Contribution", "Coefficients")
-  colnames(res) <- c("Variable", paste(rep(cols, each=length(mods)), mods))
-
-  res[order(-res[2], na.last = TRUE),]
-
-})
-
-
-#' Generate SAS code for Scorecard object
-#'
-#' @name Scorecard_gen_code_sas
-#' @description generate SAS code represenation of the Scorecard object. The SAS
-#' code that is genereated calculates the score, adverse action code distances,
-#' and provides a set of macro assignments for assigning adverse action codes
-#' to particular bin levels.
-#' @param pfx character prefix to prepend to variable names
-#' by the Scorecard model object. Defaults to 1.
-#' @param method method used for calculating the reference level for adverse
-#' action codes. Three possible choices:
-#' \itemize{
-#'  \item{"min" }{Calculate difference from minimum of perf values - default}
-#'  \item{"max" }{Calculate difference from maximum of perf values}
-#'  \item{"neutral" }{Calculate difference from zero}
-#'  }
-#' @return a character vector of SAS code
-NULL
-Scorecard$methods(gen_code_sas = function(pfx="", method="min", ...) {
-
-  out <- character(0)
-  v <- inmodel
-  mod <- models[[selected_model]]
-
-  coefs <- mod@coefs[-1][v]
-
-  if (getOption("mkivtools_REGISTERED", default = FALSE)) {
-    out <- do.call(c, lapply(v, mkivtools::get_mkiv_code))
-    # out <- do.call(c, mkivtools::pkg.env$mkiv_map[tolower(v)])
-  }
-
-  ## Print the reason code mappings
-  out <- c(out, "/** Adverse Action Code Mappings **/")
-  out <- c(out, lapply(seq_along(v), function(i) {
-    sprintf("%%let %s_AA_%02d = \"\"; /** %s **/", pfx, i, v[i])
-  }))
-
-  ### Print the variables
-  out <- c(out, lapply(seq_along(v), function(i) {
-    variables[[v[i]]]$gen_code_sas(method=method, pfx=pfx, coef=coefs[i], i=i)
-  }))
-
-  out <- c(out,
-    sprintf("\n/*** Final Score Calculation ***/"),
-    sprintf("%s_lgt = %s", pfx, mod@coefs[1]),
-    sprintf("  + %s_V%02d_w", pfx, seq_along(v)),
-    ";")
-
-  unname(unlist(out))
-
-})
-
-
-#' Return names of varibales flagged as dropped
-#'
-#' @name Scorecard_get_dropped
-#' @return a character vector of dropped variable names
-NULL
-Scorecard$methods(get_dropped = function(invert=FALSE) {
-  if (invert) setdiff(vnames, dropped) else dropped
-})
-
-
-#' Return names of varibales flagged as inmodel
-#'
-#' @name Scorecard_get_inmodel
-#' @return a character vector of inmodel variable names
-NULL
-Scorecard$methods(get_inmodel = function(invert=FALSE) {
-  if (invert) setdiff(vnames, inmodel) else inmodel
-})
-
-
-
-#' Fit2
-NULL
-Scorecard$methods(fit2 = function(name, description="", overwrite=FALSE,
+Scorecard$methods(fit = function(name=NULL, description="", overwrite=FALSE,
   newdata=.self$get_variables(), y=performance$y, w=performance$w,
   nfolds=5, upper.limits=3, lower.limits=0, alpha=0,
   family="binomial", ...) {
+
+
+  if (is.null(name)) {
+    name <- sprintf("model%d", length(models))
+  }
 
   ## check for consistent dimensions
   if (length(newdata[[1]]) != length(y)) {
@@ -486,7 +328,6 @@ Scorecard$methods(fit2 = function(name, description="", overwrite=FALSE,
         call. = FALSE)
     }
   }
-
 
   if (!any(step %in% 1)) stop("no step 1 variables in classing", call. = F)
   ## get step one fields
@@ -513,23 +354,16 @@ Scorecard$methods(fit2 = function(name, description="", overwrite=FALSE,
   #### PERFORMANCE METRICS ####
   ## calculate per-level contributions & total contributions
   lvls <- contributions_(x, coefs, y, w)
-  lvls <- split(lvls, rep(seq_along(l), l))
+  lvls <- setNames(split(lvls, rep(seq_along(l), l)), v)
   contr <- sapply(lvls, sum)
 
-  ks <- ks_(this_fit$fit.preval[,which.min(this_fit$cvm)], y, w) # kfold
-
-  ## overwrite the bin weights?
-  ## map these back on the bins
-  for (i in names(wgts)) {
-    variables[[i]]$set_overrides(wgts[[i]])
+  ## overwrite the bin weights
+  for (v in names(wgts)) {
+    variables[[v]]$set_overrides(wgts[[v]])
+    variables[[v]]$tf@contribution <<- lvls[[v]]
   }
 
-  ## store the last transforms
-  m <- new("Model", name=name, description=description, dropped=dropped,
-    transforms=get_transforms(), coefs=coefs, inmodel=inmodel, steptwo=0,
-    contribution=contr, level_contribution = lvls, ks=ks, fit=this_fit)
-
-  add_model(m)
+  ks <- ks_(this_fit$fit.preval[,which.min(this_fit$cvm)], y, w) # kfold
 
   ### add weights for step two predictors
   if (any(step %in% 2)) {
@@ -537,27 +371,29 @@ Scorecard$methods(fit2 = function(name, description="", overwrite=FALSE,
     phat <- glmnet::predict.cv.glmnet(this_fit, x)
     s2 <- names(step)[step %in% 2]
 
-    set.seed(seed)
+    # set.seed(seed)
 
-    s2_wgts <- lapply(variables[s2], function(x) {
-      x <- x$predict_sparse()
+    s2_wgts <- list()
+    s2_lvls <- list()
+    for (v in s2) {
+      x <- variables[[v]]$predict_sparse()
 
       s2_fit <- cv.glmnet(x = x, y = y, weights = w, nfolds = nfolds,
         family=family, alpha=alpha, keep=FALSE, offset=phat, ...)
 
-      coef(s2_fit, s="lambda.min")[-1]
-    })
+      s2_coefs <- coef(s2_fit, s="lambda.min")[,1]
+      s2_wgts[[v]] <- s2_coefs[-1]
 
-    for (i in names(s2_wgts)) {
-      variables[[i]]$set_overrides(s2_wgts[[i]])
+      variables[[v]]$set_overrides(s2_wgts[[v]])
+      variables[[v]]$tf@contribution <<- contributions_(x, s2_coefs, y, w)
     }
-
   }
 
+  ## store the last transforms
+  m <- new("Model", name=name, description=description, dropped=dropped,
+    transforms=get_transforms(), coefs=coefs, ks=ks, fit=this_fit)
 
-
-
-
+  add_model(m)
   sort()
 
 })
@@ -574,7 +410,7 @@ Scorecard$methods(fit2 = function(name, description="", overwrite=FALSE,
 #' matching the input dimension of the dataset containing weight-of-evidence
 #' substitutions.
 NULL
-Scorecard$methods(predict2 = function(newdata=NULL, keep=FALSE, type=c("score", "woe", "labels", "indicators"), ...) {
+Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type=c("score", "woe", "labels", "indicators"), ...) {
 
   type <- match.arg(type)
 
@@ -607,3 +443,80 @@ Scorecard$methods(predict2 = function(newdata=NULL, keep=FALSE, type=c("score", 
   }
 
 })
+
+
+
+Scorecard$methods(secondary_performance = function(name=NULL, description="",
+  overwrite=FALSE, newdata=NULL, y, w=.self$performance$w, epsilon=0.10,
+  family="gaussian", alpha=0, nfolds=5, ...) {
+
+  # browser()
+
+
+  if (is.null(name)) {
+    name <- sprintf("model%d", length(models))
+  }
+
+  ## check for consistent dimensions
+  if (length(y) != length(w)) {
+    stop("y and w must be the same length", call. = FALSE)
+  }
+
+  if (!overwrite) {
+    if (name %in% names(models)) {
+      stop("Model name already exists and overwrite=FALSE",
+        call. = FALSE)
+    }
+  }
+
+  ## fit another glmnet model with lower and upper limits on the coefficients
+  mod <- models[[selected_model]]
+  v <- names(step)[step %in% 1]
+
+  # browser()
+  x <- lapply(variables[v], function(x) x$predict_sparse())
+
+  if (nrow(x[[1]]) != length(y)) {
+    stop("newdata and y must be the same length", call. = FALSE)
+  }
+
+  l <- sapply(x, ncol)
+  x <- do.call(cbind, x)
+
+  f <- !is.na(y)
+
+  set.seed(seed)
+  this_fit <- cv.glmnet(x = x[f,], y = y[f], weights = w[f], nfolds = nfolds, family=family,
+    alpha=alpha, keep=TRUE, upper=epsilon, lower=-epsilon, ...)
+
+  ## add modified betas to the original betas
+  betas <- coef(this_fit, s="lambda.min")
+  betas <- unlist(setNames(split(betas[-1],  rep(seq_along(l), l)), names(l)))
+
+  coefs <- c(mod@coefs[1], betas + mod@coefs[names(betas)]) ## index using the original coef order
+  wgts <- setNames(split(coefs[-1],  rep(seq_along(l), l)), names(l))
+
+  ## order them the same way
+
+  #### PERFORMANCE METRICS ####
+  ## calculate per-level contributions & total contributions
+  lvls <- contributions_(x, coefs, .self$performance$y, .self$performance$y)
+  lvls <- setNames(split(lvls, rep(seq_along(l), l)), v)
+  contr <- sapply(lvls, sum)
+
+  ## overwrite the bin weights
+  for (v in names(wgts)) {
+    variables[[v]]$set_overrides(wgts[[v]])
+    variables[[v]]$tf@contribution <<- lvls[[v]]
+  }
+
+  m <- new("Model", name=name, description=description, dropped=character(),
+    transforms=get_transforms(), coefs=coefs, ks=-1, fit=this_fit)
+
+  add_model(m)
+  sort()
+
+})
+
+
+

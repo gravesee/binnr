@@ -182,7 +182,7 @@ Binary_Performance$methods(plot = function(b, ...) {
 
     abline(v = 0, lty=3)
     center <- make_bars_(woe, col=rgb(0, 0, 0, alpha = 0.30))
-    center <- make_bars_(val, width=0.2, col="red")
+    center <- make_bars_(val, width=0.2, ...)
 
     text(x = min(xlim), y = center, labels = sprintf(" [%02d]",
       rev(seq_along(lbls))), cex=0.80)
