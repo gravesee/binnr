@@ -45,8 +45,7 @@ neutralize_ <- function(tf, i) {
   if (!all(i %in% seq_along(x))) return(tf)
 
   ## ones that are already neutralized are UN-neutralized
-  neutral <- names(which(tf@overrides == 0))
-  nix <- intersect(neutral, x[i])
+  nix <- intersect(tf@neutralized, x[i])
 
   to_drop <- match(nix, names(tf@overrides), 0)
   if (length(to_drop) > 0) {
@@ -56,8 +55,8 @@ neutralize_ <- function(tf, i) {
   overrides <- setdiff(x[i], nix)
   tf@overrides[overrides] <- 0
 
-  ## Experimental
-  tf@neutralized <- unique(c(tf@neutralized, x[i]))
+  ## drop neutraulized that are already in, add ones that aren't
+  tf@neutralized <- c(setdiff(tf@neutralized, x[i]), setdiff(x[i], tf@neutralized))
 
   tf
 }
@@ -120,4 +119,3 @@ set_overrides_ <- function(tf, v1) {
   tf@overrides <- setNames(v1, names(x)) ## neutralized aren't even covariates
   tf
 }
-

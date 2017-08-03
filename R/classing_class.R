@@ -20,7 +20,6 @@ Classing <- setRefClass("Classing",
     variables = "list",
     vnames = "character",
     performance = "Performance",
-    dropped = "character",
     step = "integer"))
 
 
@@ -93,8 +92,7 @@ Classing$methods(initialize = function(data=NULL,
   vnames <<- vnames[f]
 
   ## start all models as step 3
-  step <<- setNames(seq_along(vnames), vnames)
-  step[] <<- 2L ## start all variables as step 2
+  step <<- setNames(as.integer(rep(NA, length(vnames))), vnames)
 
 })
 
@@ -117,24 +115,26 @@ Classing$methods(bin = function(...) {
   ## drop vars with zero information value
   zeros <- sapply(variables, function(b) b$sort_value()) == 0
 
-  dropped <<- names(variables)[zeros]
+  # step[names(variables)[zeros]] <<- NA
 
 })
 
 Classing$methods(get_variables = function(keep=FALSE) {
+  v <- names(step)
   if (!keep) {
-    lapply(variables[step == 1L & !is.na(step)], function(x) x$x)
+    lapply(variables[v[step == 1L & !is.na(step)]], function(x) x$x)
   } else {
-    lapply(variables, function(x) x$x[s])
+    lapply(variables[v], function(x) x$x[s])
   }
 })
 
 
 Classing$methods(get_transforms = function(keep=FALSE) {
+  v <- names(step)
   if (!keep) {
-    lapply(variables[step == 1L & !is.na(step)], function(x) x$tf)
+    lapply(variables[v[step == 1L & !is.na(step)]], function(x) x$tf)
   } else {
-    lapply(variables, function(x) x$tf)
+    lapply(variables[v], function(x) x$tf)
   }
 })
 
@@ -147,10 +147,10 @@ Classing$methods(get_transforms = function(keep=FALSE) {
 NULL
 Classing$methods(drop = function(vars=character(0), all=FALSE, ...) {
   if (all) {
-    dropped <<- vnames
+    step[] <<- NA
   } else {
     stopifnot(all(vars %in% vnames))
-    dropped <<- unique(c(dropped, vars))
+    step[vars] <<- NA
   }
 })
 
@@ -204,7 +204,7 @@ Classing$methods(combine = function(other) {
 
   variables <<- c(variables, other$variables)
   vnames <<- c(vnames, other$vnames)
-  dropped <<- c(dropped, other$dropped)
+  step <<- c(step, other$step)
 
 })
 

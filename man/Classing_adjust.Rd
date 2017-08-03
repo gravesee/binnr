@@ -28,6 +28,7 @@ The list of commands is rather extensive and summarized here:
  \item{(e)}{xceptions - change the exception values of the variable}
  \item{(s)}{et equal - set one WoE equal to another}
  \item{(u)}{ndo the last entered operation}
+ \item{(f)}{it the model and resume on this variable}
  \item{(r)}{eset the Bin object to its original state}
  \item{(d)}{rop or undrop the current variable}
  \item{(c)}{cut points. Specify space-separated bin boundaries.}

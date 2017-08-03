@@ -21,6 +21,7 @@ NULL
 #'  \item{(e)}{xceptions - change the exception values of the variable}
 #'  \item{(s)}{et equal - set one WoE equal to another}
 #'  \item{(u)}{ndo the last entered operation}
+#'  \item{(f)}{it the model and resume on this variable}
 #'  \item{(r)}{eset the Bin object to its original state}
 #'  \item{(d)}{rop or undrop the current variable}
 #'  \item{(c)}{cut points. Specify space-separated bin boundaries.}
@@ -58,14 +59,6 @@ Classing$methods(adjust = function(start=NULL, ...) {
 
     cat("\014")
     cat(sprintf(" *** STEP: %d\n", step[nm]))
-
-    ### extra columns to pass into the bin variable
-    # if (!is.na(step[nm])) {
-    #   Contribution <- round(c(mod@level_contribution[[nm]], mod@contribution[nm]), 5)
-    #   variables[[i]]$show(Contribution=Contribution)
-    # } else {
-    #   variables[[i]]$show()
-    # }
 
     variables[[i]]$show()
 
@@ -133,6 +126,11 @@ Classing$methods(adjust = function(start=NULL, ...) {
     } else if (command == "d") {
 
       step[nm] <<- NA
+
+    } else if (command == "f") {
+
+      .self$fit()
+      i <- match(nm, names(variables), 1)
 
     } else if (command == "m") {
 

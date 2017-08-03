@@ -54,6 +54,11 @@ Bin$methods(update = function() {
     ## find witch levels are in the overrides
     i <- intersect(names(tf@overrides), row.names(v))
     v[i, "Pred"] <- tf@overrides[i]
+
+    ## TODO
+    # j <- intersect(names(tf@neutralized), row.names(v))
+    # v[j, "Pred"] <- 0
+
     v
   })
 
@@ -144,8 +149,9 @@ Bin$methods(as.matrix = function() {
   if (length(tf@repr) == 0) {
     stop("`bin` function not called yet.", call. = FALSE)
   }
+  contr <- round(c(tf@contribution, sum(tf@contribution)), 5)
+  round(cbind(do.call(rbind, tf@repr), Contr=contr), 3)
 
-  round(do.call(rbind, tf@repr), 3)
 })
 
 
@@ -158,8 +164,8 @@ Bin$methods(show = function(...) {
 
   m <- as.matrix()
 
-  contr <- round(c(tf@contribution, sum(tf@contribution)), 5)
-  m <- cbind(m, Contr=contr)
+  #contr <- round(c(tf@contribution, sum(tf@contribution)), 5)
+  #m <- cbind(m, Contr=contr)
 
   ## add row labels
   lbls <- sprintf("[%02d]", seq.int(nrow(m)))
@@ -253,6 +259,9 @@ Bin$methods(predict = function(newdata=.self$x) {
   ors <- intersect(names(out), names(tf@overrides))
   out[ors] <- tf@overrides[ors]
 
+  neu <- intersect(names(out), names(tf@neutralized))
+  out[neu] <- 0
+
   out
 })
 
@@ -283,9 +292,6 @@ Bin$methods(get_excel_table = function() {
   perf$get_excel_table(b=.self)
 })
 
-
-
-
 #' Substitute weight-of-evidence for the input \code{x} values
 #'
 #' @name Bin_predict_sparse
@@ -295,13 +301,12 @@ NULL
 Bin$methods(predict_sparse = function(newdata=.self$x) {
   idx <- factorize(newdata=newdata)
 
-  ## drop neutralized levels
-  # idx <- factor(idx, setdiff(levels(idx), .self$tf@neutralized))
-
   j <- as.integer(idx)
   i <- seq_along(idx)
 
   m <- Matrix::sparseMatrix(i=i, j=j, dims = c(length(idx), length(levels(idx))))
+
+  ### Overwrite neutral bin levels with all 0s ###
   n <- match(.self$tf@neutralized, levels(idx), 0)
   m[,n] <- FALSE
   m

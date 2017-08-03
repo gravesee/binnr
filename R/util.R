@@ -12,14 +12,14 @@ lr2_ <- function(f, y, w) {
 }
 
 ## calculate score contributions for Scorecard
-contributions_ <- function(data, coefs, y, w) {
+contributions_ <- function(data, coefs, y, w, offset=0) {
   base <- lr2_(0, y, w)
 
   lr2 <- sapply(seq_along(coefs), function(i) {
     if (i > 1) {
       coefs[i] <- 0
     }
-    1 - (lr2_(data %*% coefs[-1] + coefs[1], y, w) / base)
+    1 - (lr2_(data %*% coefs[-1] + coefs[1] + offset, y, w) / base)
   })
   names(lr2) <- c("Base", names(coefs)[-1])
   lr2[1] - lr2[-1]

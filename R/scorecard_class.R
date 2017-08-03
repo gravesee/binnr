@@ -18,8 +18,7 @@ Scorecard <- setRefClass("Scorecard",
    seed = "numeric",
    models = "list",
    selected_model = "character",
-   inmodel = "character",
-   steptwo = "numeric"),
+   inmodel = "character"),
  contains = "Classing")
 
 Scorecard$methods(initialize = function(..., seed=as.numeric(strftime(Sys.time(), format="%H%M%S"))) {
@@ -50,7 +49,7 @@ Scorecard$methods(select = function(model) {
   mod <- models[[model]]
   selected_model <<- model
 
-  dropped <<- mod@dropped
+  step <<- mod@step
 
   for (v in names(mod@transforms)) {
     variables[[v]]$tf <<- mod@transforms[[v]]
@@ -76,7 +75,7 @@ NULL
 Scorecard$methods(bin = function(...) {
   callSuper(...)
   scratch <- new("Model", name="scratch", description="", fit=NULL, ks=0,
-                 dropped=dropped, transforms=get_transforms())
+    step=step, transforms=get_transforms())
   add_model(scratch)
 })
 
@@ -92,10 +91,14 @@ Scorecard$methods(show = function(...) {
   cat(sprintf("%d models", length(models)), sep="\n")
   i <- rep("", length(models))
   i[names(models) == selected_model] <- "*"
-  cat(sprintf(" |-- %-2s %-20s | %04.1f ks | %s", i,
-              sapply(models, slot, "name"),
-              sapply(models, slot, "ks") * 100,
-              sapply(models, slot, "description")), sep="\n")
+  types <- ifelse(sapply(models, function(m) m@type) == "secondary", 2, 1)
+
+  cat(sprintf(" |-- (%d) %-2s %-20s | %04.1f ks | %s",
+    types,
+    i,
+    sapply(models, slot, "name"),
+    sapply(models, slot, "ks") * 100,
+    sapply(models, slot, "description")), sep="\n")
 })
 
 
@@ -256,7 +259,7 @@ Scorecard$methods(gen_code_sas = function(pfx="", method="min", ...) {
 
   out <- c(out,
     sprintf("\n/*** Final Score Calculation ***/"),
-    sprintf("%s_lgt = %s + sum(of: %s_V:);", pfx, mod@coefs["(Intercept)"], pfx))
+    sprintf("%s_lgt = %s + sum(of %s_V:);", pfx, mod@coefs["(Intercept)"], pfx))
 
   unname(unlist(out))
 
@@ -305,50 +308,35 @@ Scorecard$methods(get_dropped = function(invert=FALSE) {
 NULL
 Scorecard$methods(fit = function(name=NULL, description="", overwrite=FALSE,
   newdata=.self$get_variables(), y=performance$y, w=performance$w,
-  nfolds=5, upper.limits=3, lower.limits=0, alpha=0,
   family="binomial", ...) {
 
+  if (is.null(name)) name <- sprintf("model%d", length(models))
 
-  if (is.null(name)) {
-    name <- sprintf("model%d", length(models))
+  if ((length(newdata[[1]]) != length(y)) || (length(y) != length(w))) {
+    stop("nObs doesn't match among newdata, y,& w", call. = FALSE)
   }
 
-  ## check for consistent dimensions
-  if (length(newdata[[1]]) != length(y)) {
-    stop("newdata and y must be the same length", call. = FALSE)
+  if (!overwrite && (name %in% names(models))) {
+    stop("Model name already exists and overwrite=FALSE", call. = FALSE)
   }
 
-  if (length(y) != length(w)) {
-    stop("y and w must be the same length", call. = FALSE)
-  }
 
-  if (!overwrite) {
-    if (name %in% names(models)) {
-      stop("Model name already exists and overwrite=FALSE",
-        call. = FALSE)
-    }
-  }
-
+  ###########################
+  ### STEP ONE PREDICTORS ###
+  ###########################
   if (!any(step %in% 1)) stop("no step 1 variables in classing", call. = F)
-  ## get step one fields
 
-    ## change this to make step 3?
   v <- names(step)[step %in% 1]
-
-  # browser()
   x <- lapply(variables[v], function(x) x$predict_sparse())
-
   l <- sapply(x, ncol)
   x <- do.call(cbind, x)
 
   set.seed(seed)
-  this_fit <- cv.glmnet(x = x, y = y, weights = w, nfolds = nfolds,
-    family=family, alpha=alpha, keep=TRUE, ...)
-
-  betas <- coef(this_fit, s="lambda.min")
+  this_fit <- glmnet::glmnet(x = x, y = y, weights = w, family=family, ...)
 
   ## split the coefficients up
-  wgts <- setNames(split(betas[-1],  rep(seq_along(l), l)), names(l))
+  betas <- unname(coef(this_fit, s=0)[,1])
+  wgts  <- setNames(split(betas[-1],  rep(seq_along(l), l)), names(l))
   coefs <- c(`(Intercept)`=betas[1], unlist(wgts))
 
   #### PERFORMANCE METRICS ####
@@ -363,39 +351,36 @@ Scorecard$methods(fit = function(name=NULL, description="", overwrite=FALSE,
     variables[[v]]$tf@contribution <<- lvls[[v]]
   }
 
-  ks <- ks_(this_fit$fit.preval[,which.min(this_fit$cvm)], y, w) # kfold
+  ### KS CALCULATION
+  phat <- glmnet::predict.glmnet(this_fit, x, s=0, offset=offset)
+  ks <- ks_(phat, y, w)
 
-  ### add weights for step two predictors
+  ###########################
+  ### STEP TWO PREDICTORS ###
+  ###########################
   if (any(step %in% 2)) {
 
-    phat <- glmnet::predict.cv.glmnet(this_fit, x)
     s2 <- names(step)[step %in% 2]
+    for (i in seq_along(s2)) {
+      v <- s2[i]
+      progress_(i, length(s2), text="StepTwo   ", extra = v)
 
-    # set.seed(seed)
-
-    s2_wgts <- list()
-    s2_lvls <- list()
-    for (v in s2) {
       x <- variables[[v]]$predict_sparse()
 
-      s2_fit <- cv.glmnet(x = x, y = y, weights = w, nfolds = nfolds,
-        family=family, alpha=alpha, keep=FALSE, offset=phat, ...)
+      s2_fit <- glmnet::glmnet(x = x, y = y, weights = w, family="binomial", offset=phat, intercept = FALSE, lambda=0, ...)
+      s2_coefs <- coef(s2_fit, s=0)[,1]
 
-      s2_coefs <- coef(s2_fit, s="lambda.min")[,1]
-      s2_wgts[[v]] <- s2_coefs[-1]
-
-      variables[[v]]$set_overrides(s2_wgts[[v]])
-      variables[[v]]$tf@contribution <<- contributions_(x, s2_coefs, y, w)
+      variables[[v]]$set_overrides(s2_coefs[-1])
+      variables[[v]]$tf@contribution <<- contributions_(x, s2_coefs, y, w, offset=phat)
     }
   }
 
-  ## store the last transforms
-  m <- new("Model", name=name, description=description, dropped=dropped,
-    transforms=get_transforms(), coefs=coefs, ks=ks, fit=this_fit)
+  m <- new("Model", name=name, description=description, step=step,
+    transforms=get_transforms(), coefs=coefs, ks=ks, fit=this_fit,
+    parent=selected_model, type="primary")
 
   add_model(m)
   sort()
-
 })
 
 
@@ -413,21 +398,15 @@ NULL
 Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type=c("score", "woe", "labels", "indicators"), ...) {
 
   type <- match.arg(type)
-
-  mod <- models[[selected_model]]
   woe <- do.call(cbind, callSuper(newdata, keep=keep))
   row.names(woe) <- NULL
 
   if (type == "score") {
-
-    return(rowSums(woe) + mod@coefs["(Intercept)"])
-
+    p <- rowSums(woe) + coef(.self)["(Intercept)"]
+    return(p)
   } else if (type == "woe") {
-
     return(woe)
-
   } else if (type == "labels") {
-
 
     stop("Not implemented yet")
 
@@ -445,13 +424,9 @@ Scorecard$methods(predict = function(newdata=NULL, keep=FALSE, type=c("score", "
 })
 
 
-
 Scorecard$methods(secondary_performance = function(name=NULL, description="",
   overwrite=FALSE, newdata=NULL, y, w=.self$performance$w, epsilon=0.10,
   family="gaussian", alpha=0, nfolds=5, ...) {
-
-  # browser()
-
 
   if (is.null(name)) {
     name <- sprintf("model%d", length(models))
@@ -471,9 +446,13 @@ Scorecard$methods(secondary_performance = function(name=NULL, description="",
 
   ## fit another glmnet model with lower and upper limits on the coefficients
   mod <- models[[selected_model]]
+
+  if (!identical(mod@type, "primary")) {
+    stop("Cannot train secondary model from secondary model", call. = FALSE)
+  }
+
   v <- names(step)[step %in% 1]
 
-  # browser()
   x <- lapply(variables[v], function(x) x$predict_sparse())
 
   if (nrow(x[[1]]) != length(y)) {
@@ -486,11 +465,11 @@ Scorecard$methods(secondary_performance = function(name=NULL, description="",
   f <- !is.na(y)
 
   set.seed(seed)
-  this_fit <- cv.glmnet(x = x[f,], y = y[f], weights = w[f], nfolds = nfolds, family=family,
-    alpha=alpha, keep=TRUE, upper=epsilon, lower=-epsilon, ...)
+  this_fit <- glmnet::glmnet(x = x[f,], y = y[f], weights = w[f], family=family,
+    alpha=alpha, upper=epsilon, lower=-epsilon, intercept=TRUE, ...)
 
   ## add modified betas to the original betas
-  betas <- coef(this_fit, s="lambda.min")
+  betas <- coef(this_fit, s=0)
   betas <- unlist(setNames(split(betas[-1],  rep(seq_along(l), l)), names(l)))
 
   coefs <- c(mod@coefs[1], betas + mod@coefs[names(betas)]) ## index using the original coef order
@@ -500,7 +479,7 @@ Scorecard$methods(secondary_performance = function(name=NULL, description="",
 
   #### PERFORMANCE METRICS ####
   ## calculate per-level contributions & total contributions
-  lvls <- contributions_(x, coefs, .self$performance$y, .self$performance$y)
+  lvls <- contributions_(x, coefs, .self$performance$y, .self$performance$w)
   lvls <- setNames(split(lvls, rep(seq_along(l), l)), v)
   contr <- sapply(lvls, sum)
 
@@ -510,8 +489,14 @@ Scorecard$methods(secondary_performance = function(name=NULL, description="",
     variables[[v]]$tf@contribution <<- lvls[[v]]
   }
 
-  m <- new("Model", name=name, description=description, dropped=character(),
-    transforms=get_transforms(), coefs=coefs, ks=-1, fit=this_fit)
+  ### KS CALCULATION
+  phat <- .self$predict()
+  ks <- ks_(phat, .self$performance$y, .self$performance$w)
+
+  m <- new("Model", name=name, description=description, step=step,
+    transforms=get_transforms(), coefs=coefs, ks=ks, fit=this_fit,
+    parent=selected_model, type="secondary")
+
 
   add_model(m)
   sort()
@@ -519,4 +504,7 @@ Scorecard$methods(secondary_performance = function(name=NULL, description="",
 })
 
 
-
+#' @export
+setMethod("coef", signature = ("Scorecard"), function(object, ...) {
+  object$models[[object$selected_model]]@coefs
+})
