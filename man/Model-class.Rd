@@ -26,6 +26,9 @@ of fit}
 
 \item{\code{inmodel}}{character vector denoting which variables entered the model}
 
+\item{\code{steptwo}}{named numeric vector of how varaibles would enter the model
+if the lambda value was lowered (a "looser" fitting model).}
+
 \item{\code{coefs}}{intercept and coefficients of the fitted model as a numeric
 vector}
 
